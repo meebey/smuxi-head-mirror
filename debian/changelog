@@ -1,0 +1,71 @@
+smuxi (0.6.4-1~pre1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mirco Bauer <meebey@debian.org>  Wed, 12 Aug 2009 07:33:02 +0200
+
+smuxi (0.6.2-1~pre1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mirco Bauer <meebey@debian.org>  Thu, 28 Aug 2008 20:54:07 +0200
+
+smuxi (0.6.1-1~pre1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mirco Bauer <meebey@debian.org>  Tue, 29 Jul 2008 22:12:03 +0200
+
+smuxi (0.5.30-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mirco Bauer <meebey@debian.org>  Thu, 31 Jan 2008 22:59:25 +0100
+
+smuxi (0.5.29-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mirco Bauer <meebey@debian.org>  Wed, 12 Dec 2007 21:21:23 +0100
+
+smuxi (0.5.28-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    + generate clilibs using dh_makeclilibs
+
+ -- Mirco Bauer <meebey@debian.org>  Sun, 02 Dec 2007 22:29:00 +0100
+
+smuxi (0.5.27-1) unstable; urgency=low
+
+  * Added missing smuxi-engine-irc dependency to smuxi-frontend-gnome-irc.
+
+ -- Mirco Bauer <meebey@debian.org>  Sat, 07 Jul 2007 15:40:54 +0200
+
+smuxi (0.5.26-1) unstable; urgency=low
+
+  * Changed from native packaging to pristine packaging
+  * debian/control:
+    + Bild depend on Gtk# >= 2.8
+
+ -- Mirco Bauer <meebey@meebey.net>  Mon, 02 Jul 2007 11:28:29 +0200
+
+smuxi (0.5.26) unstable; urgency=low
+
+  * Fix QUIT/PART crash in IrcProtocolManager.
+  * Added smuxi-engine-irc and smuxi-frontend-gnome-irc package.
+
+ -- Mirco Bauer <meebey@debian.org>  Mon, 11 Jun 2007 22:09:36 +0200
+
+smuxi (0.5.25) unstable; urgency=low
+
+  * Split the smuxi package into smuxi-engine smuxi-server and
+    smuxi-frontend-gnome.
+
+ -- Mirco Bauer <meebey@debian.org>  Tue, 17 Apr 2007 18:54:49 +0200
+
+smuxi (0.5.24) unstable; urgency=low
+
+  * Initial release. (Closes: #310836)
+
+ -- Mirco Bauer <meebey@debian.org>  Tue, 17 Apr 2007 04:46:15 +0200

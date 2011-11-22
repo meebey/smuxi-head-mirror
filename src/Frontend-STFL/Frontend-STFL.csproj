@@ -1,0 +1,66 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{58FCF1AE-4316-47AE-8EB4-DA437432B09F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>smuxi-frontend-stfl</AssemblyName>
+    <StartupObject>Smuxi.Frontend.Stfl.MainClass</StartupObject>
+    <RootNamespace>Smuxi.Frontend.Stfl</RootNamespace>
+    <CodePage>65001</CodePage>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\bin\debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;LOG4NET</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="log4net"/>
+    <Reference Include="Mono.Posix"/>
+    <Reference Include="Stfl"/>
+    <Reference Include="System"/>
+    <Reference Include="System.Xml"/>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\AssemblyVersion.cs">
+      <Link>AssemblyVersion.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="ChatView.cs" />
+    <Compile Include="ChatViewManager.cs" />
+    <Compile Include="Entry.cs" />
+    <Compile Include="Frontend.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="MainWindow.cs" />
+    <Compile Include="StflUI.cs" />
+    <Compile Include="STFL\Form.cs" />
+    <Compile Include="STFL\KeyPressedEventArgs.cs" />
+    <Compile Include="STFL\KeyPressedEventHandler.cs" />
+    <Compile Include="STFL\StflApi.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MainWindow.stfl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{E1CAA428-6841-4C42-B4FA-3A3DE6D86B3D}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Engine\Engine.csproj">
+      <Project>{B5F12596-21D7-4878-86E0-A230BE0D5F02}</Project>
+      <Name>Engine</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Frontend\Frontend.csproj">
+      <Project>{0F54E2A1-25A7-4433-AFE8-58B212E8F846}</Project>
+      <Name>Frontend</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSHARP.Targets" />
+</Project>
