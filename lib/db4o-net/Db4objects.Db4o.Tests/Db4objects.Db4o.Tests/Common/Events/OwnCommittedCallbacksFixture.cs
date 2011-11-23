@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using System;
@@ -193,10 +193,8 @@ namespace Db4objects.Db4o.Tests.Common.Events
 				IEventRegistry registry = EventRegistryFactory.ForObjectContainer(clientA);
 				registry.Committed += new System.EventHandler<Db4objects.Db4o.Events.CommitEventArgs>
 					(new _IEventListener4_153(shallListen, gotEvent, ownEvent, lockObject).OnEvent);
-				shallListen.value = true;
-				action.CommitItem(new OwnCommitCallbackFlaggedNetworkingTestSuite.Item(42), clientA
-					, clientB);
-				lockObject.Run(new _IClosure4_172(lockObject));
+				lockObject.Run(new _IClosure4_170(shallListen, action, clientA, clientB, lockObject
+					));
 				shallListen.value = false;
 				clientB.Close();
 				clientA.Close();
@@ -254,19 +252,35 @@ namespace Db4objects.Db4o.Tests.Common.Events
 				private readonly Lock4 lockObject;
 			}
 
-			private sealed class _IClosure4_172 : IClosure4
+			private sealed class _IClosure4_170 : IClosure4
 			{
-				public _IClosure4_172(Lock4 lockObject)
+				public _IClosure4_170(BooleanByRef shallListen, OwnCommittedCallbacksFixture.CommitAction
+					 action, IObjectContainer clientA, IObjectContainer clientB, Lock4 lockObject)
 				{
+					this.shallListen = shallListen;
+					this.action = action;
+					this.clientA = clientA;
+					this.clientB = clientB;
 					this.lockObject = lockObject;
 				}
 
 				public object Run()
 				{
+					shallListen.value = true;
+					action.CommitItem(new OwnCommitCallbackFlaggedNetworkingTestSuite.Item(42), clientA
+						, clientB);
 					lockObject.Snooze(OwnCommittedCallbacksFixture.OwnCommitCallbackFlaggedTestUnit.Timeout
 						);
 					return null;
 				}
+
+				private readonly BooleanByRef shallListen;
+
+				private readonly OwnCommittedCallbacksFixture.CommitAction action;
+
+				private readonly IObjectContainer clientA;
+
+				private readonly IObjectContainer clientB;
 
 				private readonly Lock4 lockObject;
 			}

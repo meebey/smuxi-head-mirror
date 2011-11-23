@@ -15,13 +15,18 @@ namespace Db4objects.Db4o.Linq.Caching
 	{
 		public static ICache4<TKey, TValue> For(ICache4 cache4)
 		{
-			return new Cache4CachingStrategy<TKey, TValue>(cache4);
+			return SynchonizedCache(new Cache4CachingStrategy<TKey, TValue>(cache4));
 		}
 
 		public static ICache4<TKey, TValue> For(ICache4 cache4, IEqualityComparer<TKey> comparer)
 		{
-			return new Cache4CachingStrategyWithComparer<TKey, TValue>(cache4, comparer);
+			return SynchonizedCache(new Cache4CachingStrategyWithComparer<TKey, TValue>(cache4, comparer));
 		}
+
+        private static ICache4<TKey, TValue> SynchonizedCache(ICache4<TKey, TValue> cacheImplementation)
+        {
+            return new SynchronizedCache<TKey, TValue>(cacheImplementation);
+        }
 	}
 
 	internal class Cache4CachingStrategy<TKey, TValue> : ICache4<TKey, TValue>

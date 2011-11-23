@@ -1,9 +1,8 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
 using Db4objects.Db4o.Foundation;
-using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Btree;
 using Db4objects.Db4o.Internal.Fieldindex;
 using Db4objects.Db4o.Internal.Query.Processor;
@@ -27,17 +26,12 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 			_constraint = qcon;
 		}
 
-		public virtual TreeInt ToTreeInt()
-		{
-			return AddToTree(null, this);
-		}
-
 		public BTree GetIndex()
 		{
-			return GetYapField().GetIndex(Transaction());
+			return FieldMetadata().GetIndex(Transaction());
 		}
 
-		private FieldMetadata GetYapField()
+		private Db4objects.Db4o.Internal.FieldMetadata FieldMetadata()
 		{
 			return _constraint.GetField().GetFieldMetadata();
 		}
@@ -55,18 +49,22 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 
 		public virtual IBTreeRange Search(object value)
 		{
-			return GetYapField().Search(Transaction(), value);
+			return FieldMetadata().Search(Transaction(), value);
 		}
 
-		public static TreeInt AddToTree(TreeInt tree, IIndexedNode node)
+		public static void Traverse(IIndexedNode node, IIntVisitor visitor)
 		{
 			IEnumerator i = node.GetEnumerator();
 			while (i.MoveNext())
 			{
 				IFieldIndexKey composite = (IFieldIndexKey)i.Current;
-				tree = (TreeInt)((TreeInt)Tree.Add(tree, new TreeInt(composite.ParentID())));
+				visitor.Visit(composite.ParentID());
 			}
-			return tree;
+		}
+
+		public virtual void Traverse(IIntVisitor visitor)
+		{
+			Traverse(this, visitor);
 		}
 
 		public virtual IIndexedNode Resolve()
@@ -83,9 +81,16 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 			return Constraint().Transaction();
 		}
 
+		public override string ToString()
+		{
+			return "IndexedNode " + _constraint.ToString();
+		}
+
 		public abstract IEnumerator GetEnumerator();
 
-		public abstract void MarkAsBestIndex();
+		public abstract bool IsEmpty();
+
+		public abstract void MarkAsBestIndex(QCandidates arg1);
 
 		public abstract int ResultSize();
 	}

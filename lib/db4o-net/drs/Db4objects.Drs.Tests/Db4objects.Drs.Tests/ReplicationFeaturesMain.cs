@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -16,6 +16,8 @@ namespace Db4objects.Drs.Tests
 {
 	public class ReplicationFeaturesMain : DrsTestCase
 	{
+		private const bool Debug = false;
+
 		private static readonly string AStuff = "A";
 
 		private static readonly string BStuff = "B";
@@ -146,7 +148,7 @@ namespace Db4objects.Drs.Tests
 			checkNameCount++;
 			if (isExpected)
 			{
-				Assert.IsNotNull(obj);
+				Assert.IsNotNull(obj, "Expecting: " + name + " in " + ContainerName(container));
 			}
 			else
 			{
@@ -178,10 +180,6 @@ namespace Db4objects.Drs.Tests
 				(origin, inspected));
 		}
 
-		//	public void configure() {
-		//		Db4o.configure().generateUUIDs(Integer.MAX_VALUE);
-		//		Db4o.configure().generateVersionNumbers(Integer.MAX_VALUE);
-		//	}
 		private ITestableReplicationProviderInside Container(string aOrB)
 		{
 			return aOrB.Equals(AStuff) ? A().Provider() : B().Provider();
@@ -200,7 +198,7 @@ namespace Db4objects.Drs.Tests
 			PrintProvidersContent("before changes");
 			PerformChanges();
 			PrintProvidersContent("after changes");
-			IReplicationEventListener listener = new _IReplicationEventListener_170(this);
+			IReplicationEventListener listener = new _IReplicationEventListener_167(this);
 			//Default replication behaviour.
 			IReplicationSession replication = new GenericReplicationSession(A().Provider(), B
 				().Provider(), listener, _fixtures.reflector);
@@ -226,9 +224,9 @@ namespace Db4objects.Drs.Tests
 			Clean();
 		}
 
-		private sealed class _IReplicationEventListener_170 : IReplicationEventListener
+		private sealed class _IReplicationEventListener_167 : IReplicationEventListener
 		{
-			public _IReplicationEventListener_170(ReplicationFeaturesMain _enclosing)
+			public _IReplicationEventListener_167(ReplicationFeaturesMain _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -254,10 +252,7 @@ namespace Db4objects.Drs.Tests
 
 		private void PrintProvidersContent(string msg)
 		{
-			if (true)
-			{
-				return;
-			}
+			return;
 			Sharpen.Runtime.Out.WriteLine("*** " + msg);
 			PrintProviderContent(A().Provider());
 			PrintProviderContent(B().Provider());
@@ -269,8 +264,21 @@ namespace Db4objects.Drs.Tests
 			Sharpen.Runtime.Out.WriteLine("PROVIDER: " + provider);
 			while (storedObjects.HasNext())
 			{
-				Sharpen.Runtime.Out.WriteLine(storedObjects.Next());
+				object @object = storedObjects.Next();
+				Sharpen.Runtime.Out.WriteLine("-> " + @object + " - c:" + CreationTime(provider, 
+					@object) + " v:" + Version(provider, @object));
 			}
+		}
+
+		private long Version(ITestableReplicationProviderInside provider, object obj)
+		{
+			return provider.ObjectVersion(obj);
+		}
+
+		private long CreationTime(ITestableReplicationProviderInside provider, object obj
+			)
+		{
+			return provider.CreationTime(obj);
 		}
 
 		private bool TryToReplicate(IReplicationSession replication)
@@ -360,8 +368,9 @@ namespace Db4objects.Drs.Tests
 			B().Provider().StoreNew(new Replicated("oldFromB"));
 			A().Provider().Commit();
 			B().Provider().Commit();
+			PrintProvidersContent("init state");
 			IReplicationSession replication = new GenericReplicationSession(A().Provider(), B
-				().Provider());
+				().Provider(), null, _fixtures.reflector);
 			ReplicateQueryingFrom(replication, A().Provider(), B().Provider());
 			ReplicateQueryingFrom(replication, B().Provider(), A().Provider());
 			replication.Commit();
@@ -628,9 +637,9 @@ namespace Db4objects.Drs.Tests
 		{
 		}
 
-		// System.out.println(string);
 		private void PrintCombination()
 		{
+			return;
 			Out(string.Empty + _testCombination + " =================================");
 			Out("Deleted Objects In: " + Print(_containersWithDeletedObjects));
 			Out("Direction: To " + Print(_direction));

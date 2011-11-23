@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -110,12 +110,12 @@ namespace Db4objects.Db4o.CS.Internal
 			{
 				return;
 			}
-			_startupLock.Run(new _IClosure4_100(this));
+			_startupLock.Run(new _IClosure4_101(this));
 		}
 
-		private sealed class _IClosure4_100 : IClosure4
+		private sealed class _IClosure4_101 : IClosure4
 		{
-			public _IClosure4_100(ObjectServerImpl _enclosing)
+			public _IClosure4_101(ObjectServerImpl _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -146,12 +146,12 @@ namespace Db4objects.Db4o.CS.Internal
 
 		private void StartServerThread()
 		{
-			_startupLock.Run(new _IClosure4_119(this));
+			_startupLock.Run(new _IClosure4_120(this));
 		}
 
-		private sealed class _IClosure4_119 : IClosure4
+		private sealed class _IClosure4_120 : IClosure4
 		{
-			public _IClosure4_119(ObjectServerImpl _enclosing)
+			public _IClosure4_120(ObjectServerImpl _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -470,13 +470,13 @@ namespace Db4objects.Db4o.CS.Internal
 			LocalObjectContainer threadContainer = _container;
 			while (_serverSocket != null)
 			{
-				threadContainer.WithEnvironment(new _IRunnable_351(this, threadContainer));
+				threadContainer.WithEnvironment(new _IRunnable_352(this, threadContainer));
 			}
 		}
 
-		private sealed class _IRunnable_351 : IRunnable
+		private sealed class _IRunnable_352 : IRunnable
 		{
-			public _IRunnable_351(ObjectServerImpl _enclosing, LocalObjectContainer threadContainer
+			public _IRunnable_352(ObjectServerImpl _enclosing, LocalObjectContainer threadContainer
 				)
 			{
 				this._enclosing = _enclosing;
@@ -529,12 +529,12 @@ namespace Db4objects.Db4o.CS.Internal
 
 		private void NotifyThreadStarted()
 		{
-			_startupLock.Run(new _IClosure4_394(this));
+			_startupLock.Run(new _IClosure4_395(this));
 		}
 
-		private sealed class _IClosure4_394 : IClosure4
+		private sealed class _IClosure4_395 : IClosure4
 		{
-			public _IClosure4_394(ObjectServerImpl _enclosing)
+			public _IClosure4_395(ObjectServerImpl _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -572,6 +572,18 @@ namespace Db4objects.Db4o.CS.Internal
 		public virtual void AddCommittedInfoMsg(MCommittedInfo message)
 		{
 			_committedInfosQueue.Add(message);
+		}
+
+		public virtual void BroadcastReplicationCommit(long timestamp, IList concurrentTimestamps
+			)
+		{
+			IEnumerator i = IterateDispatchers();
+			while (i.MoveNext())
+			{
+				IServerMessageDispatcher dispatcher = (IServerMessageDispatcher)i.Current;
+				LocalTransaction transaction = (LocalTransaction)dispatcher.Transaction();
+				transaction.NotifyAboutOtherReplicationCommit(timestamp, concurrentTimestamps);
+			}
 		}
 
 		public virtual void BroadcastMsg(Msg message, IBroadcastFilter filter)

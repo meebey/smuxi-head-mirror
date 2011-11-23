@@ -10,7 +10,7 @@ using Db4objects.Db4o.Query;
 
 namespace Db4objects.Db4o.Linq.Internals
 {
-	internal class Db4oQuery<T> : IDb4oLinqQueryInternal<T>
+    internal class Db4oQuery<T> : IDb4oLinqQueryInternal<T>, IDelayedSelectOperation<T>
 	{
 		private readonly ISodaQueryFactory _queryFactory;
 		private readonly IQueryBuilderRecord _record;
@@ -123,6 +123,24 @@ namespace Db4objects.Db4o.Linq.Internals
 			return GetExtentResult().Where(func);
 		}
 
-		#endregion
+        public IDb4oLinqQueryInternal<T> Skip(int itemsToSkip)
+        {
+            return new UnoptimizedQuery<T>( SkipInternal(itemsToSkip) );
+        }
+
+        private IEnumerable<T> SkipInternal(int itemsToSkip)
+        {
+            var result = Execute();
+            var normalizedSkipCount = Math.Max(itemsToSkip, 0);
+
+			result.Ext().Skip(normalizedSkipCount);
+
+        	foreach (var obj in result)
+        	{
+        		yield return (T) obj;
+        	}
+        }
+
+	    #endregion
 	}
 }

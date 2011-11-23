@@ -1,7 +1,6 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
-using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Query.Processor;
 
@@ -30,23 +29,14 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		internal override void EvaluateEvaluationsExec(QCandidates a_candidates, bool rereadObject
 			)
 		{
-			if (rereadObject)
-			{
-				a_candidates.Traverse(new _IVisitor4_31());
-			}
+			//		if (rereadObject) {
+			//			a_candidates.traverse(new Visitor4() {
+			//				public void visit(Object a_object) {
+			//					((QCandidate) a_object).useField(null);
+			//				}
+			//			});
+			//		}
 			a_candidates.Filter(this);
-		}
-
-		private sealed class _IVisitor4_31 : IVisitor4
-		{
-			public _IVisitor4_31()
-			{
-			}
-
-			public void Visit(object a_object)
-			{
-				((QCandidate)a_object).UseField(null);
-			}
 		}
 
 		internal override void Marshall()
@@ -95,7 +85,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		public override void Visit(object obj)
 		{
-			QCandidate candidate = (QCandidate)obj;
+			IInternalCandidate candidate = (IInternalCandidate)obj;
 			// force activation outside the try block
 			// so any activation errors bubble up
 			ForceActivation(candidate);
@@ -109,18 +99,23 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 			// TODO: implement Exception callback for the user coder
 			// at least for test cases
-			if (!candidate._include)
+			if (!candidate.Include())
 			{
 				DoNotInclude(candidate.GetRoot());
 			}
 		}
 
-		private void ForceActivation(QCandidate candidate)
+		private void ForceActivation(IInternalCandidate candidate)
 		{
 			candidate.GetObject();
 		}
 
 		internal virtual bool SupportsIndex()
+		{
+			return false;
+		}
+
+		protected override bool CanResolveByFieldIndex()
 		{
 			return false;
 		}

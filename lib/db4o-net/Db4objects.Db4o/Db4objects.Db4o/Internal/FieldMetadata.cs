@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -521,7 +521,7 @@ namespace Db4objects.Db4o.Internal
 			try
 			{
 				RemoveIndexEntry(context);
-				if (isUpdate)
+				if (isUpdate && !IsStruct())
 				{
 					IncrementOffset(context);
 					return;
@@ -1202,8 +1202,8 @@ namespace Db4objects.Db4o.Internal
 		private BTreeNodeSearchResult SearchBound(Transaction transaction, int parentID, 
 			object keyPart)
 		{
-			return GetIndex(transaction).SearchLeaf(transaction, CreateFieldIndexKey(parentID
-				, keyPart), SearchTarget.Lowest);
+			return GetIndex(transaction).SearchLeafByObject(transaction, CreateFieldIndexKey(
+				parentID, keyPart), SearchTarget.Lowest);
 		}
 
 		public virtual bool RebuildIndexForClass(LocalObjectContainer stream, ClassMetadata
@@ -1360,7 +1360,6 @@ namespace Db4objects.Db4o.Internal
 			return Db4objects.Db4o.Internal.Marshall.AspectType.Field;
 		}
 
-		// overriden in VirtualFieldMetadata
 		public override bool CanBeDisabled()
 		{
 			return true;
@@ -1369,6 +1368,24 @@ namespace Db4objects.Db4o.Internal
 		public virtual void DropIndex()
 		{
 			DropIndex((LocalTransaction)Container().SystemTransaction());
+		}
+
+		public virtual bool CanUpdateFast()
+		{
+			if (HasIndex())
+			{
+				return false;
+			}
+			if (IsStruct())
+			{
+				return false;
+			}
+			return true;
+		}
+
+		private bool IsStruct()
+		{
+			return _fieldType != null && _fieldType.IsStruct();
 		}
 	}
 }

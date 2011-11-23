@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Diagnostic;
 
@@ -29,7 +29,7 @@ namespace Db4objects.Db4o.Diagnostic
 
 		public override string Solution()
 		{
-			return "Consider indexing fields that you query for: " + "Db4o.configure().objectClass([class]).objectField([fieldName]).indexed(true)";
+			return "Consider indexing fields that you query for: " + "configuration.common().objectClass([class]).objectField([fieldName]).indexed(true)";
 		}
 	}
 }

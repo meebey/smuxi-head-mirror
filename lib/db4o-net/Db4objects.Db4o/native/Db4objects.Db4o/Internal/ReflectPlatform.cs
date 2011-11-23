@@ -2,11 +2,16 @@
 
 using System;
 using Sharpen.Lang;
+using System.Reflection;
+using Db4objects.Db4o.Ext;
 
 namespace Db4objects.Db4o.Internal
 {
 	public class ReflectPlatform
 	{
+
+		public const char InnerClassSeparator = '+';
+
 		public static Type ForName(string typeName)
 		{
 			try
@@ -50,5 +55,45 @@ namespace Db4objects.Db4o.Internal
         {
             return type.Name;
         }
+		
+		public static object NewInstance(ConstructorInfo ctor, params object[] args)
+		{
+		
+			try
+			{
+				return ctor.Invoke(args);
+			} 
+			catch(Exception e)
+			{
+				throw new Db4oException(e);
+			}
+		}
+		
+		public static string GetJavaInterfaceSimpleName(Type type) 
+		{
+			if (!type.IsInterface) 
+			{
+				return type.Name;
+			}
+			
+			if (type.Name[0] != 'I') 
+			{
+				throw new ArgumentException("The interface name should start with an 'I'");
+			}
+			
+			return type.Name.Substring(1);
+		}
+	
+		public static string ContainerName(Type type) 
+		{
+			return type.Namespace;
+		}
+		
+		public static string AdjustClassName(string className, Type type)
+		{
+			return className+","+type.Assembly.GetName().Name;
+		}
+
+
     }
 }

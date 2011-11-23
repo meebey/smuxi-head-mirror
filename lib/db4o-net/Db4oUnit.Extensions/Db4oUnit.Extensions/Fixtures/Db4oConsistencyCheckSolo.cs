@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.IO;
@@ -43,8 +43,7 @@ namespace Db4oUnit.Extensions.Fixtures
 		private void Check(IConfiguration config)
 		{
 			IObjectContainer db = base.CreateDatabase(config);
-			ConsistencyChecker.ConsistencyReport report = new ConsistencyChecker(db).CheckSlotConsistency
-				();
+			ConsistencyReport report = new ConsistencyChecker(db).CheckSlotConsistency();
 			CloseAndWait(db);
 			if (!report.Consistent())
 			{
@@ -71,7 +70,7 @@ namespace Db4oUnit.Extensions.Fixtures
 					IConfiguration clonedConfig = (IConfiguration)((IDeepClone)config).DeepClone(null
 						);
 					defragConfig.Db4oConfig(clonedConfig);
-					Db4objects.Db4o.Defragment.Defragment.Defrag(defragConfig, new _IDefragmentListener_65
+					Db4objects.Db4o.Defragment.Defragment.Defrag(defragConfig, new _IDefragmentListener_64
 						());
 				}
 				catch (IOException e)
@@ -81,9 +80,9 @@ namespace Db4oUnit.Extensions.Fixtures
 			}
 		}
 
-		private sealed class _IDefragmentListener_65 : IDefragmentListener
+		private sealed class _IDefragmentListener_64 : IDefragmentListener
 		{
-			public _IDefragmentListener_65()
+			public _IDefragmentListener_64()
 			{
 			}
 

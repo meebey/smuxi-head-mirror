@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -689,6 +689,16 @@ namespace Db4objects.Db4o.Foundation
 			}
 
 			private readonly IVisitor4 visitor;
+		}
+
+		public static int Depth(Tree tree)
+		{
+			if (tree == null)
+			{
+				return 0;
+			}
+			return Math.Max(Depth(((Tree)tree._preceding)), Depth(((Tree)tree._subsequent))) 
+				+ 1;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -15,7 +15,7 @@ using Db4objects.Db4o.Reflect;
 namespace Db4objects.Db4o.Internal.Query.Result
 {
 	/// <exclude></exclude>
-	public class IdListQueryResult : AbstractQueryResult, IVisitor4
+	public class IdListQueryResult : AbstractQueryResult, IVisitor4, IIntVisitor
 	{
 		private Tree _candidates;
 
@@ -61,11 +61,16 @@ namespace Db4objects.Db4o.Internal.Query.Result
 
 		public virtual void Visit(object a_tree)
 		{
-			QCandidate candidate = (QCandidate)a_tree;
+			IInternalCandidate candidate = (IInternalCandidate)a_tree;
 			if (candidate.Include())
 			{
-				AddKeyCheckDuplicates(candidate._key);
+				AddKeyCheckDuplicates(candidate.Id());
 			}
+		}
+
+		public virtual void Visit(int id)
+		{
+			AddKeyCheckDuplicates(id);
 		}
 
 		public virtual void AddKeyCheckDuplicates(int a_key)
@@ -84,12 +89,12 @@ namespace Db4objects.Db4o.Internal.Query.Result
 
 		public override void Sort(IQueryComparator cmp)
 		{
-			Algorithms4.Sort(new _ISortable4_74(this, cmp));
+			Algorithms4.Sort(new _ISortable4_78(this, cmp));
 		}
 
-		private sealed class _ISortable4_74 : ISortable4
+		private sealed class _ISortable4_78 : ISortable4
 		{
-			public _ISortable4_74(IdListQueryResult _enclosing, IQueryComparator cmp)
+			public _ISortable4_78(IdListQueryResult _enclosing, IQueryComparator cmp)
 			{
 				this._enclosing = _enclosing;
 				this.cmp = cmp;
@@ -118,12 +123,12 @@ namespace Db4objects.Db4o.Internal.Query.Result
 
 		public override void SortIds(IIntComparator cmp)
 		{
-			Algorithms4.Sort(new _ISortable4_88(this, cmp));
+			Algorithms4.Sort(new _ISortable4_92(this, cmp));
 		}
 
-		private sealed class _ISortable4_88 : ISortable4
+		private sealed class _ISortable4_92 : ISortable4
 		{
-			public _ISortable4_88(IdListQueryResult _enclosing, IIntComparator cmp)
+			public _ISortable4_92(IdListQueryResult _enclosing, IIntComparator cmp)
 			{
 				this._enclosing = _enclosing;
 				this.cmp = cmp;
@@ -158,12 +163,12 @@ namespace Db4objects.Db4o.Internal.Query.Result
 				BTree btree = ((BTreeClassIndexStrategy)index).Btree();
 				_ids = new IntArrayList(btree.Size(Transaction()));
 			}
-			index.TraverseAll(_transaction, new _IVisitor4_107(this));
+			index.TraverseIds(_transaction, new _IVisitor4_111(this));
 		}
 
-		private sealed class _IVisitor4_107 : IVisitor4
+		private sealed class _IVisitor4_111 : IVisitor4
 		{
-			public _IVisitor4_107(IdListQueryResult _enclosing)
+			public _IVisitor4_111(IdListQueryResult _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -194,15 +199,15 @@ namespace Db4objects.Db4o.Internal.Query.Result
 					if (claxx == null || !(Stream()._handlers.IclassInternal.IsAssignableFrom(claxx)))
 					{
 						IClassIndexStrategy index = classMetadata.Index();
-						index.TraverseAll(_transaction, new _IVisitor4_130(this, duplicates));
+						index.TraverseIds(_transaction, new _IVisitor4_134(this, duplicates));
 					}
 				}
 			}
 		}
 
-		private sealed class _IVisitor4_130 : IVisitor4
+		private sealed class _IVisitor4_134 : IVisitor4
 		{
-			public _IVisitor4_130(IdListQueryResult _enclosing, ByRef duplicates)
+			public _IVisitor4_134(IdListQueryResult _enclosing, ByRef duplicates)
 			{
 				this._enclosing = _enclosing;
 				this.duplicates = duplicates;

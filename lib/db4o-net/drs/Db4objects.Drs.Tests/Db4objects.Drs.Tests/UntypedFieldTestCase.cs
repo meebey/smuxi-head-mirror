@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -135,7 +135,7 @@ namespace Db4objects.Drs.Tests
 		{
 			IObjectSet found = B().Provider().GetStoredObjects(klass);
 			Assert.AreEqual(1, found.Count);
-			return found.GetEnumerator().Current;
+			return found[0];
 		}
 	}
 }

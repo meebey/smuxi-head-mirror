@@ -13,16 +13,16 @@ using System.Security;
 [assembly: AssemblyKeyName("")]
 
 // attributes are automatically set by the build
-[assembly: AssemblyVersion("8.0.183.14430")]
+[assembly: AssemblyVersion("8.1.197.14430")]
 [assembly: AssemblyKeyFile("")]
 [assembly: AssemblyConfiguration(".NET")]
-[assembly: AssemblyDescription("Db4objects.Db4o 8.0.183.14430 (.NET)")]
+[assembly: AssemblyDescription("Db4objects.Db4o 8.1.197.14430 (.NET)")]
 
 #if !CF && !SILVERLIGHT
 [assembly: AllowPartiallyTrustedCallers]
 #endif
 
-#if NET_4_0
+#if NET_4_0 && !SILVERLIGHT
 [assembly: SecurityRules(SecurityRuleSet.Level1)]
 #endif
 

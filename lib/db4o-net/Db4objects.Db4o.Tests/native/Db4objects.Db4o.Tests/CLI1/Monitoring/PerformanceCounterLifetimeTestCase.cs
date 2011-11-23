@@ -11,10 +11,7 @@ using Db4objects.Db4o.Monitoring;
 using Db4objects.Db4o.Query;
 using Db4objects.Db4o.Tests.Common.Api;
 using Db4oUnit;
-
-#if NET_3_5
 using Db4objects.Db4o.Linq;
-#endif
 
 namespace Db4objects.Db4o.Tests.CLI1.Monitoring
 {
@@ -79,7 +76,6 @@ namespace Db4objects.Db4o.Tests.CLI1.Monitoring
             });
         }
 
-#if NET_3_5
 		public void TestOptimizedLINQCounters()
 		{
 			AssertPerformanceCounterInstanceLifetime(new NativeQueryMonitoringSupport(), delegate(IObjectContainer db)
@@ -103,7 +99,6 @@ namespace Db4objects.Db4o.Tests.CLI1.Monitoring
 				}
 			});
 		}
-#endif
 
 		public void TestReferenceSystemCounters()
 		{

@@ -1,7 +1,8 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit.Extensions;
+using Db4objects.Db4o.Tests.Common.Types;
 
 namespace Db4objects.Db4o.Tests.Common.Types
 {
@@ -14,7 +15,8 @@ namespace Db4objects.Db4o.Tests.Common.Types
 
 		protected override Type[] TestCases()
 		{
-			return new Type[] { typeof(Db4objects.Db4o.Tests.Common.Types.Arrays.AllTests) };
+			return new Type[] { typeof(Db4objects.Db4o.Tests.Common.Types.Arrays.AllTests), typeof(
+				StoreTopLevelPrimitiveTestCase) };
 		}
 	}
 }

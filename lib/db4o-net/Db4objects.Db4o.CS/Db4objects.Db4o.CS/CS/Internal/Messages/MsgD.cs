@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.CS.Internal;
@@ -135,6 +135,18 @@ namespace Db4objects.Db4o.CS.Internal.Messages
 			Db4objects.Db4o.CS.Internal.Messages.MsgD message = GetWriterForLength(a_trans, Const4
 				.LongLength);
 			message.WriteLong(a_long);
+			return message;
+		}
+
+		public Db4objects.Db4o.CS.Internal.Messages.MsgD GetWriterForLongs(Transaction trans
+			, long[] longs)
+		{
+			Db4objects.Db4o.CS.Internal.Messages.MsgD message = GetWriterForLength(trans, Const4
+				.LongLength * longs.Length);
+			for (int i = 0; i < longs.Length; i++)
+			{
+				message.WriteLong(longs[i]);
+			}
 			return message;
 		}
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.IO;
 using Db4objects.Db4o.Config;
@@ -53,17 +53,12 @@ namespace Db4objects.Db4o.Config
 		/// <br /><br />
 		/// <code>
 		/// <b>// Creating an Alias for a single class</b><br />
-		/// Db4o.configure().addAlias(<br />
+		/// EmbeddedConfiguration config = Db4oEmbedded.newConfiguration();
+		/// config.common().addAlias(<br />
 		/// &#160;&#160;new TypeAlias("com.f1.Pilot", "com.f1.Driver"));<br />
 		/// <br /><br />
-		/// <b>// Accessing a .NET assembly from a Java package</b><br />
-		/// Db4o.configure().addAlias(<br />
-		/// &#160;&#160;new WildcardAlias(<br />
-		/// &#160;&#160;&#160;&#160;"Tutorial.F1.*, Tutorial",<br />
-		/// &#160;&#160;&#160;&#160;"com.f1.*"));<br />
-		/// <br /><br />
 		/// <b>// Mapping a Java package onto another</b><br />
-		/// Db4o.configure().addAlias(<br />
+		/// config.common().addAlias(<br />
 		/// &#160;&#160;new WildcardAlias(<br />
 		/// &#160;&#160;&#160;&#160;"com.f1.*",<br />
 		/// &#160;&#160;&#160;&#160;"com.f1.client*"));<br /></code>
@@ -80,7 +75,7 @@ namespace Db4objects.Db4o.Config
 
 		/// <summary>
 		/// Removes an alias previously added with
-		/// <see cref="IConfiguration.AddAlias(IAlias)">IConfiguration.AddAlias(IAlias)</see>
+		/// <see cref="AddAlias(IAlias)">AddAlias(IAlias)</see>
 		/// .
 		/// </summary>
 		/// <param name="alias">the alias to remove</param>
@@ -348,9 +343,9 @@ namespace Db4objects.Db4o.Config
 		}
 
 		// TODO: refactor to use provider?
-		/// <summary>allows to mark fields as transient with custom attributes.</summary>
+		/// <summary>allows to mark fields as transient with custom annotations/attributes.</summary>
 		/// <remarks>
-		/// allows to mark fields as transient with custom attributes.
+		/// allows to mark fields as transient with custom annotations/attributes.
 		/// <br /><br />.NET only: Call this method with the attribute name that you
 		/// wish to use to mark fields as transient. Multiple transient attributes
 		/// are possible by calling this method multiple times with different
@@ -361,8 +356,6 @@ namespace Db4objects.Db4o.Config
 		/// <param name="attributeName">
 		/// - the fully qualified name of the attribute, including
 		/// it's namespace
-		/// TODO: can we provide meaningful java side semantics for this one?
-		/// TODO: USE A CLASS!!!!!!
 		/// </param>
 		void MarkTransient(string attributeName);
 
@@ -390,6 +383,8 @@ namespace Db4objects.Db4o.Config
 			set;
 		}
 
+		// TODO: can we provide meaningful java side semantics for this one?
+		// TODO: USE A CLASS!!!!!!
 		/// <summary>
 		/// returns an
 		/// <see cref="IObjectClass">IObjectClass</see>
@@ -581,7 +576,6 @@ namespace Db4objects.Db4o.Config
 		/// references to objects, preventing the garbage collection process
 		/// from disposing of unused objects.
 		/// <br /><br />The default setting is <code>true</code>.
-		/// <br /><br />Ignored on JDKs before 1.2.
 		/// </remarks>
 		bool WeakReferences
 		{
@@ -594,7 +588,6 @@ namespace Db4objects.Db4o.Config
 		/// <br /><br />The default setting is 1000 milliseconds.
 		/// <br /><br />Configure this setting to zero to turn WeakReference
 		/// collection off.
-		/// <br /><br />Ignored on JDKs before 1.2.<br /><br />
 		/// </remarks>
 		/// <value>the time in milliseconds</value>
 		int WeakReferenceCollectionInterval

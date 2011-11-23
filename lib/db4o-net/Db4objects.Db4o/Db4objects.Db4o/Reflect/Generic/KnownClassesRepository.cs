@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -227,6 +227,7 @@ namespace Db4objects.Db4o.Reflect.Generic
 					(), fieldInfo.IsPrimitive(), fieldInfo.IsArray(), fieldInfo.IsNArray());
 			}
 			_builder.InitFields(clazz, fields);
+			_listeners.NotifyListeners(clazz);
 		}
 
 		private void Register(string className, IReflectClass clazz)
@@ -237,7 +238,6 @@ namespace Db4objects.Db4o.Reflect.Generic
 			}
 			_classByName.Put(className, clazz);
 			_classes.Add(clazz);
-			_listeners.NotifyListeners(clazz);
 		}
 
 		private IReflectClass ReflectClassForFieldSpec(RawFieldSpec fieldInfo, IReflector

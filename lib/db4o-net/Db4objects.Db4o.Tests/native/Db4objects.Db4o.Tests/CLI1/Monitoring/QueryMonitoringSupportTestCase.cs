@@ -37,13 +37,9 @@ namespace Db4objects.Db4o.Tests.CLI1.Monitoring
 		        ExecuteOptimizedNQ();
 		        ExecuteUnoptimizedNQ();
 
-#if CF_3_5 || NET_3_5
 		        ExecuteOptimizedLinq();
 		        ExecuteUnoptimizedLinq();
 		        Assert.AreEqual(6, counter.RawValue);
-#else
-				Assert.AreEqual(4, counter.RawValue);
-#endif
             }
 		}
 

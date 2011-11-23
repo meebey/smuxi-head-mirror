@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using System;
@@ -178,7 +178,10 @@ namespace Db4objects.Db4o.Tests.Common.CS
 			{
 				threads[i].Join();
 			}
-			EnsureMessageProcessed(clients[0]);
+			for (int i = 0; i < threads.Length; i++)
+			{
+				EnsureMessageProcessed(clients[i]);
+			}
 			Assert.IsTrue(clients[0].SetSemaphore(SemaphoreName, 0));
 			clients[0].Close();
 			threads[2] = StartGetAndReleaseThread(clients[2]);

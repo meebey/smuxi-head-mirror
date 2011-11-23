@@ -228,7 +228,7 @@ namespace Db4objects.Db4o.Reflect.Net
 			return _constructor.CanBeInstantiated().DefiniteYes();
 		}
 
-	    public bool IsImmutable()
+	    public bool IsSimple()
 	    {
 	        return IsPrimitive() || Platform4.IsSimple(_type);
 	    }

@@ -1,19 +1,21 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using Db4oUnit;
-using Db4oUnit.Extensions;
 using Db4objects.Db4o;
+using Db4objects.Db4o.Config;
 using Db4objects.Db4o.Ext;
-using Db4objects.Db4o.Foundation.IO;
 using Db4objects.Db4o.IO;
-using Db4objects.Db4o.Tests.Common.Api;
 using Db4objects.Db4o.Tests.Common.Exceptions;
 
 namespace Db4objects.Db4o.Tests.Common.Exceptions
 {
-	public class IncompatibleFileFormatExceptionTestCase : TestWithTempFile, IDb4oTestCase
+	public class IncompatibleFileFormatExceptionTestCase : ITestLifeCycle
 	{
+		private static readonly string DbPath = "inmemory.db4o";
+
+		private IStorage storage;
+
 		/// <exception cref="System.Exception"></exception>
 		public static void Main(string[] args)
 		{
@@ -21,37 +23,41 @@ namespace Db4objects.Db4o.Tests.Common.Exceptions
 		}
 
 		/// <exception cref="System.Exception"></exception>
-		public override void SetUp()
+		public virtual void SetUp()
 		{
-			File4.Delete(TempFile());
-			IoAdapter adapter = new RandomAccessFileAdapter();
-			adapter = adapter.Open(TempFile(), false, 0, false);
-			adapter.Write(new byte[] { 1, 2, 3 }, 3);
-			adapter.Close();
+			storage = new MemoryStorage();
+			IBin bin = storage.Open(new BinConfiguration(DbPath, false, 0, false));
+			bin.Write(0, new byte[] { 1, 2, 3 }, 3);
+			bin.Close();
+		}
+
+		/// <exception cref="System.Exception"></exception>
+		public virtual void TearDown()
+		{
 		}
 
 		public virtual void Test()
 		{
-			Assert.Expect(typeof(IncompatibleFileFormatException), new _ICodeBlock_31(this));
-			File4.Delete(TempFile());
-			IoAdapter adapter = new RandomAccessFileAdapter();
-			Assert.IsFalse(adapter.Exists(TempFile()));
+			IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();
+			config.File.Storage = storage;
+			Assert.Expect(typeof(IncompatibleFileFormatException), new _ICodeBlock_36(config)
+				);
 		}
 
-		private sealed class _ICodeBlock_31 : ICodeBlock
+		private sealed class _ICodeBlock_36 : ICodeBlock
 		{
-			public _ICodeBlock_31(IncompatibleFileFormatExceptionTestCase _enclosing)
+			public _ICodeBlock_36(IEmbeddedConfiguration config)
 			{
-				this._enclosing = _enclosing;
+				this.config = config;
 			}
 
 			/// <exception cref="System.Exception"></exception>
 			public void Run()
 			{
-				Db4oFactory.OpenFile(this._enclosing.TempFile());
+				Db4oEmbedded.OpenFile(config, IncompatibleFileFormatExceptionTestCase.DbPath);
 			}
 
-			private readonly IncompatibleFileFormatExceptionTestCase _enclosing;
+			private readonly IEmbeddedConfiguration config;
 		}
 	}
 }

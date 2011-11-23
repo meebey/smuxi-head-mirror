@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -230,8 +230,14 @@ namespace Db4oUnit
 
 		public static void IsInstanceOf(Type expectedClass, object actual)
 		{
-			IsTrue(expectedClass.IsInstanceOfType(actual), FailureMessage(expectedClass, actual
-				 == null ? null : actual.GetType()));
+			IsInstanceOf(expectedClass, actual, FailureMessage(expectedClass, actual == null ? 
+				null : actual.GetType()));
+		}
+
+		public static void IsInstanceOf(Type expectedClass, object actual, string message
+			)
+		{
+			IsTrue(expectedClass.IsInstanceOfType(actual), message);
 		}
 
 		public static void IsGreater(long expected, long actual)

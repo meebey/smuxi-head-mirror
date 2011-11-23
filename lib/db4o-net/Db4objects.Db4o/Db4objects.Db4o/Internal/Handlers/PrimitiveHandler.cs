@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o;
@@ -14,7 +14,7 @@ namespace Db4objects.Db4o.Internal.Handlers
 {
 	/// <exclude></exclude>
 	public abstract class PrimitiveHandler : IValueTypeHandler, IIndexableTypeHandler
-		, IBuiltinTypeHandler, IQueryableTypeHandler
+		, IBuiltinTypeHandler, IQueryableTypeHandler, ICanExcludeNullInQueries
 	{
 		protected IReflectClass _classReflector;
 
@@ -192,5 +192,10 @@ namespace Db4objects.Db4o.Internal.Handlers
 		}
 
 		public abstract IPreparedComparison InternalPrepareComparison(object obj);
+
+		public virtual bool ExcludeNull()
+		{
+			return true;
+		}
 	}
 }

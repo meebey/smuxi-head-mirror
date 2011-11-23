@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.CS.Internal;
@@ -7,11 +7,11 @@ using Db4objects.Db4o.Internal;
 
 namespace Db4objects.Db4o.CS.Internal.Messages
 {
-	public sealed class MCommit : Msg, IMessageWithResponse
+	public class MCommit : MsgD, IMessageWithResponse
 	{
-		private CallbackObjectInfoCollections committedInfo = null;
+		protected CallbackObjectInfoCollections committedInfo = null;
 
-		public Msg ReplyFromServer()
+		public virtual Msg ReplyFromServer()
 		{
 			IServerMessageDispatcher dispatcher = ServerMessageDispatcher();
 			lock (ContainerLock())

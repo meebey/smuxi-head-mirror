@@ -1,7 +1,8 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4oUnit;
+using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Fieldindex;
 using Db4objects.Db4o.Query;
@@ -56,7 +57,29 @@ namespace Db4objects.Db4o.Tests.Common.Fieldindex
 			AssertComplexItemIndex("child", result);
 			Assert.IsTrue(result.IsResolved());
 			Assert.IsNull(result.Resolve());
-			AssertComplexItems(new int[] { 4 }, result.ToTreeInt());
+			AssertComplexItems(new int[] { 4 }, ToTreeInt(result));
+		}
+
+		private TreeInt ToTreeInt(IIndexedNode result)
+		{
+			ByRef treeInts = ByRef.NewInstance();
+			result.Traverse(new _IIntVisitor_65(treeInts));
+			return ((TreeInt)treeInts.value);
+		}
+
+		private sealed class _IIntVisitor_65 : IIntVisitor
+		{
+			public _IIntVisitor_65(ByRef treeInts)
+			{
+				this.treeInts = treeInts;
+			}
+
+			public void Visit(int i)
+			{
+				treeInts.value = ((TreeInt)Tree.Add(((TreeInt)treeInts.value), new TreeInt(i)));
+			}
+
+			private readonly ByRef treeInts;
 		}
 
 		public virtual void TestTripleDescendingOnQuery()
@@ -73,7 +96,7 @@ namespace Db4objects.Db4o.Tests.Common.Fieldindex
 			result = result.Resolve();
 			Assert.IsNotNull(result);
 			AssertComplexItemIndex("child", result);
-			AssertComplexItems(new int[] { 7 }, result.ToTreeInt());
+			AssertComplexItems(new int[] { 7 }, ToTreeInt(result));
 		}
 
 		private void AssertComplexItems(int[] expectedFoos, TreeInt found)

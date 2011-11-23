@@ -7,8 +7,12 @@ namespace Db4objects.Db4o.Tests.SharpenLang
 	{
 		protected override Type[] TestCases()
 		{
-			return new System.Type[]
+			return new[]
 				{
+#if !CF && !SILVERLIGHT
+					typeof(DynamicallyLoadedAssemblyTestCase),
+					typeof(SharpenRuntimeTestCase),
+#endif
                     typeof(TypeReferenceTestCase),
 				};
 		}

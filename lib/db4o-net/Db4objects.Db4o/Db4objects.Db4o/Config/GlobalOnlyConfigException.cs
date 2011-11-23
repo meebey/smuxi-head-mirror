@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Ext;
 
@@ -16,7 +16,7 @@ namespace Db4objects.Db4o.Config
 	/// </remarks>
 	/// <seealso cref="IConfiguration.BlockSize(int)">IConfiguration.BlockSize(int)</seealso>
 	/// <seealso cref="IConfiguration.Encrypt(bool)">IConfiguration.Encrypt(bool)</seealso>
-	/// <seealso cref="IConfiguration.Io(Db4objects.Db4o.IO.IoAdapter)">IConfiguration.Io(Db4objects.Db4o.IO.IoAdapter)
+	/// <seealso cref="com.db4o.config.Configuration#io(com.db4o.io.IoAdapter)">com.db4o.config.Configuration#io(com.db4o.io.IoAdapter)
 	/// 	</seealso>
 	/// <seealso cref="IConfiguration.Password(string)">IConfiguration.Password(string)</seealso>
 	[System.Serializable]

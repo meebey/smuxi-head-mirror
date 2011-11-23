@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,8 +12,6 @@
     <AssemblyName>Db4objects.Db4o.Linq</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    
-    
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -34,7 +32,17 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    
+    
   
+
+
+
+
+
+
+
+
 
 
 
@@ -63,6 +71,7 @@
     <DefineConstants>TRACE;DEBUG;NET_3_5;NET_4_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Db4objects.Db4o.Linq.xml</DocumentationFile>
     <NoWarn>1591;1572;1573;1574;0419;</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -72,6 +81,7 @@
     <DefineConstants>TRACE;NET_3_5;NET_4_0</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Db4objects.Db4o.Linq.xml</DocumentationFile>
     <NoWarn>1591;1572;1573;1574;0419;</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -88,6 +98,7 @@
   <ItemGroup>
     <Compile Include="Db4objects.Db4o.Linq\Caching\CacheFactory.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Caching\ICache4.cs"/>
+    <Compile Include="Db4objects.Db4o.Linq\Caching\SynchronizedCache.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Caching\TracingCacheDecorator.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\CodeAnalysis\CecilMethodAnalyser.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\CodeAnalysis\CodeQueryBuilder.cs"/>
@@ -117,8 +128,10 @@
     <Compile Include="Db4objects.Db4o.Linq\ILinqQueryMonitor.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\Db4oLinqQueryable.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\Db4oQuery.cs"/>
+    <Compile Include="Db4objects.Db4o.Linq\Internals\DelayedSelect.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\Extensions.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\IDb4oLinqQueryInternal.cs"/>
+    <Compile Include="Db4objects.Db4o.Linq\Internals\IDelayedSelectOperation.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\LinqQueryMonitorImpl.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\ObjectSequence.cs"/>
     <Compile Include="Db4objects.Db4o.Linq\Internals\ObjectSetWrapper.cs"/>

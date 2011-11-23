@@ -16,8 +16,8 @@ namespace Db4objects.Db4o.Internal.Handlers
 
         public int CompareTo(object obj)
         {
-            T target = ((T)obj);
-            return _source.CompareTo(target);
+			if (obj == null) return 1;
+            return _source.CompareTo((T)obj);
         }
     }
 }

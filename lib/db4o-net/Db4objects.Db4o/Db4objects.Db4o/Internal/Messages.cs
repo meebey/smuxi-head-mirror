@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.IO;
@@ -93,7 +93,7 @@ namespace Db4objects.Db4o.Internal
 					, "Backups can not be run from clients and memory files.", "Backup in progress."
 					, "Only use persisted first class objects as keys for IdentityHashMap.", "This functionality is only available from version 5.0 onwards."
 					, "By convention a Predicate needs the following method: public boolean match(ExtentClass extent){}"
-					, "Old database file format detected. To allow automatic updates call Db4o.configure().allowVersionUpdates(true)."
+					, "Old database file format detected. To allow automatic updates call configuration.common().configure().allowVersionUpdates(true)."
 					, "This functionality is only available for indexed fields.", "This functionality is not supported for db4o clients in Client/Server mode."
 					, "Invalid address: %", "Maximum file size reached" };
 			}

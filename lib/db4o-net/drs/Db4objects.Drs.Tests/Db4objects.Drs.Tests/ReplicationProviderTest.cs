@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4oUnit;
@@ -19,7 +19,7 @@ namespace Db4objects.Drs.Tests
 
 		private IReadonlyReplicationProviderSignature ASignature;
 
-		public virtual void Test()
+		public virtual void TestReplicationLifeCycle()
 		{
 			BSignatureBytes = B().Provider().GetSignature().GetSignature();
 			ASignature = A().Provider().GetSignature();
@@ -61,13 +61,8 @@ namespace Db4objects.Drs.Tests
 
 		private void CommitReplication()
 		{
-			long maxVersion = A().Provider().GetCurrentVersion() > B().Provider().GetCurrentVersion
-				() ? A().Provider().GetCurrentVersion() : B().Provider().GetCurrentVersion();
-			A().Provider().SyncVersionWithPeer(maxVersion);
-			B().Provider().SyncVersionWithPeer(maxVersion);
-			maxVersion++;
-			A().Provider().CommitReplicationTransaction(maxVersion);
-			B().Provider().CommitReplicationTransaction(maxVersion);
+			A().Provider().CommitReplicationTransaction();
+			B().Provider().CommitReplicationTransaction();
 		}
 
 		private object FindCar(string model)

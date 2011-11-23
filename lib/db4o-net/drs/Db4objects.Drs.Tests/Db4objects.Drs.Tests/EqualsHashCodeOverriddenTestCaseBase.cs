@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4oUnit;
 using Db4objects.Db4o;
@@ -83,7 +83,7 @@ namespace Db4objects.Drs.Tests
 			IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();
 			config.File.Storage = _storage;
 			config.File.GenerateUUIDs = ConfigScope.Globally;
-			config.File.GenerateVersionNumbers = ConfigScope.Globally;
+			config.File.GenerateCommitTimestamps = true;
 			return Db4oEmbedded.OpenFile(config, filePath);
 		}
 	}

@@ -1,6 +1,7 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Internal;
+using Db4objects.Db4o.Internal.Handlers;
 using Db4objects.Db4o.Internal.Query.Processor;
 
 namespace Db4objects.Db4o.Internal.Query.Processor
@@ -20,14 +21,15 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			caseSensitive = caseSensitive_;
 		}
 
-		internal override bool Evaluate(QConObject constraint, QCandidate candidate, object
-			 obj)
+		internal override bool Evaluate(QConObject constraint, IInternalCandidate candidate
+			, object obj)
 		{
 			if (obj != null)
 			{
 				if (obj is ByteArrayBuffer)
 				{
-					obj = candidate.ReadString((ByteArrayBuffer)obj);
+					obj = StringHandler.ReadString(candidate.Transaction().Context(), (ByteArrayBuffer
+						)obj);
 				}
 				string candidateStringValue = obj.ToString();
 				string stringConstraint = constraint.GetObject().ToString();

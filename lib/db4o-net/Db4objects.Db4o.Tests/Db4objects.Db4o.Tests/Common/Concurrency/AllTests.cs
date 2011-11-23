@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using System;
@@ -11,7 +11,7 @@ namespace Db4objects.Db4o.Tests.Common.Concurrency
 	{
 		public static void Main(string[] args)
 		{
-			new Db4objects.Db4o.Tests.Common.Concurrency.AllTests().RunConcurrency();
+			new Db4objects.Db4o.Tests.Common.Concurrency.AllTests().RunConcurrencyAll();
 		}
 
 		protected override Type[] TestCases()

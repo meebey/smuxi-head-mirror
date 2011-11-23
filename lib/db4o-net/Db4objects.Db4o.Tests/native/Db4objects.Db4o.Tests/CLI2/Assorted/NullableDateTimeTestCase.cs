@@ -1,5 +1,6 @@
 ﻿/* Copyright (C) 2009 Versant Inc.   http://www.db4o.com */
 using System;
+using Db4objects.Db4o.Config;
 using Db4oUnit;
 using Db4oUnit.Extensions;
 
@@ -9,7 +10,7 @@ namespace Db4objects.Db4o.Tests.CLI2.Assorted
     {
         public class Item
         {
-            public DateTime? _typedDateTime;
+			public DateTime? _typedDateTime;
 
             public object _untypedDateTime;
 
@@ -25,10 +26,15 @@ namespace Db4objects.Db4o.Tests.CLI2.Assorted
             {
 				_typedDateTime = value;
                 _untypedDateTime = value;
-                _typedArray = new DateTime?[] {value};
-                _untypedArray = new DateTime?[] {value};
+                _typedArray = new [] {value};
+                _untypedArray = new [] {value};
             }
         }
+
+		protected override void Configure(IConfiguration config)
+		{
+			config.ObjectClass(typeof(Item)).ObjectField("_typedDateTime").Indexed(true);
+		}
 
         protected override void Store()
         {

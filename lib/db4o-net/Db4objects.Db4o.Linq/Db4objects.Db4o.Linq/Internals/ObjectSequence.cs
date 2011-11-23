@@ -4,8 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-using Db4objects.Db4o;
-
 namespace Db4objects.Db4o.Linq.Internals
 {
 	/// <summary>

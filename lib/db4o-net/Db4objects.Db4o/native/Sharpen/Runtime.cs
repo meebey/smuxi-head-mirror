@@ -1,6 +1,6 @@
-/* Copyright (C) 2004	Versant Inc.	  http://www.db4o.com */
-
+/* Copyright (C) 2004 Versant Inc.	  http://www.db4o.com */
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
@@ -45,21 +45,36 @@ namespace Sharpen
 	    }
 
         private const BindingFlags AllMembers = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        
+		private const BindingFlags AllMembersIncludingStatic = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
         private const BindingFlags DeclaredMembers = BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-        private const BindingFlags DeclaredMembersIncludingStatic = DeclaredMembers | BindingFlags.Static;
-		
 		public static FieldInfo GetDeclaredField(Type type, string name)
 		{
-            return type.GetField(name, DeclaredMembersIncludingStatic);
+            return type.GetField(name, AllMembersIncludingStatic);
 		}
 
 		public static FieldInfo[] GetDeclaredFields(Type type)
 		{
-            return type.GetFields(DeclaredMembersIncludingStatic);
+			//return type.GetFields(DeclaredMembers | BindingFlags.Static);
+
+			// Workaound for the following bug:
+			//https://connect.microsoft.com/VisualStudio/feedback/details/566678/field-of-generic-class-missing-when-getmembers-called-with-declaredonly-if-it-was-used-in-an-expression 
+			List<FieldInfo> declaredFields = new List<FieldInfo>();
+
+			var allFields = type.GetFields(AllMembersIncludingStatic);
+			foreach (var field in allFields)
+			{
+				if (field.DeclaringType == type)
+				{
+					declaredFields.Add(field);
+				}
+			}
+
+			return declaredFields.ToArray();
 		}
-		
+
 		public static MethodInfo GetDeclaredMethod(Type type, string name, Type[] parameterTypes)
 		{
 			return type.GetMethod(name, DeclaredMembers, null, parameterTypes, null);

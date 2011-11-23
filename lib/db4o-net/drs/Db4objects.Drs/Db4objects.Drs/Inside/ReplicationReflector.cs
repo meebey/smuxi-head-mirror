@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Ext;
@@ -93,7 +93,7 @@ namespace Db4objects.Drs.Inside
 		{
 			if (_container == null)
 			{
-				return clazz.IsImmutable();
+				return clazz.IsSimple();
 			}
 			ClassMetadata classMetadata = _container.ClassMetadataForReflectClass(clazz);
 			if (classMetadata == null)

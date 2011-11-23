@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -17,7 +17,8 @@ namespace Db4objects.Db4o.Internal.Freespace
 	/// </remarks>
 	public class FreespaceManagerIx : AbstractFreespaceManager
 	{
-		public FreespaceManagerIx(int discardLimit) : base(null, discardLimit)
+		public FreespaceManagerIx(int discardLimit, int remainderSizeLimit) : base(null, 
+			discardLimit, 0)
 		{
 		}
 

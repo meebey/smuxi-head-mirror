@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
 
@@ -39,5 +39,19 @@ namespace Db4objects.Db4o.Ext
 		/// <param name="index">the index position in this ObjectSet.</param>
 		/// <returns>the activated object.</returns>
 		object Get(int index);
+
+		/// <summary>skips the specified number of objects without activating them.</summary>
+		/// <remarks>
+		/// skips the specified number of objects without activating them.
+		/// Call this method before starting iterating over the iterator returned by
+		/// <see cref="System.Collections.IList{E}.GetEnumerator()">System.Collections.IList&lt;E&gt;.GetEnumerator()
+		/// 	</see>
+		/// .
+		/// This method has no effect on calls to
+		/// <see cref="Get(int)">Get(int)</see>
+		/// 
+		/// </remarks>
+		/// <since>8.1</since>
+		void Skip(int count);
 	}
 }

@@ -25,7 +25,8 @@ namespace Db4objects.Db4o.Silverlight.TestStart
 		{
 			if (!Debugger.IsAttached)
 			{
-				MessageBox.Show(e.ToString());
+				MessageBox.Show(e.ExceptionObject.ToString(), "Unhandled Exception", MessageBoxButton.OK);
+
 				e.Handled = true;
 				Deployment.Current.Dispatcher.BeginInvoke(delegate { ReportErrorToDOM(e); });
 			}

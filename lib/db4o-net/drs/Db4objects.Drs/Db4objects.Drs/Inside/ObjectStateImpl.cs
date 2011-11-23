@@ -1,11 +1,13 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Drs;
 
 namespace Db4objects.Drs.Inside
 {
-	internal class ObjectStateImpl : IObjectState
+	public class ObjectStateImpl : IObjectState
 	{
+		public const long Unknown = -1;
+
 		private object _object;
 
 		private bool _isNew;
@@ -47,6 +49,11 @@ namespace Db4objects.Drs.Inside
 		{
 			return "ObjectStateImpl{" + "_object=" + _object + ", _isNew=" + _isNew + ", _wasModified="
 				 + _wasModified + ", _modificationDate=" + _modificationDate + '}';
+		}
+
+		public virtual bool IsKnown()
+		{
+			return _modificationDate != Unknown;
 		}
 	}
 }

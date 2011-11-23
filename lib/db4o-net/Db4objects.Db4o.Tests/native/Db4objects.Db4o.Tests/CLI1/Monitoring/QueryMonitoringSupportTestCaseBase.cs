@@ -4,17 +4,14 @@ using System.Diagnostics;
 #if !CF && !SILVERLIGHT
 using Db4oUnit;
 using Db4objects.Db4o.Foundation;
-#if CF_3_5 || NET_3_5
 using System.Linq;
 using Db4objects.Db4o.Linq;
-#endif
 
 namespace Db4objects.Db4o.Tests.CLI1.Monitoring
 {
 	public class QueryMonitoringSupportTestCaseBase : PerformanceCounterTestCaseBase
 	{
 
-#if CF_3_5 || NET_3_5
 		protected void ExecuteOptimizedLinq()
 		{
 			var found = (from Item item in Db()
@@ -28,7 +25,7 @@ namespace Db4objects.Db4o.Tests.CLI1.Monitoring
 			             where item.GetType() == typeof(Item)
 			             select item).ToArray();
 		}
-#endif
+
 		protected void AssertCounter(PerformanceCounter performanceCounter, Action4 action)
 		{
 			using (PerformanceCounter counter = performanceCounter)

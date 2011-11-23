@@ -2,7 +2,7 @@
 
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using Db4objects.Db4o.Internal;
 
 namespace Sharpen.IO
 {
@@ -10,13 +10,6 @@ namespace Sharpen.IO
     {
         private readonly FileStream _stream;
 
-#if !CF && !MONO && !SILVERLIGHT
-#if NET_4_0
-        [System.Security.SecuritySafeCritical]
-#endif
-		[DllImport("kernel32.dll", SetLastError = true)]
-        static extern int FlushFileBuffers(Microsoft.Win32.SafeHandles.SafeFileHandle fileHandle);
-#endif
         public RandomAccessFile(String file, bool readOnly, bool lockFile)
         {
             _stream = new FileStream(file, FileMode.OpenOrCreate,
@@ -60,16 +53,9 @@ namespace Sharpen.IO
             _stream.Seek(pos, SeekOrigin.Begin);
         }
 
-#if NET_4_0
-        [System.Security.SecuritySafeCritical]
-#endif
 		public void Sync()
         {
-            _stream.Flush();
-
-#if !CF && !MONO && !SILVERLIGHT
-            FlushFileBuffers(_stream.SafeFileHandle);
-#endif
+        	Platform4.CLIFacade.Flush(_stream);
         }
 
         public RandomAccessFile GetFD()

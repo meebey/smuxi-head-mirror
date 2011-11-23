@@ -2,8 +2,6 @@
 using System;
 using System.IO;
 using System.Collections;
-using System.Text;
-
 using Sharpen.Util;
 using Db4objects.Db4o.IO;
 using Db4objects.Db4o.Foundation;
@@ -14,15 +12,15 @@ namespace Db4objects.Db4o.Bench.Logging.Replay
 {
     public class LogReplayer
     {
-        private String _logFilePath;
-        private IoAdapter _io;
-        private ISet _commands;
-        private Hashtable _counts;
+        private readonly String _logFilePath;
+        private readonly IBin _bin;
+        private readonly ISet _commands;
+        private readonly Hashtable _counts;
 
-        public LogReplayer(String logFilePath, IoAdapter io, ISet commands)
+        public LogReplayer(String logFilePath, IBin bin, ISet commands)
         {
             _logFilePath = logFilePath;
-            _io = io;
+            _bin = bin;
             _commands = commands;
             _counts = new Hashtable();
             foreach (object com in commands)
@@ -31,11 +29,9 @@ namespace Db4objects.Db4o.Bench.Logging.Replay
             }
         }
 
-        public LogReplayer(String logFilePath, IoAdapter io): this(logFilePath, io, LogConstants.AllEntries())
+        public LogReplayer(String logFilePath, IBin bin): this(logFilePath, bin, LogConstants.AllEntries())
         {
-            
         }
-
 
         public void ReplayLog()
         {
@@ -64,7 +60,7 @@ namespace Db4objects.Db4o.Bench.Logging.Replay
             while (commandList != null)
             {
                 IIoCommand ioCommand = (IIoCommand)commandList._element;
-                ioCommand.Replay(_io);
+                ioCommand.Replay(_bin);
                 commandList = commandList._next;
             }
         }
@@ -99,39 +95,39 @@ namespace Db4objects.Db4o.Bench.Logging.Replay
 
         private IIoCommand CommandForLine(String line)
         {
-            if (line.StartsWith(LogConstants.ReadEntry))
+			if (line.StartsWith(LogConstants.ReadEntry))
             {
-                int length = Parameter(LogConstants.ReadEntry, line);
-                return new ReadCommand(length);
+				var param = Parameter(LogConstants.ReadEntry, line);
+				return new ReadCommand(param.pos, param.len);
             }
+
             if (line.StartsWith(LogConstants.WriteEntry))
             {
-                int length = Parameter(LogConstants.WriteEntry, line);
-                return new WriteCommand(length);
+                var param = Parameter(LogConstants.WriteEntry, line);
+                return new WriteCommand(param.pos, param.len);
             }
-            if (line.StartsWith(LogConstants.SyncEntry))
+            
+			if (line.StartsWith(LogConstants.SyncEntry))
             {
                 return new SyncCommand();
-            }
-            if (line.StartsWith(LogConstants.SeekEntry))
-            {
-                int address = Parameter(LogConstants.ReadEntry, line);
-                return new SeekCommand(address);
             }
 
             return null;
         }
 
 
-        private int Parameter(String command, String line)
+        private Param Parameter(String command, String line)
         {
             return Parameter(command.Length, line);
         }
 
-        private int Parameter(int start, String line)
-        {
-            return Int32.Parse(line.Substring(start));
-        }
+		private Param Parameter(int start, String line)
+		{
+			String[] paramStr = line.Substring(start).Split(' ');
+			long pos = long.Parse(paramStr[0]);
+			int len = int.Parse(paramStr[1]);
+			return new Param(pos, len);
+		}
 
         private void IncrementCount(String key)
         {
@@ -144,5 +140,16 @@ namespace Db4objects.Db4o.Bench.Logging.Replay
             return _counts;
         }
     }
+
+	internal class Param 
+	{
+		public long pos;
+		public int len;
+
+		public Param(long pos, int len) {
+			this.pos = pos;
+			this.len = len;
+		}
+	}
 }
 

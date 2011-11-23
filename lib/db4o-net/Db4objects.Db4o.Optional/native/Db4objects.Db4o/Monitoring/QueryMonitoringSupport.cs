@@ -11,11 +11,7 @@ using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Config;
 using Db4objects.Db4o.Internal.Query;
-#if NET_3_5
-
 using Db4objects.Db4o.Linq;
-
-#endif
 
 namespace Db4objects.Db4o.Monitoring
 {
@@ -23,17 +19,13 @@ namespace Db4objects.Db4o.Monitoring
 	{
 		public void Prepare(IConfiguration configuration)
 		{
-#if NET_3_5
 			var common = Db4oLegacyConfigurationBridge.AsCommonConfiguration(configuration);
 			common.Environment.Add(new LinqQueryMonitor());
-#endif
 		}
 
 		public void Apply(IInternalObjectContainer container)
 		{
-#if NET_3_5
 			My<LinqQueryMonitor>.Instance.Initialize();
-#endif
 
 			IEventRegistry eventRegistry = EventRegistryFactory.ForObjectContainer(container);
 			
@@ -54,17 +46,13 @@ namespace Db4objects.Db4o.Monitoring
 				nativeQueriesPerSec.Dispose();
 				unoptimizedNativeQueriesPerSec.Dispose();
 
-#if NET_3_5
 				container.WithEnvironment(delegate
 				{
 					My<LinqQueryMonitor>.Instance.Dispose();
 				});
-#endif
 			};
 		}
 
-
-#if NET_3_5
 		class LinqQueryMonitor : ILinqQueryMonitor
 		{
 		    private PerformanceCounter _queriesPerSec;
@@ -111,7 +99,6 @@ namespace Db4objects.Db4o.Monitoring
 				_unoptimizedQueriesPerSec = Db4oPerformanceCounters.CounterFor(PerformanceCounterSpec.UnoptimizedLinqQueriesPerSec, false);
 			}
 		}
-#endif
 	}
 
 	public class QueryMonitoringSupport : IConfigurationItem

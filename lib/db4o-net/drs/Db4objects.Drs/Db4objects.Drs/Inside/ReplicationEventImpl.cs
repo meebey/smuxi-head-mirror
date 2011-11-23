@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Drs;
@@ -12,7 +12,7 @@ namespace Db4objects.Drs.Inside
 
 		internal readonly ObjectStateImpl _stateInProviderB = new ObjectStateImpl();
 
-		internal bool _isConflict;
+		private bool _isConflict;
 
 		internal IObjectState _actionChosenState;
 
@@ -64,6 +64,11 @@ namespace Db4objects.Drs.Inside
 			_actionWasChosen = false;
 			_actionShouldStopTraversal = false;
 			_creationDate = -1;
+		}
+
+		internal void Conflict(bool isConflict)
+		{
+			_isConflict = isConflict;
 		}
 	}
 }

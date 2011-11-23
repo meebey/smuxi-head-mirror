@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -22,11 +22,12 @@ namespace Db4objects.Drs.Tests
 
 		static DrsTestCase()
 		{
-			mappings = new Type[] { typeof(Car), typeof(CollectionHolder), typeof(ListContent
-				), typeof(ListHolder), typeof(MapContent), typeof(Pilot), typeof(R0), typeof(Replicated
-				), typeof(SimpleArrayContent), typeof(SimpleArrayHolder), typeof(SimpleItem), typeof(
-				SimpleListHolder), typeof(SPCChild), typeof(SPCParent), typeof(ItemWithUntypedField
-				), typeof(ItemDates), typeof(NamedList), typeof(ItemWithCloneable) };
+			mappings = new Type[] { typeof(Car), typeof(CollectionHolder), typeof(ItemDates), 
+				typeof(ItemWithCloneable), typeof(ItemWithUntypedField), typeof(ListContent), typeof(
+				ListHolder), typeof(MapContent), typeof(NamedList), typeof(Pilot), typeof(R0), typeof(
+				Replicated), typeof(SimpleArrayContent), typeof(SimpleArrayHolder), typeof(SimpleItem
+				), typeof(SimpleListHolder), typeof(SPCChild), typeof(SPCParent), typeof(UnqualifiedNamed
+				) };
 		}
 
 		protected readonly DrsFixture _fixtures = DrsFixtureVariable.Value();
@@ -83,7 +84,7 @@ namespace Db4objects.Drs.Tests
 				return;
 			}
 			config.GenerateUUIDs(ConfigScope.Globally);
-			config.GenerateVersionNumbers(ConfigScope.Globally);
+			config.GenerateCommitTimestamps(true);
 			Configure(config);
 		}
 
@@ -184,13 +185,13 @@ namespace Db4objects.Drs.Tests
 			ReplicateAll(replication, changedSet.GetEnumerator());
 		}
 
-		private void ReplicateAll(IReplicationSession replication, IEnumerator allObjects
-			)
+		protected virtual void ReplicateAll(IReplicationSession replication, IEnumerator 
+			allObjects)
 		{
 			while (allObjects.MoveNext())
 			{
 				object changed = allObjects.Current;
-				//System.out.println("changed = " + changed);
+				//			System.out.println("Replicating = " + changed);
 				replication.Replicate(changed);
 			}
 			replication.Commit();

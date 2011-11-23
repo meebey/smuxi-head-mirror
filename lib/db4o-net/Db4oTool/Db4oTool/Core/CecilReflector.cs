@@ -171,20 +171,24 @@ namespace Db4oTool.Core
 			_resolvers = resolvers;
 		}
 
+		public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
+		{
+			return InternalResolve(resolver => resolver.Resolve(name, parameters));
+		}
+
+		public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
+		{
+			return InternalResolve(resolver => resolver.Resolve(fullName, parameters));
+		}
+
 		public AssemblyDefinition Resolve(string fullName)
 		{
-			return InternalResolve(delegate(IAssemblyResolver resolver)
-			                       	{
-			                       		return resolver.Resolve(fullName);
-			                       	});
+			return InternalResolve(resolver => resolver.Resolve(fullName));
 		}
 
 		public AssemblyDefinition Resolve(AssemblyNameReference name)
 		{
-			return InternalResolve(delegate(IAssemblyResolver resolver)
-									{
-										return resolver.Resolve(name);
-									});
+			return InternalResolve(resolver => resolver.Resolve(name));
 		}
 
 		private AssemblyDefinition InternalResolve(Function<IAssemblyResolver, AssemblyDefinition> @delegate)

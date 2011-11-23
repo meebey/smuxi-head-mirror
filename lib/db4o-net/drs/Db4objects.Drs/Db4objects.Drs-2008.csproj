@@ -32,6 +32,52 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -43,6 +89,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Db4objects.Drs.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -51,6 +98,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Db4objects.Drs.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System"/>
@@ -63,7 +111,6 @@
 <Compile Include="Db4objects.Drs\Db4o\Db4oReplicationReferenceImpl.cs"/>
 <Compile Include="Db4objects.Drs\Db4o\Db4oSignatureMap.cs"/>
 <Compile Include="Db4objects.Drs\Db4o\IDb4oReplicationProvider.cs"/>
-<Compile Include="Db4objects.Drs\Db4o\ReplicationRecord.cs"/>
 <Compile Include="Db4objects.Drs\Foundation\DrsUUIDImpl.cs"/>
 <Compile Include="Db4objects.Drs\Foundation\IDrsUUID.cs"/>
 <Compile Include="Db4objects.Drs\Foundation\LinePrinter.cs"/>
@@ -72,6 +119,7 @@
 <Compile Include="Db4objects.Drs\Foundation\Signature.cs"/>
 <Compile Include="Db4objects.Drs\Foundation\Signatures.cs"/>
 <Compile Include="Db4objects.Drs\Foundation\StackAnalyzer.cs"/>
+<Compile Include="Db4objects.Drs\Foundation\TimeStamps.cs"/>
 <Compile Include="Db4objects.Drs\IObjectState.cs"/>
 <Compile Include="Db4objects.Drs\IReplicationEvent.cs"/>
 <Compile Include="Db4objects.Drs\IReplicationEventListener.cs"/>

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -12,7 +12,6 @@ using Db4objects.Db4o.Internal.Replication;
 using Db4objects.Db4o.Query;
 using Db4objects.Db4o.Reflect;
 using Db4objects.Db4o.TA;
-using Db4objects.Db4o.Types;
 using Db4objects.Drs.Db4o;
 using Db4objects.Drs.Foundation;
 using Db4objects.Drs.Inside;
@@ -36,6 +35,8 @@ namespace Db4objects.Drs.Db4o
 		private readonly string _name;
 
 		private readonly IProcedure4 _activationStrategy;
+
+		protected long _commitTimestamp;
 
 		public Db4oEmbeddedReplicationProvider(IObjectContainer objectContainer, string name
 			)
@@ -150,30 +151,36 @@ namespace Db4objects.Drs.Db4o
 					_replicationRecord = new ReplicationRecord(younger, older);
 					_replicationRecord.Store(_container);
 				}
+				else
+				{
+					_container.RaiseCommitTimestamp(_replicationRecord._version + 1);
+				}
+				_commitTimestamp = _container.GenerateTransactionTimestamp(0);
 			}
 		}
 
-		public virtual void SyncVersionWithPeer(long version)
+		public virtual void CommitReplicationTransaction()
 		{
-			_replicationRecord._version = version;
+			StoreReplicationRecord();
+			_container.Commit();
+			_container.UseDefaultTransactionTimestamp();
+		}
+
+		protected virtual void StoreReplicationRecord()
+		{
+			_replicationRecord._version = _commitTimestamp;
 			_replicationRecord.Store(_container);
 		}
 
-		public virtual void CommitReplicationTransaction(long raisedDatabaseVersion)
+		protected virtual long ReplicationRecordId()
 		{
-			_container.RaiseVersion(raisedDatabaseVersion);
-			_container.Commit();
+			return _container.GetID(_replicationRecord);
 		}
 
 		public virtual void RollbackReplication()
 		{
 			_container.Rollback();
 			_referencesByObject = null;
-		}
-
-		public virtual long GetCurrentVersion()
-		{
-			return _container.Version();
 		}
 
 		public virtual long GetLastReplicationVersion()
@@ -232,7 +239,7 @@ namespace Db4objects.Drs.Db4o
 				throw new ArgumentNullException();
 			}
 			Db4oReplicationReferenceImpl newNode = new Db4oReplicationReferenceImpl(objectInfo
-				);
+				, obj);
 			AddReference(newNode);
 			return newNode;
 		}
@@ -297,13 +304,13 @@ namespace Db4objects.Drs.Db4o
 		{
 			if (_referencesByObject != null)
 			{
-				_referencesByObject.Traverse(new _IVisitor4_283(visitor));
+				_referencesByObject.Traverse(new _IVisitor4_287(visitor));
 			}
 		}
 
-		private sealed class _IVisitor4_283 : IVisitor4
+		private sealed class _IVisitor4_287 : IVisitor4
 		{
-			public _IVisitor4_283(IVisitor4 visitor)
+			public _IVisitor4_287(IVisitor4 visitor)
 			{
 				this.visitor = visitor;
 			}
@@ -350,8 +357,17 @@ namespace Db4objects.Drs.Db4o
 		/// <param name="query">the Query to be constrained</param>
 		public virtual void WhereModified(IQuery query)
 		{
-			query.Descend(VirtualField.Version).Constrain(GetLastReplicationVersion()).Greater
+			IQuery qTimestamp = query.Descend(VirtualField.CommitTimestamp);
+			IConstraint constraint = qTimestamp.Constrain(GetLastReplicationVersion()).Greater
 				();
+			long[] concurrentTimestamps = _replicationRecord._concurrentTimestamps;
+			if (concurrentTimestamps != null)
+			{
+				for (int i = 0; i < concurrentTimestamps.Length; i++)
+				{
+					constraint = constraint.Or(qTimestamp.Constrain(concurrentTimestamps[i]));
+				}
+			}
 		}
 
 		public virtual IObjectSet GetStoredObjects(Type type)
@@ -406,7 +422,24 @@ namespace Db4objects.Drs.Db4o
 		public virtual bool WasModifiedSinceLastReplication(IReplicationReference reference
 			)
 		{
-			return reference.Version() > GetLastReplicationVersion();
+			long timestamp = reference.Version();
+			if (timestamp > _replicationRecord._version)
+			{
+				return true;
+			}
+			long[] concurrentTimestamps = _replicationRecord.ConcurrentTimestamps();
+			if (concurrentTimestamps == null)
+			{
+				return false;
+			}
+			for (int i = 0; i < concurrentTimestamps.Length; i++)
+			{
+				if (timestamp == concurrentTimestamps[i])
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public virtual bool SupportsMultiDimensionalArrays()
@@ -447,7 +480,7 @@ namespace Db4objects.Drs.Db4o
 
 		public virtual bool IsProviderSpecific(object original)
 		{
-			return original is IDb4oCollection;
+			return false;
 		}
 
 		public virtual void ReplicationReflector(Db4objects.Drs.Inside.ReplicationReflector
@@ -465,14 +498,6 @@ namespace Db4objects.Drs.Db4o
 			return ProduceReference(obj, null, null);
 		}
 
-		public virtual void RunIsolated(IBlock4 block)
-		{
-			lock (Lock())
-			{
-				block.Run();
-			}
-		}
-
 		public virtual object ReplaceIfSpecific(object value)
 		{
 			return value;
@@ -481,6 +506,43 @@ namespace Db4objects.Drs.Db4o
 		public virtual bool IsSecondClassObject(object obj)
 		{
 			return false;
+		}
+
+		public virtual long ObjectVersion(object @object)
+		{
+			return _container.GetObjectInfo(@object).GetCommitTimestamp();
+		}
+
+		public virtual long CreationTime(object @object)
+		{
+			return _container.GetObjectInfo(@object).GetUUID().GetLongPart();
+		}
+
+		public virtual void EnsureVersionsAreGenerated()
+		{
+			Commit();
+		}
+
+		public virtual Db4objects.Drs.Foundation.TimeStamps TimeStamps()
+		{
+			return new Db4objects.Drs.Foundation.TimeStamps(_replicationRecord._version, _commitTimestamp
+				);
+		}
+
+		public virtual void WaitForPreviousCommits()
+		{
+		}
+
+		// do nothing
+		public virtual void SyncCommitTimestamp(long syncedTimeStamp)
+		{
+			if (syncedTimeStamp <= _commitTimestamp)
+			{
+				return;
+			}
+			_commitTimestamp = syncedTimeStamp;
+			_container.RaiseCommitTimestamp(syncedTimeStamp + 1);
+			_container.GenerateTransactionTimestamp(syncedTimeStamp);
 		}
 	}
 }

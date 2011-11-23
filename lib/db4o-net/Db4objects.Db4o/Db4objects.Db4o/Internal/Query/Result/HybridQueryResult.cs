@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Config;
@@ -103,6 +103,11 @@ namespace Db4objects.Db4o.Internal.Query.Result
 		{
 			_delegate = _delegate.SupportSort();
 			_delegate.SortIds(cmp);
+		}
+
+		public override void Skip(int count)
+		{
+			_delegate.Skip(count);
 		}
 	}
 }

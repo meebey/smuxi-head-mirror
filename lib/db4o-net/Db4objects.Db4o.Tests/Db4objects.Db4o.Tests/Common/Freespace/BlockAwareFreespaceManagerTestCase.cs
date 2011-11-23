@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4oUnit;
@@ -9,7 +9,7 @@ using Db4objects.Db4o.Internal.Slots;
 
 namespace Db4objects.Db4o.Tests.Common.Freespace
 {
-	public class BlockAwareFreespaceManagerTestCase : ITestLifeCycle
+	public class BlockAwareFreespaceManagerTestCase : ITestCase
 	{
 		private const int BlockSize = 7;
 
@@ -17,7 +17,7 @@ namespace Db4objects.Db4o.Tests.Common.Freespace
 			);
 
 		private readonly InMemoryFreespaceManager _blocked = new InMemoryFreespaceManager
-			(null, 0);
+			(null, 0, 0);
 
 		private readonly BlockAwareFreespaceManager _nonBlocked;
 
@@ -66,22 +66,10 @@ namespace Db4objects.Db4o.Tests.Common.Freespace
 			private readonly IList foundSlots;
 		}
 
-		/// <exception cref="System.Exception"></exception>
-		public virtual void SetUp()
-		{
-		}
-
-		// TODO Auto-generated method stub
-		/// <exception cref="System.Exception"></exception>
-		public virtual void TearDown()
-		{
-		}
-
 		public BlockAwareFreespaceManagerTestCase()
 		{
 			_nonBlocked = new BlockAwareFreespaceManager(_blocked, new BlockSizeBlockConverter
 				(BlockSize));
 		}
-		// TODO Auto-generated method stub
 	}
 }

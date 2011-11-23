@@ -1,6 +1,7 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
+using Db4objects.Db4o.CS.Internal;
 using Db4objects.Drs.Db4o;
 
 namespace Db4objects.Drs.Db4o
@@ -20,6 +21,13 @@ namespace Db4objects.Drs.Db4o
 		protected override void Refresh(object obj)
 		{
 			_container.Refresh(obj, 1);
+		}
+
+		public override void CommitReplicationTransaction()
+		{
+			StoreReplicationRecord();
+			((ClientObjectContainer)_container).CommitReplication(ReplicationRecordId(), _commitTimestamp
+				);
 		}
 	}
 }

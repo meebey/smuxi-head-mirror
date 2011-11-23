@@ -48,6 +48,50 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -83,11 +127,11 @@
   <ItemGroup>
     <Reference Include="Cecil.FlowAnalysis, Version=0.1.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\compact-2.0\Cecil.FlowAnalysis.dll</HintPath>
+      <HintPath>..\Libs\compact-3.5\Cecil.FlowAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.6.8.8607, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\compact-2.0\Mono.Cecil.dll</HintPath>
+      <HintPath>..\Libs\compact-3.5\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib"/>
     <Reference Include="System"/>

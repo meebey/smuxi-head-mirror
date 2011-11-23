@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -116,12 +116,12 @@ namespace Db4objects.Drs.Tests.Db4o
 			)
 		{
 			EventRegistryFor(B()).Updated += new System.EventHandler<Db4objects.Db4o.Events.ObjectInfoEventArgs>
-				(new _IEventListener4_95(this, updated).OnEvent);
+				(new _IEventListener4_97(this, updated).OnEvent);
 		}
 
-		private sealed class _IEventListener4_95
+		private sealed class _IEventListener4_97
 		{
-			public _IEventListener4_95(PartialCollectionReplicationTestCase _enclosing, IList
+			public _IEventListener4_97(PartialCollectionReplicationTestCase _enclosing, IList
 				<PartialCollectionReplicationTestCase.Data> updated)
 			{
 				this._enclosing = _enclosing;
@@ -155,12 +155,12 @@ namespace Db4objects.Drs.Tests.Db4o
 			)
 		{
 			EventRegistryFor(B()).Created += new System.EventHandler<Db4objects.Db4o.Events.ObjectInfoEventArgs>
-				(new _IEventListener4_113(this, created).OnEvent);
+				(new _IEventListener4_115(this, created).OnEvent);
 		}
 
-		private sealed class _IEventListener4_113
+		private sealed class _IEventListener4_115
 		{
-			public _IEventListener4_113(PartialCollectionReplicationTestCase _enclosing, IList
+			public _IEventListener4_115(PartialCollectionReplicationTestCase _enclosing, IList
 				<PartialCollectionReplicationTestCase.Data> created)
 			{
 				this._enclosing = _enclosing;
@@ -224,7 +224,7 @@ namespace Db4objects.Drs.Tests.Db4o
 
 		private long VersionFor(PartialCollectionReplicationTestCase.Data c1)
 		{
-			return ObjectInfoFor(c1).GetVersion();
+			return ObjectInfoFor(c1).GetCommitTimestamp();
 		}
 
 		private IObjectInfo ObjectInfoFor(PartialCollectionReplicationTestCase.Data c1)

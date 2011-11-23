@@ -1,8 +1,7 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
-using Db4objects.Db4o.Internal.Query.Processor;
 using Db4objects.Db4o.Marshall;
 using Db4objects.Db4o.Reflect;
 using Db4objects.Db4o.Types;
@@ -10,7 +9,7 @@ using Db4objects.Db4o.Types;
 namespace Db4objects.Db4o.Internal.Query.Processor
 {
 	/// <exclude></exclude>
-	public class QField : IVisitor4, IUnversioned
+	public class QField : IUnversioned
 	{
 		[System.NonSerialized]
 		internal Transaction i_trans;
@@ -137,11 +136,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				ClassMetadata yc = a_trans.Container().ClassMetadataForID(i_classMetadataID);
 				_fieldMetadata = (FieldMetadata)yc._aspects[_fieldHandle];
 			}
-		}
-
-		public virtual void Visit(object obj)
-		{
-			((QCandidate)obj).UseField(this);
 		}
 
 		public override string ToString()

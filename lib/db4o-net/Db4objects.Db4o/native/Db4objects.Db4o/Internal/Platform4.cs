@@ -9,9 +9,11 @@ using Db4objects.Db4o.Config.Attributes;
 using Db4objects.Db4o.Ext;
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal.Activation;
+using Db4objects.Db4o.Internal.CLI;
 using Db4objects.Db4o.Internal.Handlers;
 using Db4objects.Db4o.Internal.Query;
 using Db4objects.Db4o.Internal.Query.Processor;
+using Db4objects.Db4o.IO;
 using Db4objects.Db4o.Query;
 using Db4objects.Db4o.Reflect;
 using Db4objects.Db4o.Reflect.Generic;
@@ -29,6 +31,28 @@ namespace Db4objects.Db4o.Internal
         private static List<ObjectContainerBase> _containersToBeShutdown;
 
 		private static readonly object _shutdownStreamsLock = new object();
+
+    	private static ICLIFacade _cli;
+
+    	internal static ICLIFacade CLIFacade
+    	{
+    		get
+    		{
+				if (_cli != null) return _cli;
+				_cli = CreateCLIFacade();
+    			return _cli;
+    		}
+    	}
+
+		private static ICLIFacade CreateCLIFacade()
+		{
+			return CLIFacadeFactory.NewInstance();
+		}
+
+		internal static IStorage NewStorage()
+		{
+			return CLIFacade.NewStorage();
+		}
 
 		public static object[] CollectionToArray(ObjectContainerBase stream, object obj)
         {
@@ -97,44 +121,44 @@ namespace Db4objects.Db4o.Internal
             return new WeakReference(obj, false);
         }
 
-        internal static Object CreateActiveObjectReference(Object referenceQueue, Object yapObject, Object obj)
+        internal static Object CreateActiveObjectReference(Object referenceQueue, Object objectRef, Object obj)
         {
-            return new WeakReferenceHandler(referenceQueue, yapObject, obj);
+            return new WeakReferenceHandler(referenceQueue, objectRef, obj);
         }
 
-        internal static long DoubleToLong(double a_double)
+        internal static long DoubleToLong(double value)
 		{
 #if CF || SILVERLIGHT
-			byte[] bytes = BitConverter.GetBytes(a_double);
+			byte[] bytes = BitConverter.GetBytes(value);
             return BitConverter.ToInt64(bytes, 0);
 #else
-            return BitConverter.DoubleToInt64Bits(a_double);
+            return BitConverter.DoubleToInt64Bits(value);
 #endif
         }
 
-        internal static QConEvaluation EvaluationCreate(Transaction a_trans, Object example)
+        internal static QConEvaluation EvaluationCreate(Transaction transaction, Object example)
         {
             if (example is IEvaluation || example is EvaluationDelegate)
             {
-                return new QConEvaluation(a_trans, example);
+                return new QConEvaluation(transaction, example);
             }
             return null;
         }
 
-        internal static void EvaluationEvaluate(Object a_evaluation, ICandidate a_candidate)
+        internal static void EvaluationEvaluate(Object evaluation, ICandidate candidate)
         {
-            IEvaluation eval = a_evaluation as IEvaluation;
+            IEvaluation eval = evaluation as IEvaluation;
             if (eval != null)
             {
-                eval.Evaluate(a_candidate);
+                eval.Evaluate(candidate);
             }
             else
             {
                 // use starting _ for PascalCase conversion purposes
-                EvaluationDelegate _ed = a_evaluation as EvaluationDelegate;
+                EvaluationDelegate _ed = evaluation as EvaluationDelegate;
                 if (_ed != null)
                 {
-                    _ed(a_candidate);
+                    _ed(candidate);
                 }
             }
         }
@@ -298,7 +322,7 @@ namespace Db4objects.Db4o.Internal
 
         internal static bool IsMono()
         {
-            return null != Type.GetType("System.MonoType, mscorlib");
+			return ReferenceEquals(Type.GetType("Mono.Runtime"), null) == false;
         }
 
         public static Object GetTypeForClass(Object obj)
@@ -376,7 +400,7 @@ namespace Db4objects.Db4o.Internal
             {
                 return false;
             }
-            System.Type netClass = GetNetType(claxx);
+            Type netClass = GetNetType(claxx);
             if (netClass == null)
             {
                 return false;
@@ -559,11 +583,16 @@ namespace Db4objects.Db4o.Internal
 				};
         }
 
-        public static bool IsSimple(Type a_class)
+        public static bool IsSimple(Type @class)
         {
+			if (@class.IsGenericType && @class.GetGenericTypeDefinition() == typeof(Nullable<>))
+			{
+				@class = @class.GetGenericArguments()[0];	
+			}
+
             for (int i1 = 0; i1 < SIMPLE_CLASSES.Length; i1++)
             {
-                if (a_class == SIMPLE_CLASSES[i1])
+                if (@class == SIMPLE_CLASSES[i1])
                 {
                     return true;
                 }
@@ -694,7 +723,7 @@ namespace Db4objects.Db4o.Internal
 
     	private static Hashtable4 _primitive2Wrapper;
 
-    	private static readonly Type[] PRIMITIVE_TYPES = new Type[]
+    	private static readonly Type[] PRIMITIVE_TYPES = new[]
     	                                        	{
 														typeof(int),
 														typeof(uint), 
@@ -722,5 +751,19 @@ namespace Db4objects.Db4o.Internal
 		    return (sbyte)b;
 	    }
 
-    }
+		public static bool IsRunningOnMono()
+		{
+			return ReferenceEquals(Type.GetType("Mono.Runtime"), null) == false;
+		}
+
+		public static void PrintStackTrace(Exception e, PrintWriter writer)
+		{
+ 			writer.Println(e.ToString());
+ 		}
+
+		public static string AsUtf8(byte[] byteArray)
+		{
+			return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+		}
+	}
 }

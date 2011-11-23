@@ -1,151 +1,98 @@
-/* Copyright (C) 2004 - 2008  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011 Versant Inc.  http://www.db4o.com */
 
 using System.IO;
 using Db4objects.Db4o.Bench.Logging;
 using Db4objects.Db4o.Ext;
 using Db4objects.Db4o.IO;
-using Sharpen.IO;
 
-namespace Db4objects.Db4o.Bench.Logging
+public class LoggingStorage : StorageDecorator 
 {
-	public class LoggingIoAdapter : VanillaIoAdapter
+	public static int LOG_READ 	= 1;
+	public static int LOG_WRITE = 2;
+	public static int LOG_SYNC 	= 4;
+	public static int LOG_SEEK  = 8;
+	
+	public static int LOG_ALL = LOG_READ + LOG_WRITE + LOG_SYNC + LOG_SEEK;
+	
+	private string _fileName;
+	private int _config;
+
+    public LoggingStorage(IStorage delegateAdapter, string fileName) : this(delegateAdapter, fileName, LOG_ALL)
 	{
-		public const int LogRead = 1;
+    }
 
-		public const int LogWrite = 2;
+    public LoggingStorage(IStorage IStorage, string fileName, int config) :base(IStorage)
+	{
+        _fileName = fileName;
+        _config = config;
+    }
+    
+	protected override IBin Decorate(BinConfiguration config, IBin bin) 
+	{
+        try 
+		{
+			var file = new FileStream(_fileName, FileMode.Create);
 
-		public const int LogSync = 4;
-
-		public const int LogSeek = 8;
-
-		public const int LogAll = LogRead + LogWrite + LogSync + LogSeek;
-
-		private readonly string _fileName;
-
-		private readonly TextWriter _out;
-
+			var @out = new StreamWriter(file);
+			return new LoggingBin(bin, @out, _config);
+		} 
+        catch(FileNotFoundException e) 
+		{
+			throw new Db4oIOException(e);
+		}
+	}
+	
+	class LoggingBin : BinDecorator 
+	{
+		private TextWriter _out;
 		private int _config;
 
-		public LoggingIoAdapter(IoAdapter delegateAdapter, string fileName, int config) : 
-			base(delegateAdapter)
+		public LoggingBin(IBin bin, TextWriter @out, int config) : base(bin)
 		{
-			_fileName = fileName;
-            try
-            {
-                _out = new StreamWriter(new FileStream(fileName, FileMode.Append, FileAccess.Write));
-            }
-            catch (FileNotFoundException e)
-            {
-                throw new Db4oIOException(e);
-            }
-        
+			_out = @out;
 			_config = config;
 		}
-
-        public LoggingIoAdapter(IoAdapter delegateAdapter, string fileName, int config, TextWriter existingOut)
-            :
-            base(delegateAdapter)
-        {
-            _fileName = fileName;
-            _out = existingOut;
-            _config = config;
-        }
-
-
-        public LoggingIoAdapter(IoAdapter delegateAdapter, string fileName) : this(delegateAdapter
-			, fileName, LogAll)
-		{
-		}
-
-		/// <exception cref="Db4oIOException"></exception>
-		private LoggingIoAdapter(IoAdapter delegateAdapter, string path, bool lockFile, long
-			 initialLength, string fileName, int config) : this(delegateAdapter.Open(path, lockFile
-			, initialLength, false), fileName, config)
-		{
-		}
-
-        private LoggingIoAdapter(IoAdapter delegateAdapter, string path, bool lockFile, long
-             initialLength, string fileName, int config, TextWriter existingOut)
-            : this(delegateAdapter.Open(path, lockFile
-            , initialLength, false), fileName, config, existingOut)
-        {
-        }
-		/// <exception cref="Db4oIOException"></exception>
-		public override IoAdapter Open(string path, bool lockFile, long initialLength, bool
-			 readOnly)
-		{
-            //if (_out == null)
-            //{
-                return new Db4objects.Db4o.Bench.Logging.LoggingIoAdapter(_delegate, path, lockFile
-                    , initialLength, _fileName, _config);
-            //}
-            //else
-            //{
-            //    return new Db4objects.Db4o.Bench.Logging.LoggingIoAdapter(_delegate, path, lockFile
-            //        , initialLength, _fileName, _config, _out);
-            //}
-		}
-
-		/// <exception cref="Db4oIOException"></exception>
+		
 		public override void Close()
 		{
 			_out.Flush();
 			_out.Close();
 			base.Close();
 		}
-
-		/// <exception cref="Db4oIOException"></exception>
-		public override int Read(byte[] bytes, int length)
+	
+	    public override int Read(long pos, byte[] bytes, int length) 
 		{
-			if (Config(LogRead))
-			{
-				Println(LogConstants.ReadEntry + length);
-			}
-			return _delegate.Read(bytes, length);
-		}
-
-		/// <exception cref="Db4oIOException"></exception>
-		public override void Seek(long pos)
+	    	if(Config(LOG_READ)) {
+	    		Println(LogConstants.ReadEntry + pos + " " + length);
+	    	}
+	        return _bin.Read(pos, bytes, length);
+	    }
+	
+	    public override void Sync() 
 		{
-			if (Config(LogSeek))
-			{
-				Println(LogConstants.SeekEntry + pos);
-			}
-			_delegate.Seek(pos);
-		}
-
-		/// <exception cref="Db4oIOException"></exception>
-		public override void Sync()
+	    	if(Config(LOG_SYNC)) {
+	    		Println(LogConstants.SyncEntry);
+	    	}
+	        _bin.Sync();
+	    }
+	
+	    public override void Write(long pos, byte[] buffer, int length)
 		{
-			if (Config(LogSync))
-			{
-				Println(LogConstants.SyncEntry);
-			}
-			_delegate.Sync();
+	    	if(Config(LOG_WRITE)) {
+	    		Println(LogConstants.WriteEntry + pos + " " + length);
+	    	}
+	        _bin.Write(pos, buffer, length);
 		}
-
-		/// <exception cref="Db4oIOException"></exception>
-		public override void Write(byte[] buffer, int length)
+	    
+	    private void Println(string s)
 		{
-			if (Config(LogWrite))
-			{
-				Println(LogConstants.WriteEntry + length);
-			}
-			_delegate.Write(buffer, length);
-		}
+	    	_out.WriteLine("{0}", s);
+	    }
 
-		private void Println(string s)
+	    private bool Config(int mask) 
 		{
-            try
-            {
-                _out.WriteLine(s);
-            }
-            catch (System.Exception e)      { }
-		}
-
-		private bool Config(int mask)
-		{
-			return (_config & mask) != 0;
-		}
+	    	return (_config & mask) != 0;
+	    }
 	}
+    
 }

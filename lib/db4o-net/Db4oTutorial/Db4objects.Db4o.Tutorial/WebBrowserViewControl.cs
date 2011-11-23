@@ -79,6 +79,7 @@ namespace Db4objects.Db4o.Tutorial
             this._toolbar.ShowToolTips = true;
             this._toolbar.Size = new System.Drawing.Size(544, 24);
             this._toolbar.TabIndex = 0;
+            this._toolbar.ButtonClick += new System.Windows.Forms.ToolBarButtonClickEventHandler(this._toolbar_ButtonClick);
             // 
             // _webBrowser
             // 
@@ -121,6 +122,11 @@ namespace Db4objects.Db4o.Tutorial
 				_webBrowser.GoForward();
 			}
 		}
+
+        private void _toolbar_ButtonClick(object sender, ToolBarButtonClickEventArgs e)
+        {
+            OnToolbarButtonClick(sender, e);
+        }
 		
 	}
 }

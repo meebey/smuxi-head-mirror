@@ -1,12 +1,16 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
+using Db4objects.Db4o.Ext;
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Handlers;
 using Db4objects.Db4o.Internal.Marshall;
 using Db4objects.Db4o.Internal.Query;
+using Db4objects.Db4o.Reflect;
+using Db4objects.Db4o.TA;
+using Db4objects.Db4o.Typehandlers;
 
 namespace Db4objects.Db4o.Internal.Query
 {
@@ -161,9 +165,58 @@ namespace Db4objects.Db4o.Internal.Query
 		{
 			object xFieldValue = GetFieldValue(x, path);
 			object yFieldValue = GetFieldValue(y, path);
+			EnsureNoManualActivationRequired(xFieldValue);
 			FieldMetadata field = ((FieldMetadata)path[path.Count - 1]);
 			return field.PrepareComparison(_transaction.Context(), xFieldValue).CompareTo(yFieldValue
 				);
+		}
+
+		private void EnsureNoManualActivationRequired(object obj)
+		{
+			if (obj == null)
+			{
+				return;
+			}
+			if (!HasValueTypeBehavior(obj))
+			{
+				if (!typeof(IActivatable).IsAssignableFrom(obj.GetType()))
+				{
+					ThrowUnsupportedOrderingException(obj.GetType(), "make it implement Activatable interface."
+						);
+				}
+				if (!TransparentActivationSupport.IsTransparentActivationEnabledOn(_container))
+				{
+					ThrowUnsupportedOrderingException(obj.GetType(), "enable transparent activation support by adding TransparentActivationSupport to the configutation before opening the db."
+						);
+				}
+			}
+		}
+
+		private bool HasValueTypeBehavior(object obj)
+		{
+			bool isSimple = Platform4.IsSimple(obj.GetType());
+			if (isSimple)
+			{
+				return true;
+			}
+			IReflectClass reflectClass = _container.Reflector().ForObject(obj);
+			if (Platform4.IsStruct(reflectClass))
+			{
+				return true;
+			}
+			bool isEnum = Platform4.IsEnum(_container.Reflector(), reflectClass);
+			if (isEnum)
+			{
+				return true;
+			}
+			ITypeHandler4 typeHandler = _container.TypeHandlerForClass(reflectClass);
+			return Handlers4.IsValueType(typeHandler);
+		}
+
+		private void ThrowUnsupportedOrderingException(Type clazz, string msg)
+		{
+			throw new UnsupportedOrderingException("Cannot sort on class '" + clazz.FullName 
+				+ "'. If you do want to use it as a sort criteria " + msg);
 		}
 
 		private object GetFieldValue(int id, IList path)

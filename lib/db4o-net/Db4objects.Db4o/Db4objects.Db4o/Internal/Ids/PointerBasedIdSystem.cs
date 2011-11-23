@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
@@ -107,6 +107,10 @@ namespace Db4objects.Db4o.Internal.Ids
 		{
 			_transactionLogHandler.CompleteInterruptedTransaction(transactionId1, transactionId2
 				);
+		}
+
+		public void TraverseOwnSlots(IProcedure4 block)
+		{
 		}
 	}
 }

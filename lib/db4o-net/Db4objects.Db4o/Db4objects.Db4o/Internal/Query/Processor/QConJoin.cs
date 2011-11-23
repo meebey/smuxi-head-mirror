@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -41,10 +41,10 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return i_constraint1;
 		}
 
-		internal override void DoNotInclude(QCandidate a_root)
+		internal override void DoNotInclude(IInternalCandidate root)
 		{
-			Constraint1().DoNotInclude(a_root);
-			Constraint2().DoNotInclude(a_root);
+			Constraint1().DoNotInclude(root);
+			Constraint2().DoNotInclude(root);
 		}
 
 		internal override void ExchangeConstraint(QCon a_exchange, QCon a_with)
@@ -60,11 +60,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		internal virtual void EvaluatePending(QCandidate a_root, QPending a_pending, int 
-			a_secondResult)
+		internal virtual void EvaluatePending(IInternalCandidate root, QPending pending, 
+			int secondResult)
 		{
-			bool res = i_evaluator.Not(i_and ? ((a_pending._result + a_secondResult) > 0) : (
-				a_pending._result + a_secondResult) > QPending.False);
+			bool res = i_evaluator.Not(i_and ? ((pending._result + secondResult) > 0) : (pending
+				._result + secondResult) > QPending.False);
 			if (HasJoins())
 			{
 				IEnumerator i = IterateJoins();
@@ -72,15 +72,15 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				{
 					Db4objects.Db4o.Internal.Query.Processor.QConJoin qcj = (Db4objects.Db4o.Internal.Query.Processor.QConJoin
 						)i.Current;
-					a_root.Evaluate(new QPending(qcj, this, res));
+					root.Evaluate(new QPending(qcj, this, res));
 				}
 			}
 			else
 			{
 				if (!res)
 				{
-					Constraint1().DoNotInclude(a_root);
-					Constraint2().DoNotInclude(a_root);
+					Constraint1().DoNotInclude(root);
+					Constraint2().DoNotInclude(root);
 				}
 			}
 		}
@@ -138,15 +138,20 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return !i_and;
 		}
 
-		public override void SetProcessedByIndex()
+		public override void SetProcessedByIndex(QCandidates candidates)
 		{
 			if (ProcessedByIndex())
 			{
 				return;
 			}
-			base.SetProcessedByIndex();
-			Constraint1().SetProcessedByIndex();
-			Constraint2().SetProcessedByIndex();
+			base.SetProcessedByIndex(candidates);
+			Constraint1().SetProcessedByIndex(candidates);
+			Constraint2().SetProcessedByIndex(candidates);
+		}
+
+		protected override bool CanResolveByFieldIndex()
+		{
+			return false;
 		}
 	}
 }

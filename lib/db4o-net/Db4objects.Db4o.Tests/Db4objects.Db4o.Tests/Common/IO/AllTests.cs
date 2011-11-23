@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -17,17 +17,16 @@ namespace Db4objects.Db4o.Tests.Common.IO
 		protected override Type[] TestCases()
 		{
 			return ComposeTests(new Type[] { typeof(BlockAwareBinTestSuite), typeof(MemoryBinGrowthTestCase
-				), typeof(MemoryBinIsReusableTestCase), typeof(MemoryIoAdapterTestCase), typeof(
-				NonFlushingStorageTestCase), typeof(RandomAccessFileStorageFactoryTestCase), typeof(
-				StorageTestSuite) });
+				), typeof(MemoryBinIsReusableTestCase), typeof(NonFlushingStorageTestCase), typeof(
+				RandomAccessFileStorageFactoryTestCase), typeof(StorageTestSuite) });
 		}
 
 		// SaveAsStorageTestCase.class,  COR-2036
 		#if !SILVERLIGHT
 		protected override Type[] ComposeWith()
 		{
-			return new Type[] { typeof(BlockSizeDependentBinTestCase), typeof(IoAdapterTestSuite
-				), typeof(RandomAccessFileFactoryTestCase) };
+			return new Type[] { typeof(BlockSizeDependentBinTestCase), typeof(RandomAccessFileFactoryTestCase
+				) };
 		}
 		#endif // !SILVERLIGHT
 	}

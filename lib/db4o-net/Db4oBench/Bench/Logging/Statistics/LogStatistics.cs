@@ -2,10 +2,7 @@
 
 using System;
 using System.IO;
-using Db4objects.Db4o.Bench.Logging;
-using Db4objects.Db4o.Bench.Logging.Statistics;
 using Sharpen;
-using Sharpen.IO;
 using Sharpen.Text;
 
 namespace Db4objects.Db4o.Bench.Logging.Statistics
@@ -22,25 +19,24 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 
 		private StreamReader _in;
 
-		private long _readCount = 0;
+		private long _readCount;
 
-		private long _readBytes = 0;
+		private long _readBytes;
 
-		private long _writeCount = 0;
+		private long _writeCount;
 
-		private long _writeBytes = 0;
+		private long _writeBytes;
 
-		private long _syncCount = 0;
+		private long _syncCount;
 
-		private long _seekCount = 0;
+		private long _seekCount;
 
 		public static void Main(string[] args)
 		{
 			if (args.Length < 1)
 			{
-				Sharpen.Runtime.Out.WriteLine("Usage: LogStatistics <log file path> [<statistics file path>]"
-					);
-                throw new System.Exception("Usage: LogStatistics <log file path> [<statistics file path>]");
+				Runtime.Out.WriteLine("Usage: LogStatistics <log file path> [<statistics file path>]");
+                throw new Exception("Usage: LogStatistics <log file path> [<statistics file path>]");
 			}
 			if (args.Length > 1)
 			{
@@ -60,13 +56,12 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 			{
 				OpenFiles();
 				_logFileName = new Sharpen.IO.File(_logFilePath).GetName();
-				Sharpen.Runtime.Out.Write("  Creating statistics for " + _logFileName + "  ...   "
-					);
+				Runtime.Out.Write("  Creating statistics for " + _logFileName + "  ...   ");
 				long start = Runtime.CurrentTimeMillis();
 				CreateStatistics();
 				long elapsed = Runtime.CurrentTimeMillis() - start;
 				string elapsedString = FormatTime(elapsed);
-				Sharpen.Runtime.Out.WriteLine("Finished! Time taken: " + elapsedString);
+				Runtime.Out.WriteLine("Finished! Time taken: " + elapsedString);
 			}
 			catch (FileNotFoundException e)
 			{
@@ -180,7 +175,7 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 
 		private double CountPercentage(long count, long totalCount)
 		{
-			return 100 * (double)count / (double)totalCount;
+			return 100 * (double)count / totalCount;
 		}
 
 		private void HandleLine(string line)
@@ -203,22 +198,10 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 					}
 					else
 					{
-						if (line.StartsWith(LogConstants.SeekEntry))
-						{
-							HandleSeek();
-						}
-						else
-						{
-							throw new ArgumentException("Unknown command in log: " + line);
-						}
+						throw new ArgumentException("Unknown command in log: " + line);
 					}
 				}
 			}
-		}
-
-		private void HandleSeek()
-		{
-			_seekCount++;
 		}
 
 		private void HandleSync()
@@ -229,18 +212,20 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 		private void HandleRead(string line)
 		{
 			_readCount++;
+			_seekCount++;
 			_readBytes += BytesForLine(line, LogConstants.ReadEntry.Length);
 		}
 
 		private void HandleWrite(string line)
 		{
 			_writeCount++;
+			_seekCount++;
 			_writeBytes += BytesForLine(line, LogConstants.WriteEntry.Length);
 		}
 
 		private long BytesForLine(string line, int commandLength)
 		{
-			return long.Parse(Sharpen.Runtime.Substring(line, commandLength));
+			return long.Parse(Runtime.Substring(line, commandLength));
 		}
 
 		private void CloseFiles()
@@ -264,7 +249,7 @@ namespace Db4objects.Db4o.Bench.Logging.Statistics
 			}
 			catch (IOException e)
 			{
-				Sharpen.Runtime.PrintStackTrace(e);
+				Runtime.PrintStackTrace(e);
 			}
 		}
 

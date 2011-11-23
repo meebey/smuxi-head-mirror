@@ -61,15 +61,16 @@ namespace Db4objects.Db4o.Tests.CLI1
 			Assert.AreSame(item.recursiveStruct.child, QuerySingleItemByStructFoo(22));
 		}
 
-		// ValueTypes are being duplicated.
-		public void _TestUpdate()
+		public void TestUpdate()
 		{
 			Assert.AreEqual(2, Db().Ext().StoredClass(typeof(SimpleStruct)).InstanceCount());
+            Assert.AreEqual(2, Db().Ext().StoredClass(typeof(RecursiveStruct)).InstanceCount());
 			Item item = QuerySingleItemByStructFoo(22);
 
 			Db().Store(item, Int32.MaxValue);
 			Db().Commit();
 			Assert.AreEqual(2, Db().Ext().StoredClass(typeof(SimpleStruct)).InstanceCount());
+            Assert.AreEqual(2, Db().Ext().StoredClass(typeof(RecursiveStruct)).InstanceCount());
 		}
 
 		// TODO:

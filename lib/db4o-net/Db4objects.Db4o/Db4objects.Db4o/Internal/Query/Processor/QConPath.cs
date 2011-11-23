@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Foundation;
@@ -39,11 +39,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return false;
 		}
 
-		internal override bool Evaluate(QCandidate a_candidate)
+		internal override bool Evaluate(IInternalCandidate candidate)
 		{
-			if (!a_candidate.FieldIsAvailable())
+			if (!candidate.FieldIsAvailable())
 			{
-				VisitOnNull(a_candidate.GetRoot());
+				VisitOnNull(candidate.GetRoot());
 			}
 			return true;
 		}
@@ -118,7 +118,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					}
 				}
 			}
-			// }
 			if (mayMorph)
 			{
 				IEnumerator j = IterateChildren();
@@ -155,12 +154,17 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return "QConPath " + base.ToString();
 		}
 
-		public override void SetProcessedByIndex()
+		public override void SetProcessedByIndex(QCandidates candidates)
 		{
 			if (ChildrenCount() <= 1)
 			{
-				InternalSetProcessedByIndex();
+				InternalSetProcessedByIndex(null);
 			}
+		}
+
+		protected override bool CanResolveByFieldIndex()
+		{
+			return true;
 		}
 	}
 }

@@ -34,6 +34,50 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -138,6 +182,7 @@
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MClose.cs"/>
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCloseSocket.cs"/>
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCommit.cs"/>
+<Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCommitReplication.cs"/>
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCommitSystemTransaction.cs"/>
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCommittedCallBackRegistry.cs"/>
 <Compile Include="Db4objects.Db4o.CS\CS\Internal\Messages\MCommittedInfo.cs"/>

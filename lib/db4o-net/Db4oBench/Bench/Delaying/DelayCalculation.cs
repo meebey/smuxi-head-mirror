@@ -2,11 +2,8 @@
 
 using System;
 using System.IO;
-using Db4objects.Db4o.Bench.Delaying;
 using Db4objects.Db4o.Bench.Logging;
 using Db4objects.Db4o.Bench.Timing;
-using Sharpen.IO;
-using Sharpen.Lang;
 
 namespace Db4objects.Db4o.Bench.Delaying
 {
@@ -18,9 +15,9 @@ namespace Db4objects.Db4o.Bench.Delaying
 
 		private MachineCharacteristics _machine2;
 
-		private MachineCharacteristics _fasterMachine = null;
+		private MachineCharacteristics _fasterMachine;
 
-		private MachineCharacteristics _slowerMachine = null;
+		private MachineCharacteristics _slowerMachine;
 
 		/// <exception cref="NumberFormatException"></exception>
 		/// <exception cref="IOException"></exception>
@@ -63,8 +60,7 @@ namespace Db4objects.Db4o.Bench.Delaying
 			{
 				tempDelays[i] = _slowerMachine.times.values[i] - _fasterMachine.times.values[i];
 			}
-			return new Delays(tempDelays[Delays.Read], tempDelays[Delays.Write], tempDelays[Delays
-				.Seek], tempDelays[Delays.Sync]);
+			return new Delays(tempDelays[Delays.Read], tempDelays[Delays.Write], tempDelays[Delays.Sync]);
 		}
 
 		public virtual void AdjustDelays(Delays delays)
@@ -182,9 +178,8 @@ namespace Db4objects.Db4o.Bench.Delaying
 			StreamReader reader = new StreamReader(_logFileName);
 			long readTime = 0;
 			long writeTime = 0;
-			long seekTime = 0;
 			long syncTime = 0;
-			string line = null;
+			string line;
 			while ((line = reader.ReadLine()) != null)
 			{
 				if (line.StartsWith(LogConstants.ReadEntry))
@@ -197,24 +192,14 @@ namespace Db4objects.Db4o.Bench.Delaying
 					{
 						writeTime = ExtractNumber(line);
 					}
-					else
+					else if (line.StartsWith(LogConstants.SyncEntry))
 					{
-						if (line.StartsWith(LogConstants.SeekEntry))
-						{
-							seekTime = ExtractNumber(line);
-						}
-						else
-						{
-							if (line.StartsWith(LogConstants.SyncEntry))
-							{
-								syncTime = ExtractNumber(line);
-							}
-						}
+						syncTime = ExtractNumber(line);
 					}
 				}
 			}
 			reader.Close();
-			times = new Delays(readTime, writeTime, seekTime, syncTime);
+			times = new Delays(readTime, writeTime, syncTime);
 		}
 
 		private long ExtractNumber(string line)

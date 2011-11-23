@@ -1,6 +1,7 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
+using System.Collections;
 using Db4objects.Db4o;
 using Db4objects.Db4o.Ext;
 using Db4objects.Db4o.Foundation;
@@ -308,6 +309,18 @@ namespace Db4objects.Db4o.Internal.Ids
 		public virtual void TraverseIds(IVisitor4 visitor)
 		{
 			_bTree.TraverseKeys(_container.SystemTransaction(), visitor);
+		}
+
+		public virtual void TraverseOwnSlots(IProcedure4 block)
+		{
+			_parentIdSystem.TraverseOwnSlots(block);
+			block.Apply(_parentIdSystem.CommittedSlot(_persistentState.GetID()));
+			block.Apply(_parentIdSystem.CommittedSlot(_bTree.GetID()));
+			IEnumerator nodeIds = _bTree.AllNodeIds(_container.SystemTransaction());
+			while (nodeIds.MoveNext())
+			{
+				block.Apply(_parentIdSystem.CommittedSlot((((int)nodeIds.Current))));
+			}
 		}
 	}
 }

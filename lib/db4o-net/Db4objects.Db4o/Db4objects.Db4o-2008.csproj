@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="3.5">
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,17 +10,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Db4objects.Db4o</RootNamespace>
     <AssemblyName>Db4objects.Db4o</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     
     
   
-
-
-
-
-
-
 
 
 
@@ -118,6 +111,7 @@
 <Compile Include="Db4objects.Db4o\Db4oEmbedded.cs"/>
 <Compile Include="Db4objects.Db4o\Db4oFactory.cs"/>
 <Compile Include="Db4objects.Db4o\Db4oVersion.cs"/>
+<Compile Include="Db4objects.Db4o\Db4o\ReplicationRecord.cs"/>
 <Compile Include="Db4objects.Db4o\Debug4.cs"/>
 <Compile Include="Db4objects.Db4o\Defragment\AbstractIdMapping.cs"/>
 <Compile Include="Db4objects.Db4o\Defragment\DatabaseIdMapping.cs"/>
@@ -198,6 +192,7 @@
 <Compile Include="Db4objects.Db4o\Ext\OldFormatException.cs"/>
 <Compile Include="Db4objects.Db4o\Ext\Status.cs"/>
 <Compile Include="Db4objects.Db4o\Ext\UnsupportedOldFormatException.cs"/>
+<Compile Include="Db4objects.Db4o\Ext\UnsupportedOrderingException.cs"/>
 <Compile Include="Db4objects.Db4o\Ext\VirtualField.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\AbstractTreeIterator.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\Algorithms4.cs"/>
@@ -247,6 +242,8 @@
 <Compile Include="Db4objects.Db4o\Foundation\IIntComparator.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\IIntIterator4.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\IIntObjectVisitor.cs"/>
+<Compile Include="Db4objects.Db4o\Foundation\IIntVisitable.cs"/>
+<Compile Include="Db4objects.Db4o\Foundation\IIntVisitor.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\IListener4.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\IMap4.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\IObjectPool.cs"/>
@@ -318,7 +315,6 @@
 <Compile Include="Db4objects.Db4o\IO\BinDecorator.cs"/>
 <Compile Include="Db4objects.Db4o\IO\BlockAwareBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\BlockAwareBinWindow.cs"/>
-<Compile Include="Db4objects.Db4o\IO\CachedIoAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IO\CachingBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\CachingStorage.cs"/>
 <Compile Include="Db4objects.Db4o\IO\ConstantGrowthStrategy.cs"/>
@@ -328,19 +324,15 @@
 <Compile Include="Db4objects.Db4o\IO\IBlockSize.cs"/>
 <Compile Include="Db4objects.Db4o\IO\IGrowthStrategy.cs"/>
 <Compile Include="Db4objects.Db4o\IO\IStorage.cs"/>
-<Compile Include="Db4objects.Db4o\IO\IoAdapter.cs"/>
-<Compile Include="Db4objects.Db4o\IO\IoAdapterStorage.cs"/>
 <Compile Include="Db4objects.Db4o\IO\MemoryBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\MemoryStorage.cs"/>
 <Compile Include="Db4objects.Db4o\IO\NonFlushingStorage.cs"/>
 <Compile Include="Db4objects.Db4o\IO\PagingMemoryBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\PagingMemoryStorage.cs"/>
-<Compile Include="Db4objects.Db4o\IO\RandomAccessFileAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IO\ReadOnlyBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\StorageDecorator.cs"/>
 <Compile Include="Db4objects.Db4o\IO\SynchronizedBin.cs"/>
 <Compile Include="Db4objects.Db4o\IO\ThreadedSyncBin.cs"/>
-<Compile Include="Db4objects.Db4o\IO\VanillaIoAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IObjectServer.cs"/>
 <Compile Include="Db4objects.Db4o\IObjectSet.cs"/>
 <Compile Include="Db4objects.Db4o\ITransactionAware.cs"/>
@@ -576,6 +568,7 @@
 <Compile Include="Db4objects.Db4o\Internal\IBlockConverter.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\IBuiltinTypeHandler.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\ICallbackInfoCollector.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\ICanExcludeNullInQueries.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\ICommittedCallbackDispatcher.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\IComparable4.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\IDGenerator.cs"/>
@@ -624,6 +617,12 @@
 <Compile Include="Db4objects.Db4o\Internal\LocalPersistentBase.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\LocalTransaction.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\LockedTree.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\ILogging.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\ILoggingInterceptor.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\Level.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\Logger.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\LoggingWrapper.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Logging\PrintWriterLoggerInterceptor.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Mapping\IIDMapping.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Mapping\IdSource.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Mapping\MappedIDPair.cs"/>
@@ -708,8 +707,12 @@
 <Compile Include="Db4objects.Db4o\Internal\Query\IDb4oQueryExecutionListener.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\NQOptimizationInfo.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\PredicateEvaluation.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\IFieldFilterable.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\IInternalCandidate.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\IInternalQuery.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\IParentCandidate.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QCandidate.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\QCandidateBase.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QCandidates.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QCon.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QConClass.cs"/>
@@ -733,8 +736,10 @@
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QEStringCmp.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QField.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QPending.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\QPrimitiveCandidate.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QQuery.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Processor\QQueryBase.cs"/>
+<Compile Include="Db4objects.Db4o\Internal\Query\Processor\QueryResultCandidates.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Result\AbstractLateQueryResult.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Result\AbstractQueryResult.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Query\Result\HybridQueryResult.cs"/>
@@ -922,6 +927,21 @@
 <Compile Include="native\Db4objects.Db4o\Foundation\SignatureGenerator.cs"/>
 <Compile Include="native\Db4objects.Db4o\IO\RandomAccessFileFactory.cs"/>
 <Compile Include="native\Db4objects.Db4o\IObjectContainer.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CF35.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIBase.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIFacadeFactory.CF35.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIFacadeFactory.NET35.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIFacadeFactory.NET40.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIFacadeFactory.SL3.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLIFacadeFactory.SL4.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLR35.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\CLR40.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\ICLIFacade.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\MONO35.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\MONO40.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\Silverlight3.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\Silverlight4.cs"/>
+<Compile Include="native\Db4objects.Db4o\Internal\CLI\SilverlightCLIBase.cs"/>
 <Compile Include="native\Db4objects.Db4o\Internal\Collections\BigSet.cs"/>
 <Compile Include="native\Db4objects.Db4o\Internal\ComparerAdaptor.cs"/>
 <Compile Include="native\Db4objects.Db4o\Internal\Config4Impl.cs"/>
@@ -999,6 +1019,7 @@
 <Compile Include="native\Sharpen\IO\IOutputStream.cs"/>
 <Compile Include="native\Sharpen\IO\InputStream.cs"/>
 <Compile Include="native\Sharpen\IO\OutputStream.cs"/>
+<Compile Include="native\Sharpen\IO\PrintWriter.cs"/>
 <Compile Include="native\Sharpen\IO\RandomAccessFile.cs"/>
 <Compile Include="native\Sharpen\IO\StreamAdaptor.cs"/>
 <Compile Include="native\Sharpen\Lang\IdentityHashCodeProvider.cs"/>
@@ -1035,6 +1056,9 @@
 <Compile Include="native\net\SerializationConstructor.cs"/>
 <Compile Include="native\net\TSerializable.cs"/>
 </ItemGroup>
+  <ItemGroup>
+    <Folder Include="native\Db4objects.Db4o\Internal\CLI\"/>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets"/>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

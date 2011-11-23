@@ -1,7 +1,6 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
-using System.Text;
 using Db4objects.Db4o;
 using Db4objects.Db4o.Consistency;
 using Db4objects.Db4o.Ext;
@@ -16,125 +15,19 @@ namespace Db4objects.Db4o.Consistency
 {
 	public class ConsistencyChecker
 	{
+		private readonly IList _bogusSlots = new ArrayList();
+
 		private readonly LocalObjectContainer _db;
 
-		private readonly IList bogusSlots = new ArrayList();
-
-		private TreeIntObject mappings;
-
-		public class SlotSource
-		{
-			public static readonly ConsistencyChecker.SlotSource IdSystem = new ConsistencyChecker.SlotSource
-				("IdSystem");
-
-			public static readonly ConsistencyChecker.SlotSource Freespace = new ConsistencyChecker.SlotSource
-				("Freespace");
-
-			private readonly string _name;
-
-			private SlotSource(string name)
-			{
-				_name = name;
-			}
-
-			public override string ToString()
-			{
-				return _name;
-			}
-		}
-
-		public class SlotWithSource
-		{
-			public readonly Slot slot;
-
-			public readonly ConsistencyChecker.SlotSource source;
-
-			public SlotWithSource(Slot slot, ConsistencyChecker.SlotSource source)
-			{
-				this.slot = slot;
-				this.source = source;
-			}
-
-			public override string ToString()
-			{
-				return slot + "(" + source + ")";
-			}
-		}
-
-		public class ConsistencyReport
-		{
-			private const int MaxReportedItems = 50;
-
-			internal readonly IList bogusSlots;
-
-			internal readonly IList overlaps;
-
-			internal readonly IList invalidObjectIds;
-
-			internal readonly IList invalidFieldIndexEntries;
-
-			public ConsistencyReport(IList bogusSlots, IList overlaps, IList invalidClassIds, 
-				IList invalidFieldIndexEntries)
-			{
-				this.bogusSlots = bogusSlots;
-				this.overlaps = overlaps;
-				this.invalidObjectIds = invalidClassIds;
-				this.invalidFieldIndexEntries = invalidFieldIndexEntries;
-			}
-
-			public virtual bool Consistent()
-			{
-				return bogusSlots.Count == 0 && overlaps.Count == 0 && invalidObjectIds.Count == 
-					0 && invalidFieldIndexEntries.Count == 0;
-			}
-
-			public override string ToString()
-			{
-				if (Consistent())
-				{
-					return "no inconsistencies detected";
-				}
-				StringBuilder message = new StringBuilder("INCONSISTENCIES DETECTED\n").Append(overlaps
-					.Count + " overlaps\n").Append(bogusSlots.Count + " bogus slots\n").Append(invalidObjectIds
-					.Count + " invalid class ids\n").Append(invalidFieldIndexEntries.Count + " invalid field index entries\n"
-					);
-				message.Append("(slot lengths are non-blocked)\n");
-				AppendInconsistencyReport(message, "OVERLAPS", overlaps);
-				AppendInconsistencyReport(message, "BOGUS SLOTS", bogusSlots);
-				AppendInconsistencyReport(message, "INVALID OBJECT IDS", invalidObjectIds);
-				AppendInconsistencyReport(message, "INVALID FIELD INDEX ENTRIES", invalidFieldIndexEntries
-					);
-				return message.ToString();
-			}
-
-			private void AppendInconsistencyReport(StringBuilder str, string title, IList entries
-				)
-			{
-				if (entries.Count != 0)
-				{
-					str.Append(title + "\n");
-					int count = 0;
-					for (IEnumerator entryIter = entries.GetEnumerator(); entryIter.MoveNext(); )
-					{
-						object entry = entryIter.Current;
-						str.Append(entry).Append("\n");
-						count++;
-						if (count > MaxReportedItems)
-						{
-							str.Append("and more...\n");
-							break;
-						}
-					}
-				}
-			}
-		}
+		private readonly OverlapMap _overlaps;
 
 		public static void Main(string[] args)
 		{
 			IEmbeddedObjectContainer db = Db4oEmbedded.OpenFile(args[0]);
 			try
 			{
-				Sharpen.Runtime.Out.WriteLine(new ConsistencyChecker(db).CheckSlotConsistency());
+				Sharpen.Runtime.Out.WriteLine(new Db4objects.Db4o.Consistency.ConsistencyChecker(
+					db).CheckSlotConsistency());
 			}
 			finally
 			{
@@ -145,14 +38,30 @@ namespace Db4objects.Db4o.Consistency
 		public ConsistencyChecker(IObjectContainer db)
 		{
 			_db = (LocalObjectContainer)db;
+			_overlaps = new OverlapMap(_db.BlockConverter());
 		}
 
-		public virtual ConsistencyChecker.ConsistencyReport CheckSlotConsistency()
+		public virtual ConsistencyReport CheckSlotConsistency()
 		{
-			MapIdSystem();
-			MapFreespace();
-			return new ConsistencyChecker.ConsistencyReport(bogusSlots, CollectOverlaps(), CheckClassIndices
-				(), CheckFieldIndices());
+			return ((ConsistencyReport)_db.SyncExec(new _IClosure4_38(this)));
+		}
+
+		private sealed class _IClosure4_38 : IClosure4
+		{
+			public _IClosure4_38(ConsistencyChecker _enclosing)
+			{
+				this._enclosing = _enclosing;
+			}
+
+			public object Run()
+			{
+				this._enclosing.MapIdSystem();
+				this._enclosing.MapFreespace();
+				return new ConsistencyReport(this._enclosing._bogusSlots, this._enclosing._overlaps
+					, this._enclosing.CheckClassIndices(), this._enclosing.CheckFieldIndices());
+			}
+
+			private readonly ConsistencyChecker _enclosing;
 		}
 
 		private IList CheckClassIndices()
@@ -172,15 +81,15 @@ namespace Db4objects.Db4o.Consistency
 					continue;
 				}
 				BTreeClassIndexStrategy index = (BTreeClassIndexStrategy)clazz.Index();
-				index.TraverseAll(_db.SystemTransaction(), new _IVisitor4_143(this, invalidIds, clazz
+				index.TraverseIds(_db.SystemTransaction(), new _IVisitor4_64(this, invalidIds, clazz
 					));
 			}
 			return invalidIds;
 		}
 
-		private sealed class _IVisitor4_143 : IVisitor4
+		private sealed class _IVisitor4_64 : IVisitor4
 		{
-			public _IVisitor4_143(ConsistencyChecker _enclosing, IList invalidIds, ClassMetadata
+			public _IVisitor4_64(ConsistencyChecker _enclosing, IList invalidIds, ClassMetadata
 				 clazz)
 			{
 				this._enclosing = _enclosing;
@@ -210,14 +119,14 @@ namespace Db4objects.Db4o.Consistency
 			while (clazzIter.MoveNext())
 			{
 				ClassMetadata clazz = clazzIter.CurrentClass();
-				clazz.TraverseDeclaredFields(new _IProcedure4_159(this, invalidIds, clazz));
+				clazz.TraverseDeclaredFields(new _IProcedure4_80(this, invalidIds, clazz));
 			}
 			return invalidIds;
 		}
 
-		private sealed class _IProcedure4_159 : IProcedure4
+		private sealed class _IProcedure4_80 : IProcedure4
 		{
-			public _IProcedure4_159(ConsistencyChecker _enclosing, IList invalidIds, ClassMetadata
+			public _IProcedure4_80(ConsistencyChecker _enclosing, IList invalidIds, ClassMetadata
 				 clazz)
 			{
 				this._enclosing = _enclosing;
@@ -233,14 +142,14 @@ namespace Db4objects.Db4o.Consistency
 				}
 				BTree fieldIndex = ((FieldMetadata)field).GetIndex(this._enclosing._db.SystemTransaction
 					());
-				fieldIndex.TraverseKeys(this._enclosing._db.SystemTransaction(), new _IVisitor4_165
+				fieldIndex.TraverseKeys(this._enclosing._db.SystemTransaction(), new _IVisitor4_86
 					(this, invalidIds, clazz, field));
 			}
 
-			private sealed class _IVisitor4_165 : IVisitor4
+			private sealed class _IVisitor4_86 : IVisitor4
 			{
-				public _IVisitor4_165(_IProcedure4_159 _enclosing, IList invalidIds, ClassMetadata
-					 clazz, object field)
+				public _IVisitor4_86(_IProcedure4_80 _enclosing, IList invalidIds, ClassMetadata 
+					clazz, object field)
 				{
 					this._enclosing = _enclosing;
 					this.invalidIds = invalidIds;
@@ -258,7 +167,7 @@ namespace Db4objects.Db4o.Consistency
 					}
 				}
 
-				private readonly _IProcedure4_159 _enclosing;
+				private readonly _IProcedure4_80 _enclosing;
 
 				private readonly IList invalidIds;
 
@@ -286,69 +195,26 @@ namespace Db4objects.Db4o.Consistency
 			}
 		}
 
-		private IList CollectOverlaps()
-		{
-			IBlockConverter blockConverter = _db.BlockConverter();
-			IList overlaps = new ArrayList();
-			ByRef prevSlot = ByRef.NewInstance();
-			mappings.Traverse(new _IVisitor4_192(prevSlot, blockConverter, overlaps));
-			return overlaps;
-		}
-
-		private sealed class _IVisitor4_192 : IVisitor4
-		{
-			public _IVisitor4_192(ByRef prevSlot, IBlockConverter blockConverter, IList overlaps
-				)
-			{
-				this.prevSlot = prevSlot;
-				this.blockConverter = blockConverter;
-				this.overlaps = overlaps;
-			}
-
-			public void Visit(object obj)
-			{
-				ConsistencyChecker.SlotWithSource curSlot = (ConsistencyChecker.SlotWithSource)((
-					TreeIntObject)obj)._object;
-				if (((ConsistencyChecker.SlotWithSource)prevSlot.value) != null)
-				{
-					if (((ConsistencyChecker.SlotWithSource)prevSlot.value).slot.Address() + blockConverter
-						.ToBlockedLength(((ConsistencyChecker.SlotWithSource)prevSlot.value).slot).Length
-						() > curSlot.slot.Address())
-					{
-						overlaps.Add(new Pair(((ConsistencyChecker.SlotWithSource)prevSlot.value), curSlot
-							));
-					}
-				}
-				prevSlot.value = curSlot;
-			}
-
-			private readonly ByRef prevSlot;
-
-			private readonly IBlockConverter blockConverter;
-
-			private readonly IList overlaps;
-		}
-
 		private void MapFreespace()
 		{
-			_db.FreespaceManager().Traverse(new _IVisitor4_207(this));
+			_db.FreespaceManager().Traverse(new _IVisitor4_110(this));
 		}
 
-		private sealed class _IVisitor4_207 : IVisitor4
+		private sealed class _IVisitor4_110 : IVisitor4
 		{
-			public _IVisitor4_207(ConsistencyChecker _enclosing)
+			public _IVisitor4_110(ConsistencyChecker _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
 
 			public void Visit(object slot)
 			{
-				if (((Slot)slot).Address() < 0)
+				if (this._enclosing.IsBogusSlot(((Slot)slot).Address(), ((Slot)slot).Length()))
 				{
-					this._enclosing.bogusSlots.Add(new ConsistencyChecker.SlotWithSource(((Slot)slot)
-						, ConsistencyChecker.SlotSource.Freespace));
+					this._enclosing._bogusSlots.Add(new SlotWithSource(((Slot)slot), SlotSource.Freespace
+						));
 				}
-				this._enclosing.AddMapping(((Slot)slot), ConsistencyChecker.SlotSource.Freespace);
+				this._enclosing._overlaps.Add(((Slot)slot), SlotSource.Freespace);
 			}
 
 			private readonly ConsistencyChecker _enclosing;
@@ -357,53 +223,63 @@ namespace Db4objects.Db4o.Consistency
 		private void MapIdSystem()
 		{
 			IIdSystem idSystem = _db.IdSystem();
-			if (idSystem is BTreeIdSystem)
+			if (!(idSystem is BTreeIdSystem))
 			{
-				((BTreeIdSystem)idSystem).TraverseIds(new _IVisitor4_220(this));
+				Sharpen.Runtime.Err.WriteLine("No btree id system found - not mapping ids.");
+				return;
 			}
+			((BTreeIdSystem)idSystem).TraverseIds(new _IVisitor4_126(this));
+			idSystem.TraverseOwnSlots(new _IProcedure4_136(this));
 		}
 
-		private sealed class _IVisitor4_220 : IVisitor4
+		private sealed class _IVisitor4_126 : IVisitor4
 		{
-			public _IVisitor4_220(ConsistencyChecker _enclosing)
+			public _IVisitor4_126(ConsistencyChecker _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
 
 			public void Visit(object mapping)
 			{
-				if (((IdSlotMapping)mapping)._address < 0)
+				if (this._enclosing.IsBogusSlot(((IdSlotMapping)mapping)._address, ((IdSlotMapping
+					)mapping)._length))
 				{
-					this._enclosing.bogusSlots.Add(new ConsistencyChecker.SlotWithSource(((IdSlotMapping
-						)mapping).Slot(), ConsistencyChecker.SlotSource.IdSystem));
+					this._enclosing._bogusSlots.Add(new SlotWithSource(((IdSlotMapping)mapping).Slot(
+						), SlotSource.IdSystem));
 				}
 				if (((IdSlotMapping)mapping)._address > 0)
 				{
-					this._enclosing.AddMapping(((IdSlotMapping)mapping).Slot(), ConsistencyChecker.SlotSource
-						.IdSystem);
+					this._enclosing._overlaps.Add(((IdSlotMapping)mapping).Slot(), SlotSource.IdSystem
+						);
 				}
 			}
 
 			private readonly ConsistencyChecker _enclosing;
 		}
 
-		private void AddMapping(Slot slot, ConsistencyChecker.SlotSource source)
+		private sealed class _IProcedure4_136 : IProcedure4
 		{
-			mappings = ((TreeIntObject)Tree.Add(mappings, new ConsistencyChecker.MappingTree(
-				slot, source)));
+			public _IProcedure4_136(ConsistencyChecker _enclosing)
+			{
+				this._enclosing = _enclosing;
+			}
+
+			public void Apply(object slot)
+			{
+				if (this._enclosing.IsBogusSlot(((Slot)slot).Address(), ((Slot)slot).Length()))
+				{
+					this._enclosing._bogusSlots.Add(new SlotWithSource(((Slot)slot), SlotSource.IdSystem
+						));
+				}
+				this._enclosing._overlaps.Add(((Slot)slot), SlotSource.IdSystem);
+			}
+
+			private readonly ConsistencyChecker _enclosing;
 		}
 
-		private class MappingTree : TreeIntObject
+		private bool IsBogusSlot(int address, int length)
 		{
-			public MappingTree(Slot slot, ConsistencyChecker.SlotSource source) : base(slot.Address
-				(), new ConsistencyChecker.SlotWithSource(slot, source))
-			{
-			}
-
-			public override bool Duplicates()
-			{
-				return true;
-			}
+			return address < 0 || (long)address + length > _db.FileLength();
 		}
 	}
 }

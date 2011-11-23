@@ -209,7 +209,7 @@ namespace Db4objects.Db4o.Typehandlers
 													typeof(Queue<>),
 													typeof(System.Collections.ObjectModel.Collection<>),
 													typeof(ActivatableList<>),
-#if NET_3_5 && ! CF
+#if NET_3_5 && !CF && !SILVERLIGHT
 													typeof(HashSet<>),
 #endif
 												};

@@ -1,10 +1,8 @@
 ﻿/* Copyright (C) 2007 - 2008  Versant Inc.  http://www.db4o.com */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-
 using Db4objects.Db4o.Linq.Expressions;
 using Db4objects.Db4o.Linq.Internals;
 
@@ -23,6 +21,22 @@ namespace Db4objects.Db4o.Linq
 				data => data.UnoptimizedWhere(expression.Compile())
 			);
 		}
+
+        public static IDb4oLinqQuery<TSource> Skip<TSource>(this IDb4oLinqQuery<TSource> query, int itemsToSkip)
+        {
+			if (query == null)
+			{
+				throw new ArgumentNullException("query");
+			}
+
+        	var skipable = query as IDelayedSelectOperation<TSource>;
+            if (null != skipable)
+            {
+                return new UnoptimizedQuery<TSource>(skipable.Skip(itemsToSkip));
+            }
+
+        	return new UnoptimizedQuery<TSource>(Enumerable.Skip(query, itemsToSkip));
+        } 
 
 		public static int Count<TSource>(this IDb4oLinqQuery<TSource> self)
 		{
@@ -111,10 +125,14 @@ namespace Db4objects.Db4o.Linq
 			);
 		}
 
-		public static IDb4oLinqQuery<TRet> Select<TSource, TRet>(this IDb4oLinqQuery<TSource> self, Func<TSource, TRet> selector)
+		public static IDb4oLinqQuery<TRet> Select<TSource, TRet>(this IDb4oLinqQuery<TSource> self,
+            Func<TSource, TRet> selector)
 		{
 			var placeHolderQuery = self as PlaceHolderQuery<TSource>;
 			if (placeHolderQuery != null) return new Db4oQuery<TRet>(placeHolderQuery.QueryFactory);
+
+            var asDb4oQuery = self as IDelayedSelectOperation<TSource>;
+            if (asDb4oQuery != null) return new DelayedSelect<TSource, TRet>(asDb4oQuery, selector);
 
 			return new UnoptimizedQuery<TRet>(Enumerable.Select(self, selector));
 		}

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -17,18 +17,31 @@ namespace Db4objects.Db4o.Internal.Btree
 		public AbstractBTreeRangeIterator(BTreeRangeSingle range)
 		{
 			_range = range;
-			_cursor = range.First();
+			BTreePointer first = range.First();
+			if (first != null)
+			{
+				// we clone here, because we are calling unsafeNext() on BTreePointer
+				// _cursor is our private copy, we modify it and never pass it out.
+				_cursor = first.ShallowClone();
+			}
 		}
 
 		public virtual bool MoveNext()
 		{
-			if (ReachedEnd(_cursor))
+			if (ReachedEnd())
 			{
 				_current = null;
 				return false;
 			}
-			_current = _cursor;
-			_cursor = _cursor.Next();
+			if (_current == null)
+			{
+				_current = _cursor.ShallowClone();
+			}
+			else
+			{
+				_cursor.CopyTo(_current);
+			}
+			_cursor = _cursor.UnsafeFastNext();
 			return true;
 		}
 
@@ -46,9 +59,9 @@ namespace Db4objects.Db4o.Internal.Btree
 			return _current;
 		}
 
-		private bool ReachedEnd(BTreePointer cursor)
+		private bool ReachedEnd()
 		{
-			if (cursor == null)
+			if (_cursor == null)
 			{
 				return true;
 			}
@@ -56,7 +69,7 @@ namespace Db4objects.Db4o.Internal.Btree
 			{
 				return false;
 			}
-			return _range.End().Equals(cursor);
+			return _range.End().Equals(_cursor);
 		}
 
 		public abstract object Current

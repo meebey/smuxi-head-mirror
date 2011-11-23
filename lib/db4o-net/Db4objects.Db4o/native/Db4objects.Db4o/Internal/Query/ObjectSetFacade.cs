@@ -19,6 +19,11 @@ namespace Db4objects.Db4o.Internal.Query
             _delegate = new StatefulQueryResult(qr);
 		}
 
+		void IExtObjectSet.Skip(int count)
+		{
+			_delegate.Skip(count);
+		}
+
 		#region IObjectSet Members
 		
 		public Object Get(int index)

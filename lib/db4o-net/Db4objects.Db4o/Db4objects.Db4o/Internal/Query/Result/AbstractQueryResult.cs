@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -15,6 +15,8 @@ namespace Db4objects.Db4o.Internal.Query.Result
 	public abstract class AbstractQueryResult : IQueryResult
 	{
 		protected readonly Db4objects.Db4o.Internal.Transaction _transaction;
+
+		private int _skipCount;
 
 		public AbstractQueryResult(Db4objects.Db4o.Internal.Transaction transaction)
 		{
@@ -62,12 +64,12 @@ namespace Db4objects.Db4o.Internal.Query.Result
 
 		public virtual IEnumerator GetEnumerator()
 		{
-			return new _MappingIterator_56(this, IterateIDs());
+			return new _MappingIterator_57(this, Skip(IterateIDs()));
 		}
 
-		private sealed class _MappingIterator_56 : MappingIterator
+		private sealed class _MappingIterator_57 : MappingIterator
 		{
-			public _MappingIterator_56(AbstractQueryResult _enclosing, IEnumerator baseArg1) : 
+			public _MappingIterator_57(AbstractQueryResult _enclosing, IEnumerator baseArg1) : 
 				base(baseArg1)
 			{
 				this._enclosing = _enclosing;
@@ -91,6 +93,53 @@ namespace Db4objects.Db4o.Internal.Query.Result
 			}
 
 			private readonly AbstractQueryResult _enclosing;
+		}
+
+		protected virtual IEnumerator Skip(IEnumerator source)
+		{
+			return new _IEnumerator_74(this, source);
+		}
+
+		private sealed class _IEnumerator_74 : IEnumerator
+		{
+			public _IEnumerator_74(AbstractQueryResult _enclosing, IEnumerator source)
+			{
+				this._enclosing = _enclosing;
+				this.source = source;
+			}
+
+			private int _skipped;
+
+			public bool MoveNext()
+			{
+				while (this._skipped < this._enclosing._skipCount)
+				{
+					this._skipped++;
+					if (!source.MoveNext())
+					{
+						return false;
+					}
+				}
+				return source.MoveNext();
+			}
+
+			public object Current
+			{
+				get
+				{
+					return source.Current;
+				}
+			}
+
+			public void Reset()
+			{
+				source.Reset();
+				this._skipped = 0;
+			}
+
+			private readonly AbstractQueryResult _enclosing;
+
+			private readonly IEnumerator source;
 		}
 
 		public virtual Db4objects.Db4o.Internal.Query.Result.AbstractQueryResult SupportSize
@@ -144,6 +193,11 @@ namespace Db4objects.Db4o.Internal.Query.Result
 			throw new NotImplementedException();
 		}
 
+		public virtual void Skip(int count)
+		{
+			_skipCount = count;
+		}
+
 		public virtual void Sort(IQueryComparator cmp)
 		{
 			throw new NotImplementedException();
@@ -159,7 +213,6 @@ namespace Db4objects.Db4o.Internal.Query.Result
 			throw new NotImplementedException();
 		}
 
-		/// <param name="i"></param>
 		public virtual int GetId(int i)
 		{
 			throw new NotImplementedException();
@@ -170,25 +223,21 @@ namespace Db4objects.Db4o.Internal.Query.Result
 			throw new NotImplementedException();
 		}
 
-		/// <param name="c"></param>
 		public virtual void LoadFromClassIndex(ClassMetadata c)
 		{
 			throw new NotImplementedException();
 		}
 
-		/// <param name="i"></param>
 		public virtual void LoadFromClassIndexes(ClassMetadataIterator i)
 		{
 			throw new NotImplementedException();
 		}
 
-		/// <param name="ids"></param>
 		public virtual void LoadFromIdReader(IEnumerator ids)
 		{
 			throw new NotImplementedException();
 		}
 
-		/// <param name="q"></param>
 		public virtual void LoadFromQuery(QQuery q)
 		{
 			throw new NotImplementedException();

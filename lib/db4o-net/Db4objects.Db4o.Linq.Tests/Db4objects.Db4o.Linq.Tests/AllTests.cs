@@ -19,6 +19,7 @@ namespace Db4objects.Db4o.Linq.Tests
 				typeof(CodeAnalysis.AllTests),
 				typeof(Expressions.AllTests),
 				typeof(Queries.AllTests),
+				typeof(QueryOperators.AllTests),
                 typeof(ByteQueryTestCase),
 				typeof(CollectionContainsObjectTestCase),
 				typeof(CollectionContainsOptimizationTestCase),
@@ -39,6 +40,9 @@ namespace Db4objects.Db4o.Linq.Tests
 				typeof(VisualBasicTestCase),
 				typeof(WhereTestCase),
 #if !CF
+				typeof(GenericQueryTestCase),
+#endif
+#if !CF && !SILVERLIGHT
 				typeof(GenericQueryTestCase),
 #endif
 			};

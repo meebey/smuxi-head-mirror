@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -16,7 +16,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 {
 	/// <summary>Object constraint on queries</summary>
 	/// <exclude></exclude>
-	public class QConObject : QCon
+	public class QConObject : QCon, IFieldFilterable
 	{
 		private object i_object;
 
@@ -146,11 +146,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return i_field._fieldMetadata.CanLoadByIndex();
 		}
 
-		internal override bool Evaluate(QCandidate a_candidate)
+		internal override bool Evaluate(IInternalCandidate candidate)
 		{
 			try
 			{
-				return a_candidate.Evaluate(this, i_evaluator);
+				return candidate.Evaluate(this, i_evaluator);
 			}
 			catch (Exception e)
 			{
@@ -175,7 +175,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				}
 				if (hasEvaluation)
 				{
-					a_candidates.Traverse(i_field);
 					IEnumerator j = IterateChildren();
 					while (j.MoveNext())
 					{
@@ -219,8 +218,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		{
 			if (i_field.IsClass())
 			{
-				a_candidates.Traverse(i_field);
-				a_candidates.Filter(i_candidates);
+				a_candidates.Filter(i_field, i_candidates);
 			}
 		}
 
@@ -230,13 +228,13 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			//       this field to load the objects, if hasOrdering() is false
 			if (i_field.IsQueryLeaf() || IsNullConstraint())
 			{
-				a_candidates.Traverse(i_field);
 				PrepareComparison(i_field);
-				a_candidates.Filter(this);
+				a_candidates.Filter(i_field, this);
 			}
 		}
 
-		internal virtual IPreparedComparison PrepareComparison(QCandidate candidate)
+		internal virtual IPreparedComparison PrepareComparison(IInternalCandidate candidate
+			)
 		{
 			if (_preparedComparison != null)
 			{
@@ -411,12 +409,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		public override void Visit(object obj)
 		{
-			QCandidate qc = (QCandidate)obj;
+			IInternalCandidate qc = (IInternalCandidate)obj;
 			bool res = true;
 			bool processed = false;
 			if (_checkClassMetadataOnly)
 			{
-				ClassMetadata yc = qc.ReadClassMetadata();
+				ClassMetadata yc = qc.ClassMetadata();
 				if (yc != null)
 				{
 					res = i_evaluator.Not(_classMetadata.GetHigherHierarchy(yc) == _classMetadata);
@@ -428,6 +426,28 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				res = Evaluate(qc);
 			}
 			Visit1(qc.GetRoot(), this, res);
+		}
+
+		public virtual void Filter(QField field, IParentCandidate candidate)
+		{
+			candidate.UseField(field);
+			bool res = true;
+			bool processed = false;
+			if (_checkClassMetadataOnly)
+			{
+				ClassMetadata classMetadata = candidate.ClassMetadata();
+				if (classMetadata != null)
+				{
+					res = i_evaluator.Not(_classMetadata.GetHigherHierarchy(classMetadata) == _classMetadata
+						);
+					processed = true;
+				}
+			}
+			if (!processed)
+			{
+				res = Evaluate(candidate);
+			}
+			Visit1(candidate.GetRoot(), this, res);
 		}
 
 		public override IConstraint Contains()
@@ -556,6 +576,25 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				str += i_object.ToString();
 			}
 			return str;
+		}
+
+		protected override void InternalSetProcessedByIndex(QCandidates candidates)
+		{
+			base.InternalSetProcessedByIndex(candidates);
+			if (i_field == null)
+			{
+				return;
+			}
+			FieldMetadata fieldMetadata = i_field.GetFieldMetadata();
+			if (!fieldMetadata.IsVirtual())
+			{
+				candidates.WasLoadedFromClassFieldIndex(true);
+			}
+		}
+
+		protected override bool CanResolveByFieldIndex()
+		{
+			return false;
 		}
 	}
 }

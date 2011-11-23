@@ -76,7 +76,7 @@ namespace Sharpen.Lang
 		{
 			get { return _simpleName; }
 		}
-		
+
 		public override AssemblyName AssemblyName
 		{
 			get { return _assemblyName; }
@@ -86,7 +86,7 @@ namespace Sharpen.Lang
 		{
 			return _assemblyName == null
 				? Type.GetType(SimpleName)
-                : ResolveAssembly().GetType(SimpleName);
+				: ResolveAssembly().GetType(SimpleName);
 		}
 
 		public override void AppendTypeName(StringBuilder builder)
@@ -120,7 +120,7 @@ namespace Sharpen.Lang
 			{
 				return LoadUnversionedAssembly(_assemblyName);
 			}
-			
+
 			Assembly found;
 			try
 			{
@@ -136,17 +136,25 @@ namespace Sharpen.Lang
 #endif
 		}
 
-		private Assembly LoadUnversionedAssembly(AssemblyName unversioned)
-		{	
+		private static Assembly LoadUnversionedAssembly(AssemblyName unversioned)
+		{
 #if CF || SILVERLIGHT
             return Assembly.Load(unversioned);
 #else
-			Assembly found = Assembly.LoadWithPartialName(unversioned.FullName);
-			return found == null
-			       	? Assembly.Load(unversioned)
-			       	: found;
+			Assembly found = LoadFromCurrentAppDomain(unversioned.FullName);
+			return found != null 
+						? found 
+						: Assembly.Load(unversioned);
 #endif
 		}
+
+#if !CF && !SILVERLIGHT
+		private static Assembly LoadFromCurrentAppDomain(string fullName)
+		{
+			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			return Array.Find(assemblies, a => a.GetName().Name == fullName);
+		}
+#endif
 	}
 
 	public abstract class QualifiedTypeReference : TypeReference
