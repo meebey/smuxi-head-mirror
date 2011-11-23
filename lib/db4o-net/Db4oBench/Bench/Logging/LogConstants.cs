@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Sharpen.Util;
 
@@ -12,8 +12,10 @@ namespace Db4objects.Db4o.Bench.Logging
 
 		public static readonly string SyncEntry = "SYNC ";
 
+		public static readonly string SeekEntry = "SEEK ";
+
 		public static readonly string[] AllConstants = new string[] { ReadEntry, WriteEntry
-			, SyncEntry };
+			, SyncEntry, SeekEntry };
 
 		public static readonly string Separator = ",";
 

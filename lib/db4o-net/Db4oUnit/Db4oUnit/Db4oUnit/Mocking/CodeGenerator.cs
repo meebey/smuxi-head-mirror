@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4oUnit;
@@ -11,7 +11,7 @@ namespace Db4oUnit.Mocking
 	{
 		/// <summary>
 		/// Generates an array that can be used with
-		/// <see cref="MethodCallRecorder.Verify(MethodCall[])">MethodCallRecorder.Verify(MethodCall[])
+		/// <see cref="MethodCallRecorder.Verify(db4ounit.mocking.MethodCall[])">MethodCallRecorder.Verify(db4ounit.mocking.MethodCall[])
 		/// 	</see>
 		/// .
 		/// Example:

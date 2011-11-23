@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -432,22 +432,132 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				{
 					result.CheckDuplicates();
 				}
+				ObjectContainerBase stream = Stream();
 				i = new Iterator4Impl(candidateCollection);
 				while (i.MoveNext())
 				{
 					QCandidates candidates = (QCandidates)i.Current;
 					if (topLevel)
 					{
-						candidates.TraverseIds(result);
+						candidates.Traverse(result);
 					}
 					else
 					{
-						candidates.TraverseIds(new QQueryBase.AscendingQueryExecutor(_trans, result, executionPath
-							));
+						candidates.Traverse(new _IVisitor4_374(this, executionPath, stream, result));
 					}
 				}
 			}
 			Sort(result);
+		}
+
+		private sealed class _IVisitor4_374 : IVisitor4
+		{
+			public _IVisitor4_374(QQueryBase _enclosing, Collection4 executionPath, ObjectContainerBase
+				 stream, IdListQueryResult result)
+			{
+				this._enclosing = _enclosing;
+				this.executionPath = executionPath;
+				this.stream = stream;
+				this.result = result;
+			}
+
+			public void Visit(object a_object)
+			{
+				QCandidate candidate = (QCandidate)a_object;
+				if (candidate.Include())
+				{
+					TreeInt ids = new TreeInt(candidate._key);
+					ByRef idsNew = new ByRef();
+					IEnumerator itPath = executionPath.GetEnumerator();
+					while (itPath.MoveNext())
+					{
+						idsNew.value = null;
+						string fieldName = (string)(itPath.Current);
+						if (ids != null)
+						{
+							ids.Traverse(new _IVisitor4_385(this, stream, fieldName, idsNew));
+						}
+						ids = (TreeInt)((TreeInt)idsNew.value);
+					}
+					if (ids != null)
+					{
+						ids.Traverse(new _IVisitor4_406(result));
+					}
+				}
+			}
+
+			private sealed class _IVisitor4_385 : IVisitor4
+			{
+				public _IVisitor4_385(_IVisitor4_374 _enclosing, ObjectContainerBase stream, string
+					 fieldName, ByRef idsNew)
+				{
+					this._enclosing = _enclosing;
+					this.stream = stream;
+					this.fieldName = fieldName;
+					this.idsNew = idsNew;
+				}
+
+				public void Visit(object treeInt)
+				{
+					int id = ((TreeInt)treeInt)._key;
+					StatefulBuffer reader = stream.ReadStatefulBufferById(this._enclosing._enclosing.
+						_trans, id);
+					if (reader != null)
+					{
+						ObjectHeader oh = new ObjectHeader(stream, reader);
+						CollectIdContext context = new CollectIdContext(this._enclosing._enclosing._trans
+							, oh, reader);
+						oh.ClassMetadata().CollectIDs(context, fieldName);
+						Tree.Traverse(context.Ids(), new _IVisitor4_394(idsNew));
+					}
+				}
+
+				private sealed class _IVisitor4_394 : IVisitor4
+				{
+					public _IVisitor4_394(ByRef idsNew)
+					{
+						this.idsNew = idsNew;
+					}
+
+					public void Visit(object node)
+					{
+						idsNew.value = TreeInt.Add(((TreeInt)idsNew.value), ((TreeInt)node)._key);
+					}
+
+					private readonly ByRef idsNew;
+				}
+
+				private readonly _IVisitor4_374 _enclosing;
+
+				private readonly ObjectContainerBase stream;
+
+				private readonly string fieldName;
+
+				private readonly ByRef idsNew;
+			}
+
+			private sealed class _IVisitor4_406 : IVisitor4
+			{
+				public _IVisitor4_406(IdListQueryResult result)
+				{
+					this.result = result;
+				}
+
+				public void Visit(object treeInt)
+				{
+					result.AddKeyCheckDuplicates(((TreeInt)treeInt)._key);
+				}
+
+				private readonly IdListQueryResult result;
+			}
+
+			private readonly QQueryBase _enclosing;
+
+			private readonly Collection4 executionPath;
+
+			private readonly ObjectContainerBase stream;
+
+			private readonly IdListQueryResult result;
 		}
 
 		private void TriggerQueryOnFinished()
@@ -466,7 +576,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			QQueryBase.CreateCandidateCollectionResult r = CreateCandidateCollection();
 			Collection4 executionPath = ExecutionPath(r);
 			IEnumerator candidateCollection = new Iterator4Impl(r.candidateCollection);
-			MappingIterator executeCandidates = new _MappingIterator_397(executionPath, candidateCollection
+			MappingIterator executeCandidates = new _MappingIterator_438(executionPath, candidateCollection
 				);
 			CompositeIterator4 resultingIDs = new CompositeIterator4(executeCandidates);
 			if (!r.checkDuplicates)
@@ -476,9 +586,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return CheckDuplicates(resultingIDs);
 		}
 
-		private sealed class _MappingIterator_397 : MappingIterator
+		private sealed class _MappingIterator_438 : MappingIterator
 		{
-			public _MappingIterator_397(Collection4 executionPath, IEnumerator baseArg1) : base
+			public _MappingIterator_438(Collection4 executionPath, IEnumerator baseArg1) : base
 				(baseArg1)
 			{
 				this.executionPath = executionPath;
@@ -587,107 +697,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return (IConstraint)i_constraints.SingleElement();
 		}
 
-		private sealed class AscendingQueryExecutor : IIntVisitor
-		{
-			private readonly ObjectContainerBase _container;
-
-			private readonly IdListQueryResult _result;
-
-			private readonly Collection4 _executionPath;
-
-			private readonly Transaction _trans;
-
-			public AscendingQueryExecutor(Transaction trans, IdListQueryResult result, Collection4
-				 executionPath)
-			{
-				_trans = trans;
-				_container = _trans.Container();
-				_result = result;
-				_executionPath = executionPath;
-			}
-
-			public void Visit(int id)
-			{
-				TreeInt ids = new TreeInt(id);
-				ByRef idsNew = new ByRef();
-				IEnumerator itPath = _executionPath.GetEnumerator();
-				while (itPath.MoveNext())
-				{
-					idsNew.value = null;
-					string fieldName = (string)(itPath.Current);
-					ids.Traverse(new _IVisitor4_508(this, fieldName, idsNew));
-					ids = (TreeInt)((TreeInt)idsNew.value);
-					if (ids == null)
-					{
-						return;
-					}
-				}
-				ids.Traverse(new _IVisitor4_529(this));
-			}
-
-			private sealed class _IVisitor4_508 : IVisitor4
-			{
-				public _IVisitor4_508(AscendingQueryExecutor _enclosing, string fieldName, ByRef 
-					idsNew)
-				{
-					this._enclosing = _enclosing;
-					this.fieldName = fieldName;
-					this.idsNew = idsNew;
-				}
-
-				public void Visit(object treeInt)
-				{
-					int id = ((TreeInt)treeInt)._key;
-					StatefulBuffer buffer = this._enclosing._container.ReadStatefulBufferById(this._enclosing
-						._trans, id);
-					if (buffer != null)
-					{
-						ObjectHeader oh = new ObjectHeader(this._enclosing._container, buffer);
-						CollectIdContext context = new CollectIdContext(this._enclosing._trans, oh, buffer
-							);
-						oh.ClassMetadata().CollectIDs(context, fieldName);
-						Tree.Traverse(context.Ids(), new _IVisitor4_516(idsNew));
-					}
-				}
-
-				private sealed class _IVisitor4_516 : IVisitor4
-				{
-					public _IVisitor4_516(ByRef idsNew)
-					{
-						this.idsNew = idsNew;
-					}
-
-					public void Visit(object node)
-					{
-						idsNew.value = TreeInt.Add(((TreeInt)idsNew.value), ((TreeInt)node)._key);
-					}
-
-					private readonly ByRef idsNew;
-				}
-
-				private readonly AscendingQueryExecutor _enclosing;
-
-				private readonly string fieldName;
-
-				private readonly ByRef idsNew;
-			}
-
-			private sealed class _IVisitor4_529 : IVisitor4
-			{
-				public _IVisitor4_529(AscendingQueryExecutor _enclosing)
-				{
-					this._enclosing = _enclosing;
-				}
-
-				public void Visit(object treeInt)
-				{
-					this._enclosing._result.AddKeyCheckDuplicates(((TreeInt)treeInt)._key);
-				}
-
-				private readonly AscendingQueryExecutor _enclosing;
-			}
-		}
-
 		public class CreateCandidateCollectionResult
 		{
 			public readonly bool checkDuplicates;
@@ -740,12 +749,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		private IEnumerator CheckDuplicates(CompositeIterator4 executeAllCandidates)
 		{
-			return Iterators.Filter(executeAllCandidates, new _IPredicate4_582());
+			return Iterators.Filter(executeAllCandidates, new _IPredicate4_573());
 		}
 
-		private sealed class _IPredicate4_582 : IPredicate4
+		private sealed class _IPredicate4_573 : IPredicate4
 		{
-			public _IPredicate4_582()
+			public _IPredicate4_573()
 			{
 				this.ids = new TreeInt(0);
 			}
@@ -854,7 +863,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					continue;
 				}
 				QCandidates candidates = new QCandidates((LocalTransaction)_trans, classMetadata, 
-					null, true);
+					null);
 				candidatesList = new List4(candidatesList, candidates);
 			}
 			return candidatesList;
@@ -1091,12 +1100,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		private bool HasOrJoins()
 		{
-			return ForEachConstraintRecursively(new _IFunction4_864());
+			return ForEachConstraintRecursively(new _IFunction4_855());
 		}
 
-		private sealed class _IFunction4_864 : IFunction4
+		private sealed class _IFunction4_855 : IFunction4
 		{
-			public _IFunction4_864()
+			public _IFunction4_855()
 			{
 			}
 
@@ -1118,12 +1127,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		private void RemoveJoins()
 		{
-			ForEachConstraintRecursively(new _IFunction4_880());
+			ForEachConstraintRecursively(new _IFunction4_871());
 		}
 
-		private sealed class _IFunction4_880 : IFunction4
+		private sealed class _IFunction4_871 : IFunction4
 		{
-			public _IFunction4_880()
+			public _IFunction4_871()
 			{
 			}
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.CS.Internal;
@@ -39,9 +39,6 @@ namespace Db4objects.Db4o.CS.Internal.Messages
 		public static readonly MCloseSocket CloseSocket = new MCloseSocket();
 
 		public static readonly MCommit Commit = new MCommit();
-
-		public static readonly MCommitReplication CommitReplication = new MCommitReplication
-			();
 
 		public static readonly MCommittedCallBackRegistry CommittedCallbackRegister = new 
 			MCommittedCallBackRegistry();

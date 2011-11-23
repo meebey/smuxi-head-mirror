@@ -46,50 +46,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -130,7 +86,7 @@
 <Compile Include="Bench\Crud\CrudApplication.cs"/>
 <Compile Include="Bench\Crud\Item.cs"/>
 <Compile Include="Bench\Delaying\DelayCalculation.cs"/>
-<Compile Include="Bench\Delaying\DelayingStorage.cs"/>
+<Compile Include="Bench\Delaying\DelayingIoAdapter.cs"/>
 <Compile Include="Bench\Delaying\Delays.cs"/>
 <Compile Include="Bench\IoBenchmark.cs"/>
 <Compile Include="Bench\Logging\LogConstants.cs"/>
@@ -138,6 +94,7 @@
 <Compile Include="Bench\Logging\Replay\Commands\IIoCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\ReadCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\ReadWriteCommand.cs"/>
+<Compile Include="Bench\Logging\Replay\Commands\SeekCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\SyncCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\WriteCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\LogReplayer.cs"/>

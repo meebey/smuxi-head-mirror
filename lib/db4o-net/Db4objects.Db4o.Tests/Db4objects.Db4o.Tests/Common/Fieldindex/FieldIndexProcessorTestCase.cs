@@ -1,11 +1,10 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
 using Db4oUnit.Extensions;
 using Db4objects.Db4o;
 using Db4objects.Db4o.Config;
-using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Btree;
 using Db4objects.Db4o.Internal.Fieldindex;
@@ -323,24 +322,7 @@ namespace Db4objects.Db4o.Tests.Common.Fieldindex
 				Assert.AreSame(FieldIndexProcessorResult.FoundIndexButNoMatch, result);
 				return;
 			}
-			ByRef treeInts = ByRef.NewInstance();
-			result.Traverse(new _IIntVisitor_302(treeInts));
-			AssertTreeInt(expectedIds, ((TreeInt)treeInts.value));
-		}
-
-		private sealed class _IIntVisitor_302 : IIntVisitor
-		{
-			public _IIntVisitor_302(ByRef treeInts)
-			{
-				this.treeInts = treeInts;
-			}
-
-			public void Visit(int i)
-			{
-				treeInts.value = ((TreeInt)Tree.Add(((TreeInt)treeInts.value), new TreeInt(i)));
-			}
-
-			private readonly ByRef treeInts;
+			AssertTreeInt(expectedIds, result.ToTreeInt());
 		}
 
 		private FieldIndexProcessorResult ExecuteProcessor(IQuery query)

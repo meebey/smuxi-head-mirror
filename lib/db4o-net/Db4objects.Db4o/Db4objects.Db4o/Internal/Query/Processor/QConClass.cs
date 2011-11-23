@@ -1,9 +1,7 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Internal;
-using Db4objects.Db4o.Internal.Btree;
-using Db4objects.Db4o.Internal.Classindex;
 using Db4objects.Db4o.Internal.Query.Processor;
 using Db4objects.Db4o.Query;
 using Db4objects.Db4o.Reflect;
@@ -55,66 +53,37 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return false;
 		}
 
-		internal override bool Evaluate(IInternalCandidate candidate)
+		internal override bool Evaluate(QCandidate a_candidate)
 		{
-			bool result = true;
-			QCandidates qCandidates = candidate.Candidates();
-			if (qCandidates.IsTopLevel() && qCandidates.WasLoadedFromClassFieldIndex())
+			bool res = true;
+			IReflectClass claxx = a_candidate.ClassReflector();
+			if (claxx == null)
 			{
-				if (_classMetadata.GetAncestor() != null)
-				{
-					BTreeClassIndexStrategy index = (BTreeClassIndexStrategy)_classMetadata.Index();
-					if (index == null)
-					{
-						return i_evaluator.Not(true);
-					}
-					BTree btree = index.Btree();
-					object searchResult = btree.Search(candidate.Transaction(), candidate.Id());
-					result = searchResult != null;
-				}
+				res = false;
 			}
 			else
 			{
-				IReflectClass claxx = candidate.ClassMetadata().ClassReflector();
-				if (claxx == null)
-				{
-					result = false;
-				}
-				else
-				{
-					result = i_equal ? _claxx.Equals(claxx) : _claxx.IsAssignableFrom(claxx);
-				}
+				res = i_equal ? _claxx.Equals(claxx) : _claxx.IsAssignableFrom(claxx);
 			}
-			return i_evaluator.Not(result);
+			return i_evaluator.Not(res);
 		}
 
 		internal override void EvaluateSelf()
 		{
+			// optimization for simple class queries: 
+			// No instantiation of objects, if not necessary.
+			// Does not handle the special comparison of the
+			// Compare interface.
+			//
 			if (i_candidates.WasLoadedFromClassIndex())
 			{
 				if (i_evaluator.IsDefault())
 				{
 					if (!HasJoins())
 					{
-						if (_classMetadata != null && i_candidates._classMetadata != null)
+						if (_classMetadata != null && i_candidates.i_classMetadata != null)
 						{
-							if (_classMetadata.GetHigherHierarchy(i_candidates._classMetadata) == _classMetadata)
-							{
-								return;
-							}
-						}
-					}
-				}
-			}
-			if (i_candidates.WasLoadedFromClassFieldIndex())
-			{
-				if (i_candidates.IsTopLevel())
-				{
-					if (i_evaluator.IsDefault())
-					{
-						if (!HasJoins())
-						{
-							if (CanResolveByFieldIndex())
+							if (_classMetadata.GetHigherHierarchy(i_candidates.i_classMetadata) == _classMetadata)
 							{
 								return;
 							}
@@ -123,11 +92,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				}
 			}
 			i_candidates.Filter(this);
-		}
-
-		protected override bool CanResolveByFieldIndex()
-		{
-			return _classMetadata != null && _classMetadata.GetAncestor() == null;
 		}
 
 		public override IConstraint Equal()
@@ -194,7 +158,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		public override void SetProcessedByIndex(QCandidates candidates)
+		public override void SetProcessedByIndex()
 		{
 		}
 		// do nothing, QConClass needs to stay in the evaluation graph.

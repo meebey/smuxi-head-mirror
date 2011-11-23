@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
 using Db4objects.Db4o.Config;
@@ -35,7 +35,7 @@ namespace Db4objects.Drs.Tests
 			string path = Runtime.GetProperty(RamDriveProperty);
 			if (path == null)
 			{
-				path = null;
+				path = Runtime.Getenv(RamDriveProperty);
 			}
 			if (path == null || path.Length == 0)
 			{

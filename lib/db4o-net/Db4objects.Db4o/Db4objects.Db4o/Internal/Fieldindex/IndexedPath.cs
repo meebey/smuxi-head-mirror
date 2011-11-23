@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -64,15 +64,10 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 			throw new NotSupportedException();
 		}
 
-		public override void MarkAsBestIndex(QCandidates candidates)
+		public override void MarkAsBestIndex()
 		{
-			_constraint.SetProcessedByIndex(candidates);
-			_next.MarkAsBestIndex(candidates);
-		}
-
-		public override bool IsEmpty()
-		{
-			throw new NotSupportedException();
+			_constraint.SetProcessedByIndex();
+			_next.MarkAsBestIndex();
 		}
 	}
 }

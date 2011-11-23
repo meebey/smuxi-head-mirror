@@ -48,50 +48,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -131,10 +87,6 @@
   <ItemGroup>
 <Compile Include="Db4objects.Db4o\Cluster\Cluster.cs"/>
 <Compile Include="Db4objects.Db4o\Consistency\ConsistencyChecker.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\ConsistencyReport.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\OverlapMap.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotSource.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotWithSource.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\BigSetMiscCollector.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassNode.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassUsageStats.cs"/>
@@ -147,6 +99,9 @@
 <Compile Include="Db4objects.Db4o\Filestats\SlotMapImpl.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeString.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeStringObject.cs"/>
+<Compile Include="Db4objects.Db4o\IO\DebugIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\MemoryIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\NonFlushingIoAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IO\SaveAsStorage.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraint.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraints.cs"/>

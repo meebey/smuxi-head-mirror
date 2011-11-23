@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit.Extensions;
@@ -18,10 +18,9 @@ namespace Db4objects.Db4o.Tests.Common.Events
 			return ComposeTests(new Type[] { typeof(ActivationEventsTestCase), typeof(ClassRegistrationEventsTestCase
 				), typeof(CreationEventsTestCase), typeof(DeleteEventOnClientTestCase), typeof(DeletionEventExceptionTestCase
 				), typeof(DeletionEventsTestCase), typeof(EventArgsTransactionTestCase), typeof(
-				EventCountTestCase), typeof(ExceptionInUpdatingCallbackCorruptionTestCase), typeof(
-				ExceptionPropagationInEventsTestSuite), typeof(InstantiationEventsTestCase), typeof(
-				ObjectContainerEventsTestCase), typeof(ObjectContainerOpenEventTestCase), typeof(
-				QueryEventsTestCase), typeof(UpdateInCallbackThrowsTestCase) });
+				EventCountTestCase), typeof(ExceptionPropagationInEventsTestSuite), typeof(InstantiationEventsTestCase
+				), typeof(ObjectContainerEventsTestCase), typeof(ObjectContainerOpenEventTestCase
+				), typeof(QueryEventsTestCase), typeof(UpdateInCallbackThrowsTestCase) });
 		}
 
 		#if !SILVERLIGHT

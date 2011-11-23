@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -15,7 +15,7 @@ using Db4objects.Db4o.Tests.Common.Defragment;
 
 namespace Db4objects.Db4o.Tests.Common.Defragment
 {
-	public class IdMappingTestSuite : FixtureBasedTestSuite
+	public partial class IdMappingTestSuite : FixtureBasedTestSuite
 	{
 		public static void Main(string[] args)
 		{
@@ -67,13 +67,13 @@ namespace Db4objects.Db4o.Tests.Common.Defragment
 					_idMapping.MapId(testableIdSlotMapping._id, testableIdSlotMapping.Slot());
 				}
 				IList actual = new ArrayList();
-				_idMapping.SlotChanges().Accept(new _IVisitor4_63(actual));
+				_idMapping.SlotChanges().Accept(new _IVisitor4_66(actual));
 				IteratorAssert.SameContent(expected, actual);
 			}
 
-			private sealed class _IVisitor4_63 : IVisitor4
+			private sealed class _IVisitor4_66 : IVisitor4
 			{
-				public _IVisitor4_63(IList actual)
+				public _IVisitor4_66(IList actual)
 				{
 					this.actual = actual;
 				}
@@ -103,13 +103,6 @@ namespace Db4objects.Db4o.Tests.Common.Defragment
 					)obj;
 				return _id == other._id && _address == other._address && _length == other._length;
 			}
-		}
-
-		public override IFixtureProvider[] FixtureProviders()
-		{
-			return new IFixtureProvider[] { new SimpleFixtureProvider(_fixture, new IFunction4
-				[] { new IdMappingTestSuite.DatabaseIdMappingProvider(this), new IdMappingTestSuite.InMemoryIdMappingProvider
-				(this) }) };
 		}
 
 		public override Type[] TestUnits()

@@ -47,7 +47,7 @@ namespace Db4objects.Db4o.Internal
 				RegisterGenericTypeHandler(type, handler);
     		});
 
-#if NET_3_5 && !CF && !SILVERLIGHT
+#if NET_3_5 && ! CF
 			_config.Reflector().RegisterCollection(new GenericCollectionTypePredicate(typeof(HashSet<>)));
 #endif 
 

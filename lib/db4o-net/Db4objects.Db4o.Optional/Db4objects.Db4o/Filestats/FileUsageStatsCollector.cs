@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using System;
@@ -195,7 +195,7 @@ namespace Db4objects.Db4o.Filestats
 			LongByRef slotUsage = new LongByRef();
 			LongByRef miscUsage = new LongByRef();
 			BTreeClassIndexStrategy index = (BTreeClassIndexStrategy)clazz.Index();
-			index.TraverseIds(_db.SystemTransaction(), new _IVisitor4_166(this, slotUsage, miscCollector
+			index.TraverseAll(_db.SystemTransaction(), new _IVisitor4_166(this, slotUsage, miscCollector
 				, miscUsage));
 			return new FileUsageStatsCollector.InstanceUsage(slotUsage.value, miscUsage.value
 				);
@@ -238,7 +238,7 @@ namespace Db4objects.Db4o.Filestats
 				return;
 			}
 			BTreeClassIndexStrategy index = (BTreeClassIndexStrategy)clazz.Index();
-			index.TraverseIds(_db.SystemTransaction(), new _IVisitor4_182(this));
+			index.TraverseAll(_db.SystemTransaction(), new _IVisitor4_182(this));
 		}
 
 		private sealed class _IVisitor4_182 : IVisitor4
@@ -302,28 +302,30 @@ namespace Db4objects.Db4o.Filestats
 
 		private long IdSystemUsage()
 		{
-			IntByRef usage = new IntByRef();
-			_db.IdSystem().TraverseOwnSlots(new _IProcedure4_217(this, usage));
-			return usage.value;
-		}
-
-		private sealed class _IProcedure4_217 : IProcedure4
-		{
-			public _IProcedure4_217(FileUsageStatsCollector _enclosing, IntByRef usage)
+			IIdSystem idSystem = _db.IdSystem();
+			long usage = 0;
+			while (idSystem is BTreeIdSystem)
 			{
-				this._enclosing = _enclosing;
-				this.usage = usage;
+				IIdSystem parentIdSystem = ((IIdSystem)FieldValue(idSystem, "_parentIdSystem"));
+				usage += BTreeUsage(_db.SystemTransaction(), parentIdSystem, (BTree)FieldValue(idSystem
+					, "_bTree"), _slots);
+				PersistentIntegerArray persistentState = (PersistentIntegerArray)FieldValue(idSystem
+					, "_persistentState");
+				int persistentStateId = persistentState.GetID();
+				Db4objects.Db4o.Internal.Slots.Slot persistentStateSlot = parentIdSystem.CommittedSlot
+					(persistentStateId);
+				_slots.Add(persistentStateSlot);
+				usage += persistentStateSlot.Length();
+				idSystem = parentIdSystem;
 			}
-
-			public void Apply(object slot)
+			if (idSystem is InMemoryIdSystem)
 			{
-				usage.value += ((Db4objects.Db4o.Internal.Slots.Slot)slot).Length();
-				this._enclosing._slots.Add(((Db4objects.Db4o.Internal.Slots.Slot)slot));
+				Db4objects.Db4o.Internal.Slots.Slot idSystemSlot = ((Db4objects.Db4o.Internal.Slots.Slot
+					)FieldValue(idSystem, "_slot"));
+				usage += idSystemSlot.Length();
+				_slots.Add(idSystemSlot);
 			}
-
-			private readonly FileUsageStatsCollector _enclosing;
-
-			private readonly IntByRef usage;
+			return usage;
 		}
 
 		private long ClassMetadataUsage()

@@ -39,7 +39,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>Bin\Release</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;SILVERLIGHT;NET_4_0</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -64,7 +64,6 @@
     <Compile Include="Db4objects.Db4o.Linq.Tests\CollectionContainsOptimizationTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\CollectionContainsTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\ComposedQueryTestCase.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\ConcurrentLINQTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\CountTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\DateTimeOffsetQueryTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\EnumComparisonTestCase.cs" />
@@ -82,12 +81,6 @@
     <Compile Include="Db4objects.Db4o.Linq.Tests\Queries\QueryPrettyPrinter.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\Queries\QueryPrettyPrinterTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\QueryableTestCase.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\AllTests.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\SkipTestCase.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\SkipTestSuite.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\SkipTestSuiteVariables.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\SkipTestUnit.cs" />
-    <Compile Include="Db4objects.Db4o.Linq.Tests\QueryOperators\SkipTestUnit.Helper.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\QueryReuseTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\QueryTranslationPerformanceTestCase.cs" />
     <Compile Include="Db4objects.Db4o.Linq.Tests\StringMethodTestCase.cs" />

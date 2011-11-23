@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
 using Db4objects.Db4o.Query;
@@ -119,23 +119,18 @@ namespace Db4objects.Db4o.Query
 		/// </returns>
 		IObjectSet Execute();
 
-		/// <summary>adds an ascending ordering criteria to this node of the query graph.</summary>
+		/// <summary>
+		/// adds an ascending ordering criteria to this node of
+		/// the query graph.
+		/// </summary>
 		/// <remarks>
-		/// adds an ascending ordering criteria to this node of the query graph.
+		/// adds an ascending ordering criteria to this node of
+		/// the query graph.
 		/// <p>
 		/// If multiple ordering criteria are applied, the chronological
 		/// order of method calls is relevant: criteria created by 'earlier' calls are
 		/// considered more significant, i.e. 'later' criteria only have an effect
 		/// for elements that are considered equal by all 'earlier' criteria.
-		/// </p>
-		/// <p>
-		/// Ordering by non primitive fields works only for classes that implement the
-		/// <see cref="Db4objects.Db4o.TA.IActivatable">Db4objects.Db4o.TA.IActivatable</see>
-		/// interface
-		/// and
-		/// <see cref="Db4objects.Db4o.TA.TransparentActivationSupport">Db4objects.Db4o.TA.TransparentActivationSupport
-		/// 	</see>
-		/// is enabled.
 		/// </p>
 		/// <p>
 		/// As an example, consider a type with two int fields, and an instance set

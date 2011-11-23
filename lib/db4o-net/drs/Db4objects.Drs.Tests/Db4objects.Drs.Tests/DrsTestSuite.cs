@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -8,21 +8,24 @@ using Db4objects.Drs.Tests.Regression;
 
 namespace Db4objects.Drs.Tests
 {
+	/// <exclude></exclude>
 	public abstract class DrsTestSuite : ReflectionTestSuite
 	{
-		public const bool RunOneSingleTest = false;
-
 		protected override Type[] TestCases()
 		{
+			if (false)
+			{
+				return new Type[] { typeof(ListTest) };
+			}
 			return new Type[] { typeof(DateReplicationTestCase), typeof(Db4objects.Drs.Tests.Foundation.AllTests
 				), typeof(TheSimplest), typeof(ReplicationEventTest), typeof(ReplicationProviderTest
 				), typeof(ReplicationAfterDeletionTest), typeof(SimpleArrayTest), typeof(SimpleParentChild
-				), typeof(ByteArrayTest), typeof(UnqualifiedNamedTestCase), typeof(ComplexListTestCase
-				), typeof(ListTest), typeof(R0to4Runner), typeof(ReplicationFeaturesMain), typeof(
-				CollectionHandlerImplTest), typeof(BidirectionalReplicationTestCase), typeof(TimestampTestCase
-				), typeof(MapTest), typeof(ArrayReplicationTest), typeof(SingleTypeCollectionReplicationTest
-				), typeof(MixedTypesCollectionReplicationTest), typeof(TransparentActivationTestCase
-				), typeof(DRS42Test), typeof(SameHashCodeTestCase) };
+				), typeof(ByteArrayTest), typeof(ComplexListTestCase), typeof(ListTest), typeof(
+				R0to4Runner), typeof(ReplicationFeaturesMain), typeof(CollectionHandlerImplTest)
+				, typeof(ReplicationTraversalTest), typeof(MapTest), typeof(ArrayReplicationTest
+				), typeof(SingleTypeCollectionReplicationTest), typeof(MixedTypesCollectionReplicationTest
+				), typeof(TransparentActivationTestCase), typeof(DRS42Test), typeof(SameHashCodeTestCase
+				) };
 		}
 
 		// Simple

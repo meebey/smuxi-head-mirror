@@ -18,6 +18,9 @@ namespace Db4objects.Db4o.Tests.Common.IO
 										Db4oUnitPlatform.NewPersistentStorage(),
 										new MemoryStorage(), 
 										new CachingStorage(Db4oUnitPlatform.NewPersistentStorage()), 
+#if !SILVERLIGHT
+										new IoAdapterStorage(new RandomAccessFileAdapter()) 
+#endif
 									})
 						};
 		}

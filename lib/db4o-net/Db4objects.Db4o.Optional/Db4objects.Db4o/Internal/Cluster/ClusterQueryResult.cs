@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -148,29 +148,28 @@ namespace Db4objects.Db4o.Internal.Cluster
 			throw new NotSupportedException();
 		}
 
+		/// <param name="c"></param>
 		public virtual void LoadFromClassIndex(ClassMetadata c)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <param name="q"></param>
 		public virtual void LoadFromQuery(QQuery q)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <param name="i"></param>
 		public virtual void LoadFromClassIndexes(ClassMetadataIterator i)
 		{
 			throw new NotSupportedException();
 		}
 
+		/// <param name="r"></param>
 		public virtual void LoadFromIdReader(ByteArrayBuffer r)
 		{
 			throw new NotSupportedException();
-		}
-
-		public virtual void Skip(int count)
-		{
-			throw new NotImplementedException();
 		}
 	}
 }

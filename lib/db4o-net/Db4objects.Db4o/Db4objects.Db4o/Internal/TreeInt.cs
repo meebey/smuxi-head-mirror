@@ -1,7 +1,8 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
+using Db4objects.Db4o.Internal.Query.Processor;
 
 namespace Db4objects.Db4o.Internal
 {
@@ -151,6 +152,27 @@ namespace Db4objects.Db4o.Internal
 			return false;
 		}
 
+		internal virtual QCandidate ToQCandidate(QCandidates candidates)
+		{
+			QCandidate qc = new QCandidate(candidates, null, _key);
+			qc._preceding = ToQCandidate((Db4objects.Db4o.Internal.TreeInt)((Tree)_preceding)
+				, candidates);
+			qc._subsequent = ToQCandidate((Db4objects.Db4o.Internal.TreeInt)((Tree)_subsequent
+				), candidates);
+			qc._size = _size;
+			return qc;
+		}
+
+		public static QCandidate ToQCandidate(Db4objects.Db4o.Internal.TreeInt tree, QCandidates
+			 candidates)
+		{
+			if (tree == null)
+			{
+				return null;
+			}
+			return tree.ToQCandidate(candidates);
+		}
+
 		public override string ToString()
 		{
 			return string.Empty + _key;
@@ -185,15 +207,15 @@ namespace Db4objects.Db4o.Internal
 			if (VariableLength())
 			{
 				IntByRef length = new IntByRef(Const4.IntLength);
-				Traverse(new _IVisitor4_137(length));
+				Traverse(new _IVisitor4_152(length));
 				return length.value;
 			}
 			return MarshalledLength(Size());
 		}
 
-		private sealed class _IVisitor4_137 : IVisitor4
+		private sealed class _IVisitor4_152 : IVisitor4
 		{
-			public _IVisitor4_137(IntByRef length)
+			public _IVisitor4_152(IntByRef length)
 			{
 				this.length = length;
 			}

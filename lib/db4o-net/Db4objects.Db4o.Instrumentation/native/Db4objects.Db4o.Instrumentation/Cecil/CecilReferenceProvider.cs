@@ -55,7 +55,7 @@ namespace Db4objects.Db4o.Instrumentation.Cecil
 #if CF
 		private TypeReference ImportType(Type type)
 		{
-			return _module.Import(new TypeReference(type.Namespace, type.Name, _module, _module));
+			return _module.Import(new TypeReference(type.Namespace, type.Name, _module));
 		}
 #endif
 

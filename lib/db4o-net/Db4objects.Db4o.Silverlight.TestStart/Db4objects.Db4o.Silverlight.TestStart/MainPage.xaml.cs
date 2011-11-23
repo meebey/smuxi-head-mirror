@@ -30,6 +30,7 @@ namespace Db4objects.Db4o.Silverlight.TestStart
 										typeof(Tests.CLI2.AllTests),
 				                   	};
 
+
 				InitializeVersion();
 				new TestRunner(SilverlightSuite(testCases)).Run(new SilverlightTestListener(Dispatcher));
 				Complete();

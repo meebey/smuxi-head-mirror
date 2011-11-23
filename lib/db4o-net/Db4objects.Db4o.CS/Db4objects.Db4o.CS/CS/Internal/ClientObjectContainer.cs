@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -1307,7 +1307,6 @@ namespace Db4objects.Db4o.CS.Internal
 				return;
 			}
 			Write(Msg.CommittedCallbackRegister);
-			ExpectedResponse(Msg.Ok);
 		}
 
 		public override int ClassMetadataIdForName(string name)
@@ -1489,20 +1488,6 @@ namespace Db4objects.Db4o.CS.Internal
 		public virtual IQLin From(Type clazz)
 		{
 			return new QLinRoot(Query(), clazz);
-		}
-
-		public virtual void CommitReplication(long replicationRecordId, long timestamp)
-		{
-			lock (_lock)
-			{
-				CheckReadOnly();
-				ClientTransaction clientTransaction = (ClientTransaction)Transaction;
-				clientTransaction.PreCommit();
-				Write(Msg.CommitReplication.GetWriterForLongs(clientTransaction, new long[] { replicationRecordId
-					, timestamp }));
-				ExpectedResponse(Msg.Ok);
-				clientTransaction.PostCommit();
-			}
 		}
 	}
 }

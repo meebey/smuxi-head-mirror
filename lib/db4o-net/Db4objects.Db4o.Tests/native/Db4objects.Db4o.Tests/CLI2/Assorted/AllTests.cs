@@ -5,13 +5,10 @@ namespace Db4objects.Db4o.Tests.CLI2.Assorted
 	{
 		protected override System.Type[] TestCases()
 		{
-			return new[]
+			return new System.Type[]
 			{
 				typeof(AssemblyInfoTestCase),
 				typeof(DelegateFieldTestCase),
-#if !CF && !SILVERLIGHT
-				typeof(DynamicallyLoadedAssemblyTestCase),
-#endif
                 typeof(ListOfNullableItemTestCase),
 				typeof(NullableDateTimeTestCase),
                 typeof(NullableTypes),

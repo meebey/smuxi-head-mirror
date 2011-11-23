@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.CS.Internal;
 using Db4objects.Db4o.CS.Internal.Messages;
@@ -24,22 +24,17 @@ namespace Db4objects.Db4o.CS.Internal
 
 		public override void Commit()
 		{
-			PreCommit();
+			CommitTransactionListeners();
+			ClearAll();
 			if (IsSystemTransaction())
 			{
 				_client.Write(Msg.CommitSystemtrans);
 			}
 			else
 			{
-				_client.Write(Msg.Commit.GetWriter(this));
+				_client.Write(Msg.Commit);
 				_client.ExpectedResponse(Msg.Ok);
 			}
-		}
-
-		public void PreCommit()
-		{
-			CommitTransactionListeners();
-			ClearAll();
 		}
 
 		protected override void Clear()
@@ -51,14 +46,14 @@ namespace Db4objects.Db4o.CS.Internal
 		{
 			if (_objectRefrencesToGC != null)
 			{
-				_objectRefrencesToGC.Traverse(new _IVisitor4_43(this));
+				_objectRefrencesToGC.Traverse(new _IVisitor4_39(this));
 			}
 			_objectRefrencesToGC = null;
 		}
 
-		private sealed class _IVisitor4_43 : IVisitor4
+		private sealed class _IVisitor4_39 : IVisitor4
 		{
-			public _IVisitor4_43(ClientTransaction _enclosing)
+			public _IVisitor4_39(ClientTransaction _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -85,14 +80,14 @@ namespace Db4objects.Db4o.CS.Internal
 
 		public override void ProcessDeletes()
 		{
-			IVisitor4 deleteVisitor = new _IVisitor4_63(this);
+			IVisitor4 deleteVisitor = new _IVisitor4_59(this);
 			TraverseDelete(deleteVisitor);
 			_client.WriteBatchedMessage(Msg.ProcessDeletes);
 		}
 
-		private sealed class _IVisitor4_63 : IVisitor4
+		private sealed class _IVisitor4_59 : IVisitor4
 		{
-			public _IVisitor4_63(ClientTransaction _enclosing)
+			public _IVisitor4_59(ClientTransaction _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -569,6 +569,12 @@ namespace Db4objects.Db4o.Internal
 			_internStrings = doIntern;
 		}
 
+		public void Io(IoAdapter adapter)
+		{
+			GlobalSettingOnly();
+			Storage = new IoAdapterStorage(adapter);
+		}
+
 		public void LockDatabaseFile(bool flag)
 		{
 			_config.Put(LockFileKey, flag);
@@ -1126,6 +1132,11 @@ namespace Db4objects.Db4o.Internal
 		public bool WeakReferences()
 		{
 			return _config.GetAsBoolean(WeakReferencesKey);
+		}
+
+		public IoAdapter Io()
+		{
+			throw new NotImplementedException();
 		}
 
 		public IStorage Storage

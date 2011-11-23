@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Internal;
@@ -45,26 +45,13 @@ namespace Db4objects.Db4o.Internal.Btree
 			return y;
 		}
 
-		private BTreeNode _node;
+		private readonly BTreeNode _node;
 
-		private int _index;
+		private readonly int _index;
 
 		private readonly Transaction _transaction;
 
-		private ByteArrayBuffer _nodeReader;
-
-		public Db4objects.Db4o.Internal.Btree.BTreePointer ShallowClone()
-		{
-			return new Db4objects.Db4o.Internal.Btree.BTreePointer(_transaction, _nodeReader, 
-				_node, _index);
-		}
-
-		public void CopyTo(Db4objects.Db4o.Internal.Btree.BTreePointer target)
-		{
-			target._node = _node;
-			target._index = _index;
-			target._nodeReader = _nodeReader;
-		}
+		private readonly ByteArrayBuffer _nodeReader;
 
 		public BTreePointer(Transaction transaction, ByteArrayBuffer nodeReader, BTreeNode
 			 node, int index)
@@ -122,50 +109,6 @@ namespace Db4objects.Db4o.Internal.Btree
 			Btree().ConvertCacheEvictedNodesToReadMode();
 			return new Db4objects.Db4o.Internal.Btree.BTreePointer(_transaction, nextReader, 
 				nextNode, newIndex);
-		}
-
-		/// <summary>
-		/// Duplicate code of next(), reusing this BTreePointer without creating a
-		/// new BTreePointer, very dangerous to call because there may be side
-		/// effects if this BTreePointer is used elsewhere and code relies on
-		/// state the stay the same.
-		/// </summary>
-		/// <remarks>
-		/// Duplicate code of next(), reusing this BTreePointer without creating a
-		/// new BTreePointer, very dangerous to call because there may be side
-		/// effects if this BTreePointer is used elsewhere and code relies on
-		/// state the stay the same.
-		/// </remarks>
-		public Db4objects.Db4o.Internal.Btree.BTreePointer UnsafeFastNext()
-		{
-			int indexInMyNode = _index + 1;
-			while (indexInMyNode < _node.Count())
-			{
-				if (_node.IndexIsValid(_transaction, indexInMyNode))
-				{
-					_index = indexInMyNode;
-					return this;
-				}
-				indexInMyNode++;
-			}
-			int newIndex = -1;
-			BTreeNode nextNode = _node;
-			ByteArrayBuffer nextReader = null;
-			while (newIndex == -1)
-			{
-				nextNode = nextNode.NextNode();
-				if (nextNode == null)
-				{
-					return null;
-				}
-				nextReader = nextNode.PrepareRead(_transaction);
-				newIndex = nextNode.FirstKeyIndex(_transaction);
-			}
-			Btree().ConvertCacheEvictedNodesToReadMode();
-			_nodeReader = nextReader;
-			_node = nextNode;
-			_index = newIndex;
-			return this;
 		}
 
 		public Db4objects.Db4o.Internal.Btree.BTreePointer Previous()

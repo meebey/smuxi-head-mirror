@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o;
@@ -121,7 +121,7 @@ namespace Db4objects.Db4o.Defragment
 		internal static LocalObjectContainer FreshTempFile(string fileName, int blockSize
 			)
 		{
-			IStorage storage = Platform4.NewStorage();
+			FileStorage storage = new FileStorage();
 			storage.Delete(fileName);
 			IConfiguration db4oConfig = DefragmentConfig.VanillaDb4oConfig(blockSize);
 			db4oConfig.ObjectClass(typeof(IdSlotMapping)).ObjectField("_id").Indexed(true);
@@ -297,7 +297,7 @@ namespace Db4objects.Db4o.Defragment
 			{
 				return;
 			}
-			classMetadata.Index().TraverseIds(Sourcedb.Transaction(this), command);
+			classMetadata.Index().TraverseAll(Sourcedb.Transaction(this), command);
 		}
 
 		public virtual void TraverseAllIndexSlots(ClassMetadata classMetadata, IVisitor4 

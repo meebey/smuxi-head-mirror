@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -6,7 +6,7 @@
     <ProductVersion>9.0.21022</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D8AB00B9-7769-4136-98FA-920F89B12653}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Db4objects.Db4o.Bench</RootNamespace>
     <AssemblyName>Db4oBench</AssemblyName>
@@ -16,6 +16,8 @@
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    
+    
     <TargetFrameworkProfile/>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -32,25 +34,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    
-    
   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -92,9 +76,6 @@
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591;1572;1573;1574;0419;</NoWarn>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>Db4objects.Db4o.Bench.IoBenchmark</StartupObject>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System"/>
     <Reference Include="System.Core">
@@ -107,7 +88,7 @@
 <Compile Include="Bench\Crud\CrudApplication.cs"/>
 <Compile Include="Bench\Crud\Item.cs"/>
 <Compile Include="Bench\Delaying\DelayCalculation.cs"/>
-<Compile Include="Bench\Delaying\DelayingStorage.cs"/>
+<Compile Include="Bench\Delaying\DelayingIoAdapter.cs"/>
 <Compile Include="Bench\Delaying\Delays.cs"/>
 <Compile Include="Bench\IoBenchmark.cs"/>
 <Compile Include="Bench\Logging\LogConstants.cs"/>
@@ -115,6 +96,7 @@
 <Compile Include="Bench\Logging\Replay\Commands\IIoCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\ReadCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\ReadWriteCommand.cs"/>
+<Compile Include="Bench\Logging\Replay\Commands\SeekCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\SyncCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\Commands\WriteCommand.cs"/>
 <Compile Include="Bench\Logging\Replay\LogReplayer.cs"/>

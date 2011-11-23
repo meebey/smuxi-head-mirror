@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -94,8 +94,8 @@ namespace Db4objects.Db4o.Tests.Common.Assorted
 
 		private void AssertCount(StaticFieldUpdateTestCase.SimpleEnum value, int count)
 		{
-			ConsistencyReport consistencyReport = new ConsistencyChecker(FileSession()).CheckSlotConsistency
-				();
+			ConsistencyChecker.ConsistencyReport consistencyReport = new ConsistencyChecker(FileSession
+				()).CheckSlotConsistency();
 			if (!consistencyReport.Consistent())
 			{
 				Sharpen.Runtime.Err.WriteLine(consistencyReport);

@@ -30,9 +30,11 @@ namespace Db4objects.Db4o.Tests
 		
 		protected override Type[] TestCases()
 		{
-			return new[]
+			return new Type[]
 				{	
+#if CF_3_5 || NET_3_5
 					typeof(Linq.Tests.AllTests),
+#endif
                     typeof(Common.Migration.AllTests),
                     typeof(Common.TA.AllTests),
                     typeof(Common.AllTests),

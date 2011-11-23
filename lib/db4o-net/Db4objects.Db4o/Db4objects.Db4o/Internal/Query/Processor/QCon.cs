@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -244,12 +244,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				}
 			}
 			i_candidates = new QCandidates((LocalTransaction)i_trans, GetYapClass(), GetField
-				(), false);
+				());
 			i_candidates.AddConstraint(this);
 			a_candidateCollection.Add(i_candidates);
 		}
 
-		internal virtual void DoNotInclude(IInternalCandidate root)
+		internal virtual void DoNotInclude(QCandidate a_root)
 		{
 			if (DTrace.enabled)
 			{
@@ -257,11 +257,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 			if (i_parent != null)
 			{
-				i_parent.Visit1(root, this, false);
+				i_parent.Visit1(a_root, this, false);
 			}
 			else
 			{
-				root.DoNotInclude();
+				a_root.DoNotInclude();
 			}
 		}
 
@@ -271,7 +271,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		}
 
 		/// <param name="candidate"></param>
-		internal virtual bool Evaluate(IInternalCandidate candidate)
+		internal virtual bool Evaluate(QCandidate candidate)
 		{
 			throw Exceptions4.VirtualException();
 		}
@@ -304,40 +304,10 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			IEnumerator i = IterateChildren();
 			while (i.MoveNext())
 			{
-				Db4objects.Db4o.Internal.Query.Processor.QCon constraint = (Db4objects.Db4o.Internal.Query.Processor.QCon
-					)i.Current;
-				if (!constraint.ResolvedByIndex())
-				{
-					constraint.CreateCandidates(i_childrenCandidates);
-				}
+				((Db4objects.Db4o.Internal.Query.Processor.QCon)i.Current).CreateCandidates(i_childrenCandidates
+					);
 			}
 		}
-
-		private bool ResolvedByIndex()
-		{
-			if (!CanResolveByFieldIndex())
-			{
-				return false;
-			}
-			bool result = false;
-			IEnumerator it = IterateChildren();
-			while (it.MoveNext())
-			{
-				Db4objects.Db4o.Internal.Query.Processor.QCon childConstraint = (Db4objects.Db4o.Internal.Query.Processor.QCon
-					)it.Current;
-				if (!childConstraint.ProcessedByIndex())
-				{
-					return false;
-				}
-				else
-				{
-					result = true;
-				}
-			}
-			return result;
-		}
-
-		protected abstract bool CanResolveByFieldIndex();
 
 		internal virtual void EvaluateEvaluations()
 		{
@@ -375,12 +345,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			{
 				Db4objects.Db4o.Internal.Query.Processor.QCon qcon = (Db4objects.Db4o.Internal.Query.Processor.QCon
 					)i.Current;
-				if (!qcon.ProcessedByIndex())
-				{
-					i_candidates.SetCurrentConstraint(qcon);
-					qcon.SetCandidates(i_candidates);
-					qcon.EvaluateSimpleExec(i_candidates);
-				}
+				i_candidates.SetCurrentConstraint(qcon);
+				qcon.SetCandidates(i_candidates);
+				qcon.EvaluateSimpleExec(i_candidates);
 			}
 			i_candidates.SetCurrentConstraint(null);
 		}
@@ -833,16 +800,16 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		public virtual void Visit(object obj)
 		{
-			IInternalCandidate candidate = (IInternalCandidate)obj;
-			Visit1(candidate.GetRoot(), this, Evaluate(candidate));
+			QCandidate qc = (QCandidate)obj;
+			Visit1(qc.GetRoot(), this, Evaluate(qc));
 		}
 
-		internal virtual void Visit(IInternalCandidate root, bool res)
+		internal virtual void Visit(QCandidate a_root, bool res)
 		{
-			Visit1(root, this, i_evaluator.Not(res));
+			Visit1(a_root, this, i_evaluator.Not(res));
 		}
 
-		internal virtual void Visit1(IInternalCandidate root, Db4objects.Db4o.Internal.Query.Processor.QCon
+		internal virtual void Visit1(QCandidate root, Db4objects.Db4o.Internal.Query.Processor.QCon
 			 reason, bool res)
 		{
 			// The a_reason parameter makes it eays to distinguish
@@ -865,7 +832,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		internal void VisitOnNull(IInternalCandidate a_root)
+		internal void VisitOnNull(QCandidate a_root)
 		{
 			// TODO: It may be more efficient to rule out 
 			// all possible keepOnNull issues when starting
@@ -891,12 +858,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return i_evaluator;
 		}
 
-		public virtual void SetProcessedByIndex(QCandidates candidates)
+		public virtual void SetProcessedByIndex()
 		{
-			InternalSetProcessedByIndex(candidates);
+			InternalSetProcessedByIndex();
 		}
 
-		protected virtual void InternalSetProcessedByIndex(QCandidates candidates)
+		protected virtual void InternalSetProcessedByIndex()
 		{
 			_processedByIndex = true;
 			if (i_joins != null)
@@ -904,7 +871,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				IEnumerator i = i_joins.GetEnumerator();
 				while (i.MoveNext())
 				{
-					((QConJoin)i.Current).SetProcessedByIndex(candidates);
+					((QConJoin)i.Current).SetProcessedByIndex();
 				}
 			}
 		}

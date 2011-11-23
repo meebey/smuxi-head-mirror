@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Foundation;
@@ -27,7 +27,7 @@ namespace Db4objects.Db4o.Internal.Classindex
 
 		/// <summary>Traverses all index entries (java.lang.Integer references).</summary>
 		/// <remarks>Traverses all index entries (java.lang.Integer references).</remarks>
-		void TraverseIds(Transaction transaction, IVisitor4 command);
+		void TraverseAll(Transaction transaction, IVisitor4 command);
 
 		void DontDelete(Transaction transaction, int id);
 
@@ -41,7 +41,5 @@ namespace Db4objects.Db4o.Internal.Classindex
 
 		// FIXME: Why is this never called?
 		void DefragIndex(DefragmentContextImpl context);
-
-		IIntVisitable IdVisitable(Transaction trans);
 	}
 }

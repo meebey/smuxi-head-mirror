@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -41,20 +41,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -69,7 +55,6 @@
     <ErrorReport>prompt</ErrorReport>
     <FileAlignment>512</FileAlignment>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Db4objects.Db4o.Linq.xml</DocumentationFile>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <NoWarn>1591;1572;1573;1574;0419;</NoWarn>
   </PropertyGroup>
@@ -83,7 +68,6 @@
     <ErrorReport>prompt</ErrorReport>
     <FileAlignment>512</FileAlignment>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Db4objects.Db4o.Linq.xml</DocumentationFile>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
     <NoWarn>1591;1572;1573;1574;0419;</NoWarn>
   </PropertyGroup>
@@ -95,17 +79,16 @@
   <ItemGroup>
     <Reference Include="Cecil.FlowAnalysis, Version=0.1.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\compact-3.5\Cecil.FlowAnalysis.dll</HintPath>
+      <HintPath>..\Libs\compact-2.0\Cecil.FlowAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.6.8.8607, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\compact-3.5\Mono.Cecil.dll</HintPath>
+      <HintPath>..\Libs\compact-2.0\Mono.Cecil.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
 <Compile Include="Db4objects.Db4o.Linq\Caching\CacheFactory.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Caching\ICache4.cs"/>
-<Compile Include="Db4objects.Db4o.Linq\Caching\SynchronizedCache.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Caching\TracingCacheDecorator.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\CodeAnalysis\CecilMethodAnalyser.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\CodeAnalysis\CodeQueryBuilder.cs"/>
@@ -135,10 +118,8 @@
 <Compile Include="Db4objects.Db4o.Linq\ILinqQueryMonitor.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\Db4oLinqQueryable.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\Db4oQuery.cs"/>
-<Compile Include="Db4objects.Db4o.Linq\Internals\DelayedSelect.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\Extensions.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\IDb4oLinqQueryInternal.cs"/>
-<Compile Include="Db4objects.Db4o.Linq\Internals\IDelayedSelectOperation.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\LinqQueryMonitorImpl.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\ObjectSequence.cs"/>
 <Compile Include="Db4objects.Db4o.Linq\Internals\ObjectSetWrapper.cs"/>

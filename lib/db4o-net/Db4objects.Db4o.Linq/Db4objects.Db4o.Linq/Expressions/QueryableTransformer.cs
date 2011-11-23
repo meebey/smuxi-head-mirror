@@ -171,21 +171,11 @@ namespace Db4objects.Db4o.Linq.Expressions
 			return (a, b) =>
 			{
 				if (a == b) return true;
-				if (mapper(a) == b) return true;
-				return mapper(UnboxExpression(a)) == b;
+				return mapper(a) == b;
 			};
 		}
 
-	    private static Type UnboxExpression(Type type)
-	    {
-	        if(type.IsGenericInstanceOf((typeof(Expression<>))))
-	        {
-	            return type.GetGenericArguments()[0];
-	        }
-	        return type;
-	    }
-
-	    private static Dictionary<Type, Func<Type, Type>> _mappers = new Dictionary<Type, Func<Type, Type>> {
+		private static Dictionary<Type, Func<Type, Type>> _mappers = new Dictionary<Type, Func<Type, Type>> {
 			{ typeof(Db4oLinqQueryExtensions), MapQueryableToDb4o },
 			{ typeof(Enumerable), MapQueryableToEnumerable },
 		};

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o;
@@ -10,6 +10,7 @@ using Db4objects.Db4o.Internal.Handlers.Array;
 using Db4objects.Db4o.Internal.Marshall;
 using Db4objects.Db4o.Internal.Query.Processor;
 using Db4objects.Db4o.Marshall;
+using Db4objects.Db4o.Query;
 using Db4objects.Db4o.Reflect;
 using Db4objects.Db4o.Typehandlers;
 
@@ -22,33 +23,62 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 	/// this is doNotInclude'd.
 	/// </remarks>
 	/// <exclude></exclude>
-	public class QCandidate : QCandidateBase, IParentCandidate
+	public class QCandidate : TreeInt, ICandidate
 	{
 		internal ByteArrayBuffer _bytes;
 
-		internal object _member;
+		internal readonly QCandidates _candidates;
 
-		internal Db4objects.Db4o.Internal.ClassMetadata _classMetadata;
+		private List4 _dependants;
 
-		internal FieldMetadata _fieldMetadata;
+		internal bool _include = true;
+
+		private object _member;
+
+		private Tree _pendingJoins;
+
+		private Db4objects.Db4o.Internal.Query.Processor.QCandidate _root;
+
+		private Db4objects.Db4o.Internal.ClassMetadata _classMetadata;
+
+		private FieldMetadata _fieldMetadata;
 
 		private int _handlerVersion;
 
-		public QCandidate(QCandidates candidates, object member, int id) : base(candidates
-			, id)
+		private QCandidate(QCandidates qcandidates) : base(0)
 		{
 			// db4o ID is stored in _key;
 			// db4o byte stream storing the object
+			// Dependent candidates
+			// whether to include in the result set
+			// may use id for optimisation ???
+			// Possible pending joins on children
+			// The evaluation root to compare all ORs
 			// the ClassMetadata of this object
 			// temporary field and member for one field during evaluation
 			// null denotes null object
+			_candidates = qcandidates;
+		}
+
+		public QCandidate(QCandidates candidates, object member, int id) : base(id)
+		{
+			if (DTrace.enabled)
+			{
+				DTrace.CreateCandidate.Log(id);
+			}
+			_candidates = candidates;
 			_member = member;
+			_include = true;
+			if (id == 0)
+			{
+				_key = candidates.GenerateCandidateId();
+			}
 		}
 
 		public override object ShallowClone()
 		{
 			Db4objects.Db4o.Internal.Query.Processor.QCandidate qcan = new Db4objects.Db4o.Internal.Query.Processor.QCandidate
-				(_candidates, _member, _key);
+				(_candidates);
 			qcan.SetBytes(_bytes);
 			qcan._dependants = _dependants;
 			qcan._include = _include;
@@ -58,6 +88,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			qcan._classMetadata = _classMetadata;
 			qcan._fieldMetadata = _fieldMetadata;
 			return base.ShallowCloneInternal(qcan);
+		}
+
+		internal virtual void AddDependant(Db4objects.Db4o.Internal.Query.Processor.QCandidate
+			 a_candidate)
+		{
+			_dependants = new List4(_dependants, a_candidate);
 		}
 
 		private void CheckInstanceOfCompare()
@@ -80,48 +116,127 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		public virtual bool CreateChild(QField field, QCandidates candidates)
+		internal virtual bool CreateChild(QCandidates a_candidates)
 		{
 			if (!_include)
 			{
 				return false;
 			}
-			UseField(field);
-			if (_fieldMetadata == null || _fieldMetadata is NullFieldMetadata)
+			if (_fieldMetadata != null)
+			{
+				ITypeHandler4 handler = _fieldMetadata.GetHandler();
+				if (handler != null)
+				{
+					QueryingReadContext queryingReadContext = new QueryingReadContext(Transaction(), 
+						MarshallerFamily().HandlerVersion(), _bytes, _key);
+					ITypeHandler4 arrayElementHandler = Handlers4.ArrayElementHandler(handler, queryingReadContext
+						);
+					if (arrayElementHandler != null)
+					{
+						int offset = queryingReadContext.Offset();
+						bool outerRes = true;
+						// The following construct is worse than not ideal.
+						// For each constraint it completely reads the
+						// underlying structure again. The structure could b
+						// kept fairly easy. TODO: Optimize!
+						IEnumerator i = a_candidates.IterateConstraints();
+						while (i.MoveNext())
+						{
+							QCon qcon = (QCon)i.Current;
+							QField qf = qcon.GetField();
+							if (qf == null || qf.Name().Equals(_fieldMetadata.GetName()))
+							{
+								QCon tempParent = qcon.Parent();
+								qcon.SetParent(null);
+								QCandidates candidates = new QCandidates(a_candidates.i_trans, null, qf);
+								candidates.AddConstraint(qcon);
+								qcon.SetCandidates(candidates);
+								ReadArrayCandidates(handler, queryingReadContext.Buffer(), arrayElementHandler, candidates
+									);
+								queryingReadContext.Seek(offset);
+								bool isNot = qcon.IsNot();
+								if (isNot)
+								{
+									qcon.RemoveNot();
+								}
+								candidates.Evaluate();
+								ByRef pending = ByRef.NewInstance();
+								bool[] innerRes = new bool[] { isNot };
+								candidates.Traverse(new _IVisitor4_160(innerRes, isNot, pending));
+								// Collect all pending subresults.
+								// We need to change
+								// the
+								// constraint here, so
+								// our
+								// pending collector
+								// uses
+								// the right
+								// comparator.
+								// We only keep one
+								// pending result
+								// for
+								// all array
+								// elements.
+								// and memorize,
+								// whether we had a
+								// true or a false
+								// result.
+								// or both.
+								if (isNot)
+								{
+									qcon.Not();
+								}
+								// In case we had pending subresults, we
+								// need to communicate
+								// them up to our root.
+								if (((Tree)pending.value) != null)
+								{
+									((Tree)pending.value).Traverse(new _IVisitor4_229(this));
+								}
+								if (!innerRes[0])
+								{
+									// Again this could be double triggering.
+									// 
+									// We want to clean up the "No route"
+									// at some stage.
+									qcon.Visit(GetRoot(), qcon.Evaluator().Not(false));
+									outerRes = false;
+								}
+								qcon.SetParent(tempParent);
+							}
+						}
+						return outerRes;
+					}
+					// We may get simple types here too, if the YapField was null
+					// in the higher level simple evaluation. Evaluate these
+					// immediately.
+					if (Handlers4.IsQueryLeaf(handler))
+					{
+						a_candidates.i_currentConstraint.Visit(this);
+						return true;
+					}
+				}
+			}
+			if (_fieldMetadata == null)
 			{
 				return false;
 			}
-			ITypeHandler4 handler = _fieldMetadata.GetHandler();
-			if (handler != null)
+			if (_fieldMetadata is NullFieldMetadata)
 			{
-				QueryingReadContext queryingReadContext = new QueryingReadContext(Transaction(), 
-					MarshallerFamily().HandlerVersion(), _bytes, _key);
-				ITypeHandler4 arrayElementHandler = Handlers4.ArrayElementHandler(handler, queryingReadContext
-					);
-				if (arrayElementHandler != null)
-				{
-					return CreateChildForDescendable(candidates, handler, queryingReadContext, arrayElementHandler
-						);
-				}
-				// We may get simple types here too, if the YapField was null
-				// in the higher level simple evaluation. Evaluate these
-				// immediately.
-				if (Handlers4.IsQueryLeaf(handler))
-				{
-					candidates._currentConstraint.Visit(this);
-					return true;
-				}
+				return false;
 			}
 			_classMetadata.SeekToField(Transaction(), _bytes, _fieldMetadata);
-			IInternalCandidate candidate = ReadSubCandidate(candidates);
+			Db4objects.Db4o.Internal.Query.Processor.QCandidate candidate = ReadSubCandidate(
+				a_candidates);
 			if (candidate == null)
 			{
 				return false;
 			}
 			// fast early check for ClassMetadata
-			if (candidates._classMetadata != null && candidates._classMetadata.IsStronglyTyped
+			if (a_candidates.i_classMetadata != null && a_candidates.i_classMetadata.IsStronglyTyped
 				())
 			{
+				ITypeHandler4 handler = _fieldMetadata.GetHandler();
 				if (Handlers4.IsUntyped(handler))
 				{
 					handler = TypeHandlerFor(candidate);
@@ -131,71 +246,71 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					return false;
 				}
 			}
-			AddDependant(candidates.Add(candidate));
+			AddDependant(a_candidates.Add(candidate));
 			return true;
 		}
 
-		private bool CreateChildForDescendable(QCandidates parentCandidates, ITypeHandler4
-			 handler, QueryingReadContext queryingReadContext, ITypeHandler4 arrayElementHandler
-			)
+		private sealed class _IVisitor4_160 : IVisitor4
 		{
-			int offset = queryingReadContext.Offset();
-			bool outerRes = true;
-			// The following construct is worse than not ideal. For each constraint it completely reads the
-			// underlying structure again. The structure could be kept fairly easy. TODO: Optimize!
-			IEnumerator i = parentCandidates.IterateConstraints();
-			while (i.MoveNext())
+			public _IVisitor4_160(bool[] innerRes, bool isNot, ByRef pending)
 			{
-				QCon qcon = (QCon)i.Current;
-				QField qf = qcon.GetField();
-				if (qf != null && !qf.Name().Equals(_fieldMetadata.GetName()))
-				{
-					continue;
-				}
-				QCon tempParent = qcon.Parent();
-				qcon.SetParent(null);
-				QCandidates candidates = new QCandidates(parentCandidates.i_trans, null, qf, false
-					);
-				candidates.AddConstraint(qcon);
-				qcon.SetCandidates(candidates);
-				ReadArrayCandidates(handler, queryingReadContext.Buffer(), arrayElementHandler, candidates
-					);
-				queryingReadContext.Seek(offset);
-				bool isNot = qcon.IsNot();
-				if (isNot)
-				{
-					qcon.RemoveNot();
-				}
-				candidates.Evaluate();
-				ByRef pending = ByRef.NewInstance();
-				BooleanByRef innerRes = new BooleanByRef(isNot);
-				candidates.Traverse(new QCandidate.CreateDescendChildTraversingVisitor(pending, innerRes
-					, isNot));
-				if (isNot)
-				{
-					qcon.Not();
-				}
-				// In case we had pending subresults, we need to communicate them up to our root.
-				if (((Tree)pending.value) != null)
-				{
-					((Tree)pending.value).Traverse(new _IVisitor4_168(this));
-				}
-				if (!innerRes.value)
-				{
-					// Again this could be double triggering.
-					// 
-					// We want to clean up the "No route" at some stage.
-					qcon.Visit(GetRoot(), qcon.Evaluator().Not(false));
-					outerRes = false;
-				}
-				qcon.SetParent(tempParent);
+				this.innerRes = innerRes;
+				this.isNot = isNot;
+				this.pending = pending;
 			}
-			return outerRes;
+
+			public void Visit(object obj)
+			{
+				Db4objects.Db4o.Internal.Query.Processor.QCandidate cand = (Db4objects.Db4o.Internal.Query.Processor.QCandidate
+					)obj;
+				if (cand.Include())
+				{
+					innerRes[0] = !isNot;
+				}
+				if (cand._pendingJoins != null)
+				{
+					cand._pendingJoins.Traverse(new _IVisitor4_173(pending));
+				}
+			}
+
+			private sealed class _IVisitor4_173 : IVisitor4
+			{
+				public _IVisitor4_173(ByRef pending)
+				{
+					this.pending = pending;
+				}
+
+				public void Visit(object a_object)
+				{
+					QPending newPending = ((QPending)a_object).InternalClonePayload();
+					newPending.ChangeConstraint();
+					QPending oldPending = (QPending)Tree.Find(((Tree)pending.value), newPending);
+					if (oldPending != null)
+					{
+						if (oldPending._result != newPending._result)
+						{
+							oldPending._result = QPending.Both;
+						}
+					}
+					else
+					{
+						pending.value = Tree.Add(((Tree)pending.value), newPending);
+					}
+				}
+
+				private readonly ByRef pending;
+			}
+
+			private readonly bool[] innerRes;
+
+			private readonly bool isNot;
+
+			private readonly ByRef pending;
 		}
 
-		private sealed class _IVisitor4_168 : IVisitor4
+		private sealed class _IVisitor4_229 : IVisitor4
 		{
-			public _IVisitor4_168(QCandidate _enclosing)
+			public _IVisitor4_229(QCandidate _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -208,9 +323,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			private readonly QCandidate _enclosing;
 		}
 
-		private ITypeHandler4 TypeHandlerFor(IInternalCandidate candidate)
+		private ITypeHandler4 TypeHandlerFor(Db4objects.Db4o.Internal.Query.Processor.QCandidate
+			 candidate)
 		{
-			Db4objects.Db4o.Internal.ClassMetadata classMetadata = candidate.ClassMetadata();
+			Db4objects.Db4o.Internal.ClassMetadata classMetadata = candidate.ReadClassMetadata
+				();
 			if (classMetadata != null)
 			{
 				return classMetadata.TypeHandler();
@@ -226,13 +343,13 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				return;
 			}
 			SlotFormat slotFormat = SlotFormat.ForHandlerVersion(_handlerVersion);
-			slotFormat.DoWithSlotIndirection(buffer, typeHandler, new _IClosure4_205(this, arrayElementHandler
+			slotFormat.DoWithSlotIndirection(buffer, typeHandler, new _IClosure4_318(this, arrayElementHandler
 				, buffer, candidates));
 		}
 
-		private sealed class _IClosure4_205 : IClosure4
+		private sealed class _IClosure4_318 : IClosure4
 		{
-			public _IClosure4_205(QCandidate _enclosing, ITypeHandler4 arrayElementHandler, IReadBuffer
+			public _IClosure4_318(QCandidate _enclosing, ITypeHandler4 arrayElementHandler, IReadBuffer
 				 buffer, QCandidates candidates)
 			{
 				this._enclosing = _enclosing;
@@ -262,7 +379,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 						._enclosing._handlerVersion, buffer, 0);
 					((ICascadingTypeHandler)arrayElementHandler).CollectIDs(context);
 				}
-				Tree.Traverse(context.Ids(), new _IVisitor4_223(candidates));
+				Tree.Traverse(context.Ids(), new _IVisitor4_336(candidates));
 				IEnumerator i = context.ObjectsWithoutId();
 				while (i.MoveNext())
 				{
@@ -273,9 +390,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				return null;
 			}
 
-			private sealed class _IVisitor4_223 : IVisitor4
+			private sealed class _IVisitor4_336 : IVisitor4
 			{
-				public _IVisitor4_223(QCandidates candidates)
+				public _IVisitor4_336(QCandidates candidates)
 				{
 					this.candidates = candidates;
 				}
@@ -299,9 +416,50 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			private readonly QCandidates candidates;
 		}
 
+		internal virtual void DoNotInclude()
+		{
+			Include(false);
+			if (_dependants != null)
+			{
+				IEnumerator i = new Iterator4Impl(_dependants);
+				_dependants = null;
+				while (i.MoveNext())
+				{
+					((Db4objects.Db4o.Internal.Query.Processor.QCandidate)i.Current).DoNotInclude();
+				}
+			}
+		}
+
+		internal virtual bool Evaluate(QConObject a_constraint, QE a_evaluator)
+		{
+			if (a_evaluator.Identity())
+			{
+				return a_evaluator.Evaluate(a_constraint, this, null);
+			}
+			if (_member == null)
+			{
+				_member = Value();
+			}
+			return a_evaluator.Evaluate(a_constraint, this, a_constraint.Translate(_member));
+		}
+
+		internal virtual bool Evaluate(QPending a_pending)
+		{
+			QPending oldPending = (QPending)Tree.Find(_pendingJoins, a_pending);
+			if (oldPending == null)
+			{
+				a_pending.ChangeConstraint();
+				_pendingJoins = Tree.Add(_pendingJoins, a_pending.InternalClonePayload());
+				return true;
+			}
+			_pendingJoins = _pendingJoins.RemoveNode(oldPending);
+			oldPending._join.EvaluatePending(this, oldPending, a_pending._result);
+			return false;
+		}
+
 		internal virtual IReflectClass ClassReflector()
 		{
-			ClassMetadata();
+			ReadClassMetadata();
 			if (_classMetadata == null)
 			{
 				return null;
@@ -309,14 +467,122 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return _classMetadata.ClassReflector();
 		}
 
-		public override bool FieldIsAvailable()
+		internal virtual bool FieldIsAvailable()
 		{
 			return ClassReflector() != null;
 		}
 
-		internal virtual IReflectClass MemberClass()
+		// / ***<Candidate interface code>***
+		public virtual IObjectContainer ObjectContainer()
+		{
+			return Container();
+		}
+
+		public virtual object GetObject()
+		{
+			object obj = Value(true);
+			if (obj is ByteArrayBuffer)
+			{
+				ByteArrayBuffer reader = (ByteArrayBuffer)obj;
+				int offset = reader._offset;
+				obj = ReadString(reader);
+				reader._offset = offset;
+			}
+			return obj;
+		}
+
+		public virtual string ReadString(ByteArrayBuffer buffer)
+		{
+			return StringHandler.ReadString(Transaction().Context(), buffer);
+		}
+
+		internal virtual Db4objects.Db4o.Internal.Query.Processor.QCandidate GetRoot()
+		{
+			return _root == null ? this : _root;
+		}
+
+		internal LocalObjectContainer Container()
+		{
+			return Transaction().LocalContainer();
+		}
+
+		internal LocalTransaction Transaction()
+		{
+			return _candidates.i_trans;
+		}
+
+		public virtual bool Include()
+		{
+			return _include;
+		}
+
+		/// <summary>For external interface use only.</summary>
+		/// <remarks>
+		/// For external interface use only. Call doNotInclude() internally so
+		/// dependancies can be checked.
+		/// </remarks>
+		public virtual void Include(bool flag)
+		{
+			// TODO:
+			// Internal and external flag may need to be handled seperately.
+			_include = flag;
+		}
+
+		public override Tree OnAttemptToAddDuplicate(Tree oldNode)
+		{
+			_size = 0;
+			_root = (Db4objects.Db4o.Internal.Query.Processor.QCandidate)oldNode;
+			return oldNode;
+		}
+
+		private IReflectClass MemberClass()
 		{
 			return Transaction().Reflector().ForObject(_member);
+		}
+
+		internal virtual IPreparedComparison PrepareComparison(ObjectContainerBase container
+			, object constraint)
+		{
+			IContext context = container.Transaction.Context();
+			if (_fieldMetadata != null)
+			{
+				return _fieldMetadata.PrepareComparison(context, constraint);
+			}
+			if (_classMetadata != null)
+			{
+				return _classMetadata.PrepareComparison(context, constraint);
+			}
+			IReflector reflector = container.Reflector();
+			Db4objects.Db4o.Internal.ClassMetadata classMetadata = null;
+			if (_bytes != null)
+			{
+				classMetadata = container.ProduceClassMetadata(reflector.ForObject(constraint));
+			}
+			else
+			{
+				if (_member != null)
+				{
+					classMetadata = container.ClassMetadataForReflectClass(reflector.ForObject(_member
+						));
+				}
+			}
+			if (classMetadata != null)
+			{
+				if (_member != null && _member.GetType().IsArray)
+				{
+					ITypeHandler4 arrayElementTypehandler = classMetadata.TypeHandler();
+					if (reflector.Array().IsNDimensional(MemberClass()))
+					{
+						MultidimensionalArrayHandler mah = new MultidimensionalArrayHandler(arrayElementTypehandler
+							, false);
+						return mah.PrepareComparison(context, _member);
+					}
+					ArrayHandler ya = new ArrayHandler(arrayElementTypehandler, false);
+					return ya.PrepareComparison(context, _member);
+				}
+				return classMetadata.PrepareComparison(context, constraint);
+			}
+			return null;
 		}
 
 		private void Read()
@@ -350,7 +616,8 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return _bytes._offset;
 		}
 
-		private IInternalCandidate ReadSubCandidate(QCandidates candidateCollection)
+		private Db4objects.Db4o.Internal.Query.Processor.QCandidate ReadSubCandidate(QCandidates
+			 candidateCollection)
 		{
 			Read();
 			if (_bytes == null || _fieldMetadata == null)
@@ -361,12 +628,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			QueryingReadContext context = NewQueryingReadContext();
 			ITypeHandler4 handler = HandlerRegistry.CorrectHandlerVersion(context, _fieldMetadata
 				.GetHandler());
-			IInternalCandidate subCandidate = candidateCollection.ReadSubCandidate(context, handler
-				);
+			Db4objects.Db4o.Internal.Query.Processor.QCandidate subCandidate = candidateCollection
+				.ReadSubCandidate(context, handler);
 			Seek(offset);
 			if (subCandidate != null)
 			{
-				subCandidate.Root(GetRoot());
+				subCandidate._root = GetRoot();
 				return subCandidate;
 			}
 			return null;
@@ -394,27 +661,25 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		public override Db4objects.Db4o.Internal.ClassMetadata ClassMetadata()
+		internal virtual Db4objects.Db4o.Internal.ClassMetadata ReadClassMetadata()
 		{
-			if (_classMetadata != null)
+			if (_classMetadata == null)
 			{
-				return _classMetadata;
-			}
-			Read();
-			if (_bytes == null)
-			{
-				return null;
-			}
-			Seek(0);
-			ObjectContainerBase stream = Container();
-			ObjectHeader objectHeader = new ObjectHeader(stream, _bytes);
-			_classMetadata = objectHeader.ClassMetadata();
-			if (_classMetadata != null)
-			{
-				if (stream._handlers.IclassCompare.IsAssignableFrom(_classMetadata.ClassReflector
-					()))
+				Read();
+				if (_bytes != null)
 				{
-					ReadThis(false);
+					Seek(0);
+					ObjectContainerBase stream = Container();
+					ObjectHeader objectHeader = new ObjectHeader(stream, _bytes);
+					_classMetadata = objectHeader.ClassMetadata();
+					if (_classMetadata != null)
+					{
+						if (stream._handlers.IclassCompare.IsAssignableFrom(_classMetadata.ClassReflector
+							()))
+						{
+							ReadThis(false);
+						}
+					}
 				}
 			}
 			return _classMetadata;
@@ -422,7 +687,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		public override string ToString()
 		{
-			string str = "QCandidate id: " + _key;
+			string str = "QCandidate ";
 			if (_classMetadata != null)
 			{
 				str += "\n   YapClass " + _classMetadata.GetName();
@@ -447,7 +712,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return str;
 		}
 
-		public virtual void UseField(QField a_field)
+		internal virtual void UseField(QField a_field)
 		{
 			Read();
 			if (_bytes == null)
@@ -455,7 +720,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				_fieldMetadata = null;
 				return;
 			}
-			ClassMetadata();
+			ReadClassMetadata();
 			_member = null;
 			if (a_field == null)
 			{
@@ -551,147 +816,15 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 				);
 		}
 
+		public override bool Duplicates()
+		{
+			return _root != null;
+		}
+
 		public virtual void ClassMetadata(Db4objects.Db4o.Internal.ClassMetadata classMetadata
 			)
 		{
 			_classMetadata = classMetadata;
-		}
-
-		public override bool Evaluate(QConObject a_constraint, QE a_evaluator)
-		{
-			if (a_evaluator.Identity())
-			{
-				return a_evaluator.Evaluate(a_constraint, this, null);
-			}
-			if (_member == null)
-			{
-				_member = Value();
-			}
-			return a_evaluator.Evaluate(a_constraint, this, a_constraint.Translate(_member));
-		}
-
-		public override object GetObject()
-		{
-			object obj = Value(true);
-			if (obj is ByteArrayBuffer)
-			{
-				ByteArrayBuffer reader = (ByteArrayBuffer)obj;
-				int offset = reader._offset;
-				obj = StringHandler.ReadString(Transaction().Context(), reader);
-				reader._offset = offset;
-			}
-			return obj;
-		}
-
-		public override IPreparedComparison PrepareComparison(ObjectContainerBase container
-			, object constraint)
-		{
-			IContext context = container.Transaction.Context();
-			if (_fieldMetadata != null)
-			{
-				return _fieldMetadata.PrepareComparison(context, constraint);
-			}
-			if (_classMetadata != null)
-			{
-				return _classMetadata.PrepareComparison(context, constraint);
-			}
-			IReflector reflector = container.Reflector();
-			Db4objects.Db4o.Internal.ClassMetadata classMetadata = null;
-			if (_bytes != null)
-			{
-				classMetadata = container.ProduceClassMetadata(reflector.ForObject(constraint));
-			}
-			else
-			{
-				if (_member != null)
-				{
-					classMetadata = container.ClassMetadataForReflectClass(reflector.ForObject(_member
-						));
-				}
-			}
-			if (classMetadata != null)
-			{
-				if (_member != null && _member.GetType().IsArray)
-				{
-					ITypeHandler4 arrayElementTypehandler = classMetadata.TypeHandler();
-					if (reflector.Array().IsNDimensional(MemberClass()))
-					{
-						MultidimensionalArrayHandler mah = new MultidimensionalArrayHandler(arrayElementTypehandler
-							, false);
-						return mah.PrepareComparison(context, _member);
-					}
-					ArrayHandler ya = new ArrayHandler(arrayElementTypehandler, false);
-					return ya.PrepareComparison(context, _member);
-				}
-				return classMetadata.PrepareComparison(context, constraint);
-			}
-			return null;
-		}
-
-		internal sealed class CreateDescendChildTraversingVisitor : IVisitor4
-		{
-			private readonly ByRef _pending;
-
-			private readonly BooleanByRef _innerRes;
-
-			private readonly bool _isNot;
-
-			internal CreateDescendChildTraversingVisitor(ByRef pending, BooleanByRef innerRes
-				, bool isNot)
-			{
-				_pending = pending;
-				_innerRes = innerRes;
-				_isNot = isNot;
-			}
-
-			public void Visit(object obj)
-			{
-				IInternalCandidate cand = (IInternalCandidate)obj;
-				if (cand.Include())
-				{
-					_innerRes.value = !_isNot;
-				}
-				// Collect all pending subresults.
-				if (cand.PendingJoins() == null)
-				{
-					return;
-				}
-				cand.PendingJoins().Traverse(new _IVisitor4_529(this));
-			}
-
-			private sealed class _IVisitor4_529 : IVisitor4
-			{
-				public _IVisitor4_529(CreateDescendChildTraversingVisitor _enclosing)
-				{
-					this._enclosing = _enclosing;
-				}
-
-				public void Visit(object a_object)
-				{
-					QPending newPending = ((QPending)a_object).InternalClonePayload();
-					// We need to change the constraint here, so our pending collector
-					// uses the right comparator.
-					newPending.ChangeConstraint();
-					QPending oldPending = (QPending)Tree.Find(((Tree)this._enclosing._pending.value), 
-						newPending);
-					if (oldPending != null)
-					{
-						// We only keep one pending result for all array elements and memorize,
-						// whether we had a true or a false result or both.
-						if (oldPending._result != newPending._result)
-						{
-							oldPending._result = QPending.Both;
-						}
-					}
-					else
-					{
-						this._enclosing._pending.value = Tree.Add(((Tree)this._enclosing._pending.value), 
-							newPending);
-					}
-				}
-
-				private readonly CreateDescendChildTraversingVisitor _enclosing;
-			}
 		}
 	}
 }

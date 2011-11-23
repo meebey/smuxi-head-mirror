@@ -1,13 +1,15 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Foundation;
+using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Btree;
 using Db4objects.Db4o.Internal.Fieldindex;
+using Db4objects.Db4o.Internal.Query.Processor;
 
 namespace Db4objects.Db4o.Internal.Fieldindex
 {
-	public class FieldIndexProcessorResult : IIntVisitable
+	public class FieldIndexProcessorResult
 	{
 		public static readonly Db4objects.Db4o.Internal.Fieldindex.FieldIndexProcessorResult
 			 NoIndexFound = new Db4objects.Db4o.Internal.Fieldindex.FieldIndexProcessorResult
@@ -24,13 +26,18 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 			_indexedNode = indexedNode;
 		}
 
-		public virtual void Traverse(IIntVisitor visitor)
+		public virtual Tree ToQCandidate(QCandidates candidates)
 		{
-			if (!FoundMatch())
+			return TreeInt.ToQCandidate(ToTreeInt(), candidates);
+		}
+
+		public virtual TreeInt ToTreeInt()
+		{
+			if (FoundMatch())
 			{
-				return;
+				return _indexedNode.ToTreeInt();
 			}
-			_indexedNode.Traverse(visitor);
+			return null;
 		}
 
 		public virtual bool FoundMatch()
@@ -50,12 +57,12 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 
 		public virtual IEnumerator IterateIDs()
 		{
-			return new _MappingIterator_40(_indexedNode.GetEnumerator());
+			return new _MappingIterator_46(_indexedNode.GetEnumerator());
 		}
 
-		private sealed class _MappingIterator_40 : MappingIterator
+		private sealed class _MappingIterator_46 : MappingIterator
 		{
-			public _MappingIterator_40(IEnumerator baseArg1) : base(baseArg1)
+			public _MappingIterator_46(IEnumerator baseArg1) : base(baseArg1)
 			{
 			}
 

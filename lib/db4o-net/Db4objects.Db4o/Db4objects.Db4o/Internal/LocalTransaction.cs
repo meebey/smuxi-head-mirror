@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -31,20 +31,18 @@ namespace Db4objects.Db4o.Internal
 
 		private long _timestamp;
 
-		private IList _concurrentReplicationTimestamps;
-
 		public LocalTransaction(ObjectContainerBase container, Transaction parentTransaction
 			, ITransactionalIdSystem idSystem, IReferenceSystem referenceSystem) : base(container
 			, parentTransaction, referenceSystem)
 		{
 			_file = (LocalObjectContainer)container;
-			_committedCallbackDispatcher = new _ICommittedCallbackDispatcher_39(this);
+			_committedCallbackDispatcher = new _ICommittedCallbackDispatcher_35(this);
 			_idSystem = idSystem;
 		}
 
-		private sealed class _ICommittedCallbackDispatcher_39 : ICommittedCallbackDispatcher
+		private sealed class _ICommittedCallbackDispatcher_35 : ICommittedCallbackDispatcher
 		{
-			public _ICommittedCallbackDispatcher_39(LocalTransaction _enclosing)
+			public _ICommittedCallbackDispatcher_35(LocalTransaction _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -264,7 +262,7 @@ namespace Db4objects.Db4o.Internal
 			{
 				Tree delete = _delete;
 				_delete = null;
-				delete.Traverse(new _IVisitor4_229(this));
+				delete.Traverse(new _IVisitor4_225(this));
 			}
 			// if the object has been deleted
 			// We need to hold a hard reference here, otherwise we can get 
@@ -275,9 +273,9 @@ namespace Db4objects.Db4o.Internal
 			_writtenUpdateAdjustedIndexes = null;
 		}
 
-		private sealed class _IVisitor4_229 : IVisitor4
+		private sealed class _IVisitor4_225 : IVisitor4
 		{
-			public _IVisitor4_229(LocalTransaction _enclosing)
+			public _IVisitor4_225(LocalTransaction _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -327,13 +325,13 @@ namespace Db4objects.Db4o.Internal
 		private Collection4 CollectCommittedCallbackDeletedInfo()
 		{
 			Collection4 deleted = new Collection4();
-			CollectCallBackInfo(new _ICallbackInfoCollector_279(this, deleted));
+			CollectCallBackInfo(new _ICallbackInfoCollector_275(this, deleted));
 			return deleted;
 		}
 
-		private sealed class _ICallbackInfoCollector_279 : ICallbackInfoCollector
+		private sealed class _ICallbackInfoCollector_275 : ICallbackInfoCollector
 		{
-			public _ICallbackInfoCollector_279(LocalTransaction _enclosing, Collection4 deleted
+			public _ICallbackInfoCollector_275(LocalTransaction _enclosing, Collection4 deleted
 				)
 			{
 				this._enclosing = _enclosing;
@@ -371,13 +369,13 @@ namespace Db4objects.Db4o.Internal
 			}
 			Collection4 added = new Collection4();
 			Collection4 updated = new Collection4();
-			CollectCallBackInfo(new _ICallbackInfoCollector_302(this, added, updated));
+			CollectCallBackInfo(new _ICallbackInfoCollector_298(this, added, updated));
 			return NewCallbackObjectInfoCollections(added, updated, deleted);
 		}
 
-		private sealed class _ICallbackInfoCollector_302 : ICallbackInfoCollector
+		private sealed class _ICallbackInfoCollector_298 : ICallbackInfoCollector
 		{
-			public _ICallbackInfoCollector_302(LocalTransaction _enclosing, Collection4 added
+			public _ICallbackInfoCollector_298(LocalTransaction _enclosing, Collection4 added
 				, Collection4 updated)
 			{
 				this._enclosing = _enclosing;
@@ -415,14 +413,14 @@ namespace Db4objects.Db4o.Internal
 			Collection4 added = new Collection4();
 			Collection4 deleted = new Collection4();
 			Collection4 updated = new Collection4();
-			CollectCallBackInfo(new _ICallbackInfoCollector_325(this, added, updated, deleted
+			CollectCallBackInfo(new _ICallbackInfoCollector_321(this, added, updated, deleted
 				));
 			return NewCallbackObjectInfoCollections(added, updated, deleted);
 		}
 
-		private sealed class _ICallbackInfoCollector_325 : ICallbackInfoCollector
+		private sealed class _ICallbackInfoCollector_321 : ICallbackInfoCollector
 		{
-			public _ICallbackInfoCollector_325(LocalTransaction _enclosing, Collection4 added
+			public _ICallbackInfoCollector_321(LocalTransaction _enclosing, Collection4 added
 				, Collection4 updated, Collection4 deleted)
 			{
 				this._enclosing = _enclosing;
@@ -481,24 +479,15 @@ namespace Db4objects.Db4o.Internal
 			ObjectReference @ref = ReferenceForId(id);
 			if (@ref != null)
 			{
-				if (IsStruct(@ref))
-				{
-					return null;
-				}
 				return new FrozenObjectInfo(this, @ref, true);
 			}
 			@ref = Container().PeekReference(SystemTransaction(), id, new FixedActivationDepth
 				(0), true);
-			if (@ref == null || @ref.GetObject() == null || IsStruct(@ref))
+			if (@ref == null || @ref.GetObject() == null)
 			{
 				return null;
 			}
 			return new FrozenObjectInfo(SystemTransaction(), @ref, true);
-		}
-
-		private bool IsStruct(ObjectReference @ref)
-		{
-			return @ref.ClassMetadata().IsStruct();
 		}
 
 		public virtual LazyObjectReference LazyReferenceFor(int id)
@@ -542,36 +531,11 @@ namespace Db4objects.Db4o.Internal
 		public override void UseDefaultTransactionTimestamp()
 		{
 			_timestamp = 0;
-			_concurrentReplicationTimestamps = null;
 		}
 
 		public virtual long Timestamp()
 		{
 			return _timestamp;
-		}
-
-		public virtual void NotifyAboutOtherReplicationCommit(long replicationVersion, IList
-			 concurrentTimestamps)
-		{
-			if (Timestamp() == 0)
-			{
-				return;
-			}
-			if (_concurrentReplicationTimestamps == null)
-			{
-				_concurrentReplicationTimestamps = new ArrayList();
-			}
-			_concurrentReplicationTimestamps.Add(replicationVersion);
-			concurrentTimestamps.Add(Timestamp());
-		}
-
-		public virtual IList ConcurrentReplicationTimestamps()
-		{
-			if (_concurrentReplicationTimestamps != null)
-			{
-				return _concurrentReplicationTimestamps;
-			}
-			return new ArrayList();
 		}
 	}
 }

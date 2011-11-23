@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Reflect;
 
@@ -77,6 +77,6 @@ namespace Db4objects.Db4o.Reflect
 		/// 	</see>
 		/// We can think about letting users add an Immutable annotation.
 		/// </remarks>
-		bool IsSimple();
+		bool IsImmutable();
 	}
 }

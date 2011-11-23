@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using Db4objects.Db4o.Bench;
 using Db4objects.Db4o.Bench.Crud;
 using Db4objects.Db4o.Bench.Delaying;
 using Db4objects.Db4o.Bench.Logging;
@@ -11,6 +12,8 @@ using Db4objects.Db4o.Ext;
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.IO;
 using Sharpen;
+using Sharpen.IO;
+using Sharpen.Lang;
 using Sharpen.Util;
 
 namespace Db4objects.Db4o.Bench
@@ -31,7 +34,7 @@ namespace Db4objects.Db4o.Bench
 
 		private static readonly string _dbFileName = "IoBenchmark.db4o";
 
-		private Delays _delays;
+		private Delays _delays = null;
 
 		/// <exception cref="IOException"></exception>
 		public static void Main(string[] args)
@@ -41,7 +44,8 @@ namespace Db4objects.Db4o.Bench
 			IoBenchmark ioBenchmark = new IoBenchmark();
 			if (argumentParser.Delayed())
 			{
-				ioBenchmark.ProcessResultsFiles(argumentParser.ResultsFile1(), argumentParser.ResultsFile2());
+				ioBenchmark.ProcessResultsFiles(argumentParser.ResultsFile1(), argumentParser.ResultsFile2
+					());
 			}
 			ioBenchmark.Run(argumentParser);
 		}
@@ -64,20 +68,21 @@ namespace Db4objects.Db4o.Bench
 		{
 			Sysout("Preparing DB file ...");
 			DeleteFile(_dbFileName);
-			var storage = new FileStorage();
-			var bin = storage.Open(new BinConfiguration(_dbFileName, false, 0, false));
-			LogReplayer replayer = new LogReplayer(CrudApplication.LogFileName(itemCount), bin);
+			Db4objects.Db4o.IO.IoAdapter rafFactory = new RandomAccessFileAdapter();
+			Db4objects.Db4o.IO.IoAdapter raf = rafFactory.Open(_dbFileName, false, 0, false);
+			LogReplayer replayer = new LogReplayer(CrudApplication.LogFileName(itemCount), raf
+				);
 			try
 			{
 				replayer.ReplayLog();
 			}
-			catch (IOException ex)
+			catch (IOException)
 			{
-				ExitWithError("Error reading I/O operations log file " + ex);
+				ExitWithError("Error reading I/O operations log file");
 			}
 			finally
 			{
-				bin.Close();
+				raf.Close();
 			}
 		}
 
@@ -98,43 +103,44 @@ namespace Db4objects.Db4o.Bench
 		}
 
 		/// <exception cref="IOException"></exception>
-		private void BenchmarkCommand(string command, int itemCount, string dbFileName, TextWriter@out)
+		private void BenchmarkCommand(string command, int itemCount, string dbFileName, TextWriter
+			 @out)
 		{
-			var commands = CommandSet(command);
-			IBin bin = Bin(dbFileName);
-			var replayer = new LogReplayer(CrudApplication.LogFileName(itemCount), bin, commands);
+			HashSet commands = CommandSet(command);
+			Db4objects.Db4o.IO.IoAdapter io = IoAdapter(dbFileName);
+			LogReplayer replayer = new LogReplayer(CrudApplication.LogFileName(itemCount), io
+				, commands);
 			List4 commandList = replayer.ReadCommandList();
-			var watch = new StopWatch();
+			StopWatch watch = new StopWatch();
 			watch.Start();
 			replayer.PlayCommandList(commandList);
 			watch.Stop();
-			bin.Close();
-			
-			var timeElapsed = watch.Elapsed();
-			var operationCount = ((long)replayer.OperationCounts()[command]);
+			io.Close();
+			long timeElapsed = watch.Elapsed();
+			long operationCount = ((long)replayer.OperationCounts()[command]);
 			PrintStatisticsForCommand(@out, command, timeElapsed, operationCount);
 		}
 
 		/// <exception cref="NumberFormatException"></exception>
 		/// <exception cref="IOException"></exception>
 		/// <exception cref="Db4oIOException"></exception>
-		private IBin Bin(string dbFileName)
+		private Db4objects.Db4o.IO.IoAdapter IoAdapter(string dbFileName)
 		{
 			if (Delayed())
 			{
 				return DelayingIoAdapter(dbFileName);
 			}
-			var storage = new FileStorage();
-			return storage.Open(new BinConfiguration(dbFileName, false, 0, false));
+			Db4objects.Db4o.IO.IoAdapter rafFactory = new RandomAccessFileAdapter();
+			return rafFactory.Open(dbFileName, false, 0, false);
 		}
 
 		/// <exception cref="NumberFormatException"></exception>
-		private IBin DelayingIoAdapter(string dbFileName)
+		private Db4objects.Db4o.IO.IoAdapter DelayingIoAdapter(string dbFileName)
 		{
-			var storage = new FileStorage();
-
-			var delayingStorage = new DelayingStorage(storage, _delays);
-			return delayingStorage.Open(new BinConfiguration(dbFileName, false, 0, false));
+			Db4objects.Db4o.IO.IoAdapter rafFactory = new RandomAccessFileAdapter();
+			Db4objects.Db4o.IO.IoAdapter delFactory = new Db4objects.Db4o.Bench.Delaying.DelayingIoAdapter
+				(rafFactory, _delays);
+			return delFactory.Open(dbFileName, false, 0, false);
 		}
 
 		/// <exception cref="NumberFormatException"></exception>
@@ -159,14 +165,15 @@ namespace Db4objects.Db4o.Bench
 			}
 			catch (IOException)
 			{
-				ExitWithError("> Could not open results file(s)!\n" + "> Please check the file name settings in IoBenchmark.properties.");
+				ExitWithError("> Could not open results file(s)!\n" + "> Please check the file name settings in IoBenchmark.properties."
+					);
 			}
 		}
 
 		private void ExitWithError(string error)
 		{
-			Runtime.Err.WriteLine(error + "\n Aborting execution!");
-            throw new Exception(error + "\n Aborting execution!");
+			Sharpen.Runtime.Err.WriteLine(error + "\n Aborting execution!");
+            throw new System.Exception(error + "\n Aborting execution!");
 		}
 
 		private string ResultsFileName(int itemCount)
@@ -226,8 +233,8 @@ namespace Db4objects.Db4o.Bench
 		private void PrintStatisticsForCommand(TextWriter @out, string currentCommand, long
 			 timeElapsed, long operationCount)
 		{
-			double avgTimePerOp = (double)timeElapsed / operationCount;
-			double opsPerMs = (double)operationCount / timeElapsed;
+			double avgTimePerOp = (double)timeElapsed / (double)operationCount;
+			double opsPerMs = (double)operationCount / (double)timeElapsed;
 			double nanosPerMilli = Math.Pow(10, 6);
 			string output = "Results for " + currentCommand + "\r\n" + "> operations executed: "
 				 + operationCount + "\r\n" + "> time elapsed: " + timeElapsed + " ms\r\n" + "> operations per millisecond: "
@@ -250,7 +257,7 @@ namespace Db4objects.Db4o.Bench
 
 		private static void Sysout(string text)
 		{
-			Runtime.Out.WriteLine(text);
+			Sharpen.Runtime.Out.WriteLine(text);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Foundation;
 using Db4objects.Db4o.Internal;
@@ -8,7 +8,7 @@ using Db4objects.Db4o.Marshall;
 namespace Db4objects.Db4o.Internal.Btree
 {
 	/// <exclude></exclude>
-	public class FieldIndexKeyHandler : IIndexable4, ICanExcludeNullInQueries
+	public class FieldIndexKeyHandler : IIndexable4
 	{
 		private readonly IIndexable4 _valueHandler;
 
@@ -25,16 +25,22 @@ namespace Db4objects.Db4o.Internal.Btree
 			return _valueHandler.LinkLength() + Const4.IntLength;
 		}
 
-		public virtual object ReadIndexEntry(IContext context, ByteArrayBuffer buffer)
+		public virtual object ReadIndexEntry(IContext context, ByteArrayBuffer a_reader)
 		{
-			int parentID = buffer.ReadInt();
-			object objPart = _valueHandler.ReadIndexEntry(context, buffer);
+			// TODO: could read int directly here with a_reader.readInt()
+			int parentID = ReadParentID(context, a_reader);
+			object objPart = _valueHandler.ReadIndexEntry(context, a_reader);
 			if (parentID < 0)
 			{
 				objPart = null;
 				parentID = -parentID;
 			}
 			return new FieldIndexKeyImpl(parentID, objPart);
+		}
+
+		private int ReadParentID(IContext context, ByteArrayBuffer a_reader)
+		{
+			return ((int)_parentIdHandler.ReadIndexEntry(context, a_reader));
 		}
 
 		public virtual void WriteIndexEntry(IContext context, ByteArrayBuffer writer, object
@@ -65,22 +71,18 @@ namespace Db4objects.Db4o.Internal.Btree
 		public virtual IPreparedComparison PrepareComparison(IContext context, object fieldIndexKey
 			)
 		{
-			if (fieldIndexKey == null)
-			{
-				fieldIndexKey = new FieldIndexKeyImpl(int.MaxValue, null);
-			}
 			IFieldIndexKey source = (IFieldIndexKey)fieldIndexKey;
 			IPreparedComparison preparedValueComparison = _valueHandler.PrepareComparison(context
 				, source.Value());
 			IPreparedComparison preparedParentIdComparison = _parentIdHandler.NewPrepareCompare
 				(source.ParentID());
-			return new _IPreparedComparison_65(preparedValueComparison, preparedParentIdComparison
+			return new _IPreparedComparison_67(preparedValueComparison, preparedParentIdComparison
 				);
 		}
 
-		private sealed class _IPreparedComparison_65 : IPreparedComparison
+		private sealed class _IPreparedComparison_67 : IPreparedComparison
 		{
-			public _IPreparedComparison_65(IPreparedComparison preparedValueComparison, IPreparedComparison
+			public _IPreparedComparison_67(IPreparedComparison preparedValueComparison, IPreparedComparison
 				 preparedParentIdComparison)
 			{
 				this.preparedValueComparison = preparedValueComparison;
@@ -108,15 +110,6 @@ namespace Db4objects.Db4o.Internal.Btree
 			private readonly IPreparedComparison preparedValueComparison;
 
 			private readonly IPreparedComparison preparedParentIdComparison;
-		}
-
-		public virtual bool ExcludeNull()
-		{
-			if (_valueHandler is ICanExcludeNullInQueries)
-			{
-				return ((ICanExcludeNullInQueries)_valueHandler).ExcludeNull();
-			}
-			return false;
 		}
 	}
 }

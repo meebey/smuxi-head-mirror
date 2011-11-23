@@ -1,7 +1,14 @@
 ﻿/* Copyright (C) 2007 - 2008  Versant Inc.  http://www.db4o.com */
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
+
+using Db4objects.Db4o;
+using Db4objects.Db4o.Linq;
+
 using Db4oUnit;
+using Db4oUnit.Extensions;
 
 namespace Db4objects.Db4o.Linq.Tests
 {
@@ -17,12 +24,12 @@ namespace Db4objects.Db4o.Linq.Tests
 				Person p = obj as Person;
 				if (p == null) return false;
 
-				return p.Name == Name && p.Age == Age;
+				return p.Name == this.Name && p.Age == this.Age;
 			}
 
 			public override int GetHashCode()
 			{
-				return Age ^ Name.GetHashCode();
+				return this.Age ^ this.Name.GetHashCode();
 			}
 		}
 

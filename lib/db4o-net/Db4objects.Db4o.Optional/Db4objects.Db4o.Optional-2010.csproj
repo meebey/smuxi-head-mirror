@@ -54,50 +54,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <SignAssembly>true</SignAssembly>
 <AssemblyOriginatorKeyFile>../db4objects.snk</AssemblyOriginatorKeyFile>
 </PropertyGroup>
@@ -125,11 +81,11 @@
   <ItemGroup>
     <Reference Include="Cecil.FlowAnalysis, Version=0.1.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\net-3.5\Cecil.FlowAnalysis.dll</HintPath>
+      <HintPath>..\Libs\net-2.0\Cecil.FlowAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil, Version=0.6.8.8607, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Libs\net-3.5\Mono.Cecil.dll</HintPath>
+      <HintPath>..\Libs\net-2.0\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="System"/>
     <Reference Include="System.Core">
@@ -141,10 +97,6 @@
   <ItemGroup>
 <Compile Include="Db4objects.Db4o\Cluster\Cluster.cs"/>
 <Compile Include="Db4objects.Db4o\Consistency\ConsistencyChecker.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\ConsistencyReport.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\OverlapMap.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotSource.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotWithSource.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\BigSetMiscCollector.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassNode.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassUsageStats.cs"/>
@@ -157,6 +109,9 @@
 <Compile Include="Db4objects.Db4o\Filestats\SlotMapImpl.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeString.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeStringObject.cs"/>
+<Compile Include="Db4objects.Db4o\IO\DebugIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\MemoryIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\NonFlushingIoAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IO\SaveAsStorage.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraint.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraints.cs"/>

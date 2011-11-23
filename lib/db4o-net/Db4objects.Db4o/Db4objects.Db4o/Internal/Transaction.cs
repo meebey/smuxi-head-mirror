@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o;
@@ -253,11 +253,6 @@ namespace Db4objects.Db4o.Internal
 			ReferenceSystem().Rollback();
 		}
 
-		public virtual void PostCommit()
-		{
-			CommitReferenceSystem();
-		}
-
 		public virtual void CommitReferenceSystem()
 		{
 			ReferenceSystem().Commit();
@@ -352,14 +347,14 @@ namespace Db4objects.Db4o.Internal
 		{
 			if (_context == null)
 			{
-				_context = new _IContext_299(this);
+				_context = new _IContext_295(this);
 			}
 			return _context;
 		}
 
-		private sealed class _IContext_299 : IContext
+		private sealed class _IContext_295 : IContext
 		{
-			public _IContext_299(Transaction _enclosing)
+			public _IContext_295(Transaction _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}

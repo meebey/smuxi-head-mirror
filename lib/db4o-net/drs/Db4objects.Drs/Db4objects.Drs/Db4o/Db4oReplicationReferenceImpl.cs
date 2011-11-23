@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Ext;
@@ -20,18 +20,11 @@ namespace Db4objects.Drs.Db4o
 
 		private bool _markedForDeleting;
 
-		private readonly long _version;
-
-		internal Db4oReplicationReferenceImpl(IObjectInfo objectInfo, object obj)
+		internal Db4oReplicationReferenceImpl(IObjectInfo objectInfo)
 		{
-			if (obj == null)
-			{
-				throw new InvalidOperationException("obj may not be null");
-			}
-			_version = objectInfo.GetCommitTimestamp();
-			ObjectReference @ref = (ObjectReference)objectInfo;
-			Transaction trans = @ref.Transaction();
-			Db4objects.Db4o.Internal.VirtualAttributes va = @ref.VirtualAttributes(trans);
+			ObjectReference yo = (ObjectReference)objectInfo;
+			Transaction trans = yo.Transaction();
+			Db4objects.Db4o.Internal.VirtualAttributes va = yo.VirtualAttributes(trans);
 			if (va != null)
 			{
 				SetVirtualAttributes((Db4objects.Db4o.Internal.VirtualAttributes)va.ShallowClone(
@@ -39,27 +32,24 @@ namespace Db4objects.Drs.Db4o
 			}
 			else
 			{
+				// No virtu
 				SetVirtualAttributes(new Db4objects.Db4o.Internal.VirtualAttributes());
 			}
+			object obj = yo.GetObject();
 			SetObject(obj);
 			Ref_init();
 		}
 
-		public Db4oReplicationReferenceImpl(object obj, Db4oDatabase db, long longPart, long
-			 version)
+		public Db4oReplicationReferenceImpl(object myObject, Db4oDatabase db, long longPart
+			, long version)
 		{
-			if (obj == null)
-			{
-				throw new InvalidOperationException("obj may not be null");
-			}
-			SetObject(obj);
+			SetObject(myObject);
 			Ref_init();
 			Db4objects.Db4o.Internal.VirtualAttributes va = new Db4objects.Db4o.Internal.VirtualAttributes
 				();
 			va.i_database = db;
 			va.i_uuid = longPart;
 			va.i_version = version;
-			_version = version;
 			SetVirtualAttributes(va);
 		}
 
@@ -91,7 +81,7 @@ namespace Db4objects.Drs.Db4o
 
 		public virtual long Version()
 		{
-			return _version;
+			return VirtualAttributes().i_version;
 		}
 
 		public virtual object Object()

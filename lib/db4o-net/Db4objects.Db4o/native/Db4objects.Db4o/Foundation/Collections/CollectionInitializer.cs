@@ -27,7 +27,7 @@ namespace Db4objects.Db4o.Foundation.Collections
 			_initializerByType[typeof (ICollection<>)] = typeof (CollectionInitializerImpl<>);
 			_initializerByType[typeof(Stack<>)] = typeof(StackInitializer<>);
 			_initializerByType[typeof(Queue<>)] = typeof(QueueInitializer<>);
-#if NET_3_5 && !CF && !SILVERLIGHT
+#if NET_3_5 && ! CF
 		    _initializerByType[typeof (HashSet<>)] = typeof (HashSetInitializer<>);
 #endif
 		}
@@ -242,7 +242,7 @@ namespace Db4objects.Db4o.Foundation.Collections
 			}
 		}
 
-#if NET_3_5 && !CF && !SILVERLIGHT
+#if NET_3_5 && ! CF
         private sealed class HashSetInitializer<T> : ICollectionInitializer
         {
             private readonly HashSet<T> _hashSet;

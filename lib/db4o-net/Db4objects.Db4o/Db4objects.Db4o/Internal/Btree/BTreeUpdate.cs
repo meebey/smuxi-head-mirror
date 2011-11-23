@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -40,17 +40,18 @@ namespace Db4objects.Db4o.Internal.Btree
 			{
 				return _next;
 			}
-			if (_next != null)
+			if (_next == null)
 			{
-				_next = _next.RemoveFor(trans);
+				return this;
 			}
-			return this;
+			return _next.RemoveFor(trans);
 		}
 
 		public virtual void Append(Db4objects.Db4o.Internal.Btree.BTreeUpdate patch)
 		{
 			if (_transaction == patch._transaction)
 			{
+				// don't allow two patches for the same transaction
 				throw new ArgumentException();
 			}
 			if (!HasNext())

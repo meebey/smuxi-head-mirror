@@ -100,6 +100,7 @@ namespace Db4objects.Db4o.Monitoring
                                  PerformanceCounterType.NumberOfItems32);
 
 
+#if NET_3_5
         public static readonly PerformanceCounterSpec LinqQueriesPerSec = new PerformanceCounterSpec("linq queries/sec",
                                 "Number of Linq queries executed per second",
                                 PerformanceCounterType.RateOfCountsPerSecond32);
@@ -107,6 +108,10 @@ namespace Db4objects.Db4o.Monitoring
         public static readonly PerformanceCounterSpec UnoptimizedLinqQueriesPerSec = new PerformanceCounterSpec("unoptimized linq queries/sec",
                                 "Number of unoptimized Linq queries executed per second",
                                 PerformanceCounterType.RateOfCountsPerSecond32);
+
+        
+#endif
+
 
         public string Id
         {
@@ -136,8 +141,10 @@ namespace Db4objects.Db4o.Monitoring
                            FreespaceSlotCount,
                            TotalFreespace,
                            ObjectReferenceCount,
+#if NET_3_5
                            LinqQueriesPerSec,
                            UnoptimizedLinqQueriesPerSec,
+#endif
                        };
             
         }

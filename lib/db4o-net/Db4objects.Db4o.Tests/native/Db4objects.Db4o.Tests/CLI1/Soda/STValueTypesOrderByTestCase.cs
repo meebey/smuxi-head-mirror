@@ -15,10 +15,9 @@ namespace Db4objects.Db4o.Tests.CLI1.Soda
 		private readonly List<object> _items = new List<object>();
 		protected override void Store()
 		{
-			Random rnd = new Random();
 			for (int i = 0; i < ThingsCount; i++)
 			{
-				object item = ItemVariable().New(rnd.Next(1, 1000));
+				object item = ItemVariable().New(i);
 				_items.Add(item);
 				Store(item);
 			}

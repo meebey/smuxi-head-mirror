@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -165,7 +165,7 @@ namespace Db4objects.Db4o.Tests.Common.Reflect.Custom
 			return true;
 		}
 
-		public virtual bool IsSimple()
+		public virtual bool IsImmutable()
 		{
 			return false;
 		}

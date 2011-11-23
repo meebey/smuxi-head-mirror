@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit;
@@ -84,12 +84,10 @@ namespace Db4objects.Db4o.Tests.Common.Internal
 			Assert.IsNotNull(comparable);
 			Assert.AreEqual(0, comparable.CompareTo(smaller));
 			Assert.IsSmaller(0, comparable.CompareTo(greater));
-			Assert.IsGreater(0, comparable.CompareTo(null));
 			comparable = handler.PrepareComparison(Context(), greater);
 			Assert.IsNotNull(comparable);
 			Assert.AreEqual(0, comparable.CompareTo(greater));
 			Assert.IsGreater(0, comparable.CompareTo(smaller));
-			Assert.IsGreater(0, comparable.CompareTo(null));
 			comparable = handler.PrepareComparison(Context(), null);
 			Assert.IsNotNull(comparable);
 			Assert.AreEqual(0, comparable.CompareTo(null));

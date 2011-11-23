@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -16,41 +16,47 @@ using Db4objects.Db4o.Typehandlers;
 
 namespace Db4objects.Db4o.Internal.Query.Processor
 {
+	/// <summary>
+	/// Holds the tree of
+	/// <see cref="QCandidate">QCandidate</see>
+	/// objects and the list of
+	/// <see cref="QCon">QCon</see>
+	/// during query evaluation.
+	/// The query work (adding and removing nodes) happens here.
+	/// Candidates during query evaluation.
+	/// <see cref="QCandidate">QCandidate</see>
+	/// objects are stored in i_root
+	/// </summary>
 	/// <exclude></exclude>
-	public sealed class QCandidates : IFieldFilterable
+	public sealed class QCandidates : IVisitor4
 	{
 		public readonly LocalTransaction i_trans;
 
-		public QueryResultCandidates _result;
+		public Tree i_root;
 
 		private List4 _constraints;
 
-		internal ClassMetadata _classMetadata;
+		internal ClassMetadata i_classMetadata;
 
 		private QField _field;
 
-		internal QCon _currentConstraint;
+		internal QCon i_currentConstraint;
 
 		private IDGenerator _idGenerator;
 
 		private bool _loadedFromClassIndex;
 
-		private bool _loadedFromClassFieldIndex;
-
-		private bool _isTopLevel;
-
 		internal QCandidates(LocalTransaction a_trans, ClassMetadata a_classMetadata, QField
-			 a_field, bool isTopLevel)
+			 a_field)
 		{
 			// Transaction necessary as reference to stream
+			// root of the QCandidate tree
 			// collection of all constraints
 			// possible class information
 			// possible field information
 			// current executing constraint, only set where needed
-			_result = new QueryResultCandidates(this);
-			_isTopLevel = isTopLevel;
 			i_trans = a_trans;
-			_classMetadata = a_classMetadata;
+			i_classMetadata = a_classMetadata;
 			_field = a_field;
 			if (a_field == null || a_field._fieldMetadata == null || !(a_field._fieldMetadata
 				.GetHandler() is StandardReferenceTypeHandler))
@@ -59,29 +65,24 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 			ClassMetadata yc = ((StandardReferenceTypeHandler)a_field._fieldMetadata.GetHandler
 				()).ClassMetadata();
-			if (_classMetadata == null)
+			if (i_classMetadata == null)
 			{
-				_classMetadata = yc;
+				i_classMetadata = yc;
 			}
 			else
 			{
-				yc = _classMetadata.GetHigherOrCommonHierarchy(yc);
+				yc = i_classMetadata.GetHigherOrCommonHierarchy(yc);
 				if (yc != null)
 				{
-					_classMetadata = yc;
+					i_classMetadata = yc;
 				}
 			}
 		}
 
-		public bool IsTopLevel()
+		public QCandidate Add(QCandidate candidate)
 		{
-			return _isTopLevel;
-		}
-
-		public IInternalCandidate Add(IInternalCandidate candidate)
-		{
-			_result.Add(candidate);
-			if (((QCandidateBase)candidate)._size == 0)
+			i_root = Tree.Add(i_root, candidate);
+			if (candidate._size == 0)
 			{
 				// This means that the candidate was already present
 				// and QCandidate does not allow duplicates.
@@ -98,8 +99,8 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			_constraints = new List4(_constraints, a_constraint);
 		}
 
-		public IInternalCandidate ReadSubCandidate(QueryingReadContext context, ITypeHandler4
-			 handler)
+		public QCandidate ReadSubCandidate(QueryingReadContext context, ITypeHandler4 handler
+			)
 		{
 			ObjectID objectID = ObjectID.NotPossible;
 			try
@@ -119,12 +120,8 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					object obj = context.Read(handler);
 					if (obj != null)
 					{
-						int id = context.Container().GetID(context.Transaction(), obj);
-						if (id == 0)
-						{
-							return new QPrimitiveCandidate(this, obj);
-						}
-						QCandidate candidate = new QCandidate(this, obj, id);
+						QCandidate candidate = new QCandidate(this, obj, context.Container().GetID(context
+							.Transaction(), obj));
 						candidate.ClassMetadata(context.Container().ClassMetadataForObject(obj));
 						return candidate;
 					}
@@ -159,7 +156,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			FieldIndexProcessorResult result = ProcessFieldIndexes();
 			if (result.FoundIndex())
 			{
-				_result.FieldIndexProcessorResult(result);
+				i_root = result.ToQCandidate(this);
 			}
 			else
 			{
@@ -181,12 +178,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		private IEnumerator SingleObjectSodaProcessor(IEnumerator indexIterator)
 		{
-			return Iterators.Map(indexIterator, new _IFunction4_171(this));
+			return Iterators.Map(indexIterator, new _IFunction4_159(this));
 		}
 
-		private sealed class _IFunction4_171 : IFunction4
+		private sealed class _IFunction4_159 : IFunction4
 		{
-			public _IFunction4_171(QCandidates _enclosing)
+			public _IFunction4_159(QCandidates _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -194,8 +191,8 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			public object Apply(object current)
 			{
 				int id = ((int)current);
-				QCandidateBase candidate = new QCandidate(this._enclosing, null, id);
-				this._enclosing._result.SingleCandidate(candidate);
+				QCandidate candidate = new QCandidate(this._enclosing, null, id);
+				this._enclosing.i_root = candidate;
 				this._enclosing.Evaluate();
 				if (!candidate.Include())
 				{
@@ -224,11 +221,11 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			{
 				return result.IterateIDs();
 			}
-			if (!_classMetadata.HasClassIndex())
+			if (!i_classMetadata.HasClassIndex())
 			{
 				return Iterators.EmptyIterator;
 			}
-			return BTreeClassIndexStrategy.Iterate(_classMetadata, i_trans);
+			return BTreeClassIndexStrategy.Iterate(i_classMetadata, i_trans);
 		}
 
 		private IEnumerator MapIdsToExecutionPath(IEnumerator singleObjectQueryIterator, 
@@ -243,14 +240,14 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			while (executionPathIterator.MoveNext())
 			{
 				string fieldName = (string)executionPathIterator.Current;
-				res = Iterators.Concat(Iterators.Map(res, new _IFunction4_217(this, fieldName)));
+				res = Iterators.Concat(Iterators.Map(res, new _IFunction4_205(this, fieldName)));
 			}
 			return res;
 		}
 
-		private sealed class _IFunction4_217 : IFunction4
+		private sealed class _IFunction4_205 : IFunction4
 		{
-			public _IFunction4_217(QCandidates _enclosing, string fieldName)
+			public _IFunction4_205(QCandidates _enclosing, string fieldName)
 			{
 				this._enclosing = _enclosing;
 				this.fieldName = fieldName;
@@ -280,7 +277,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 
 		public int ClassIndexEntryCount()
 		{
-			return _classMetadata.IndexEntryCount(i_trans);
+			return i_classMetadata.IndexEntryCount(i_trans);
 		}
 
 		private FieldIndexProcessorResult ProcessFieldIndexes()
@@ -298,17 +295,17 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			{
 				return;
 			}
-			ForEachConstraint(new _IProcedure4_254(this));
-			ForEachConstraint(new _IProcedure4_262());
-			ForEachConstraint(new _IProcedure4_268());
-			ForEachConstraint(new _IProcedure4_274());
-			ForEachConstraint(new _IProcedure4_280());
-			ForEachConstraint(new _IProcedure4_286());
+			ForEachConstraint(new _IProcedure4_243(this));
+			ForEachConstraint(new _IProcedure4_251());
+			ForEachConstraint(new _IProcedure4_257());
+			ForEachConstraint(new _IProcedure4_263());
+			ForEachConstraint(new _IProcedure4_269());
+			ForEachConstraint(new _IProcedure4_275());
 		}
 
-		private sealed class _IProcedure4_254 : IProcedure4
+		private sealed class _IProcedure4_243 : IProcedure4
 		{
-			public _IProcedure4_254(QCandidates _enclosing)
+			public _IProcedure4_243(QCandidates _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -323,9 +320,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			private readonly QCandidates _enclosing;
 		}
 
-		private sealed class _IProcedure4_262 : IProcedure4
+		private sealed class _IProcedure4_251 : IProcedure4
 		{
-			public _IProcedure4_262()
+			public _IProcedure4_251()
 			{
 			}
 
@@ -335,9 +332,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		private sealed class _IProcedure4_268 : IProcedure4
+		private sealed class _IProcedure4_257 : IProcedure4
 		{
-			public _IProcedure4_268()
+			public _IProcedure4_257()
 			{
 			}
 
@@ -347,9 +344,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		private sealed class _IProcedure4_274 : IProcedure4
+		private sealed class _IProcedure4_263 : IProcedure4
 		{
-			public _IProcedure4_274()
+			public _IProcedure4_263()
 			{
 			}
 
@@ -359,9 +356,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		private sealed class _IProcedure4_280 : IProcedure4
+		private sealed class _IProcedure4_269 : IProcedure4
 		{
-			public _IProcedure4_280()
+			public _IProcedure4_269()
 			{
 			}
 
@@ -371,9 +368,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			}
 		}
 
-		private sealed class _IProcedure4_286 : IProcedure4
+		private sealed class _IProcedure4_275 : IProcedure4
 		{
-			public _IProcedure4_286()
+			public _IProcedure4_275()
 			{
 			}
 
@@ -399,20 +396,20 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		internal bool IsEmpty()
 		{
 			bool[] ret = new bool[] { true };
-			Traverse(new _IVisitor4_306(ret));
+			Traverse(new _IVisitor4_295(ret));
 			return ret[0];
 		}
 
-		private sealed class _IVisitor4_306 : IVisitor4
+		private sealed class _IVisitor4_295 : IVisitor4
 		{
-			public _IVisitor4_306(bool[] ret)
+			public _IVisitor4_295(bool[] ret)
 			{
 				this.ret = ret;
 			}
 
 			public void Visit(object obj)
 			{
-				if (((IInternalCandidate)obj).Include())
+				if (((QCandidate)obj)._include)
 				{
 					ret[0] = false;
 				}
@@ -421,14 +418,26 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			private readonly bool[] ret;
 		}
 
-		internal bool Filter(IVisitor4 visitor)
+		internal bool Filter(IVisitor4 a_host)
 		{
-			return _result.Filter(visitor);
+			if (i_root != null)
+			{
+				i_root.Traverse(a_host);
+				i_root = i_root.Filter(new _IPredicate4_308());
+			}
+			return i_root != null;
 		}
 
-		internal bool Filter(QField field, IFieldFilterable filterable)
+		private sealed class _IPredicate4_308 : IPredicate4
 		{
-			return _result.Filter(field, filterable);
+			public _IPredicate4_308()
+			{
+			}
+
+			public bool Match(object a_candidate)
+			{
+				return ((QCandidate)a_candidate)._include;
+			}
 		}
 
 		internal int GenerateCandidateId()
@@ -449,34 +458,63 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return new Iterator4Impl(_constraints);
 		}
 
+		internal sealed class TreeIntBuilder
+		{
+			public TreeInt tree;
+
+			public void Add(TreeInt node)
+			{
+				tree = (TreeInt)((TreeInt)Tree.Add(tree, node));
+			}
+		}
+
 		internal void LoadFromClassIndex()
 		{
 			if (!IsEmpty())
 			{
 				return;
 			}
-			_result.LoadFromClassIndex(_classMetadata.Index());
+			QCandidates.TreeIntBuilder result = new QCandidates.TreeIntBuilder();
+			IClassIndexStrategy index = i_classMetadata.Index();
+			index.TraverseAll(i_trans, new _IVisitor4_346(this, result));
+			i_root = result.tree;
 			DiagnosticProcessor dp = i_trans.Container()._handlers.DiagnosticProcessor();
 			if (dp.Enabled() && !IsClassOnlyQuery())
 			{
-				dp.LoadedFromClassIndex(_classMetadata);
+				dp.LoadedFromClassIndex(i_classMetadata);
 			}
 			_loadedFromClassIndex = true;
 		}
 
+		private sealed class _IVisitor4_346 : IVisitor4
+		{
+			public _IVisitor4_346(QCandidates _enclosing, QCandidates.TreeIntBuilder result)
+			{
+				this._enclosing = _enclosing;
+				this.result = result;
+			}
+
+			public void Visit(object obj)
+			{
+				result.Add(new QCandidate(this._enclosing, null, ((int)obj)));
+			}
+
+			private readonly QCandidates _enclosing;
+
+			private readonly QCandidates.TreeIntBuilder result;
+		}
+
 		internal void SetCurrentConstraint(QCon a_constraint)
 		{
-			_currentConstraint = a_constraint;
+			i_currentConstraint = a_constraint;
 		}
 
-		internal void Traverse(IVisitor4 visitor)
+		internal void Traverse(IVisitor4 a_visitor)
 		{
-			_result.Traverse(visitor);
-		}
-
-		internal void TraverseIds(IIntVisitor visitor)
-		{
-			_result.TraverseIds(visitor);
+			if (i_root != null)
+			{
+				i_root.Traverse(a_visitor);
+			}
 		}
 
 		// FIXME: This method should go completely.
@@ -503,7 +541,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					}
 				}
 			}
-			if (_classMetadata == null || a_constraint.IsNullConstraint())
+			if (i_classMetadata == null || a_constraint.IsNullConstraint())
 			{
 				AddConstraint(a_constraint);
 				return true;
@@ -511,10 +549,10 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			ClassMetadata yc = a_constraint.GetYapClass();
 			if (yc != null)
 			{
-				yc = _classMetadata.GetHigherOrCommonHierarchy(yc);
+				yc = i_classMetadata.GetHigherOrCommonHierarchy(yc);
 				if (yc != null)
 				{
-					_classMetadata = yc;
+					i_classMetadata = yc;
 					AddConstraint(a_constraint);
 					return true;
 				}
@@ -523,24 +561,10 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			return false;
 		}
 
-		//    public void visit(Object a_tree) {
-		//    	final QCandidate parent = (QCandidate) a_tree;
-		//    	if (parent.createChild(this)) {
-		//    		return;
-		//    	}
-		//    	
-		//    	// No object found.
-		//    	// All children constraints are necessarily false.
-		//    	// Check immediately.
-		//		Iterator4 i = iterateConstraints();
-		//		while(i.moveNext()){
-		//			((QCon)i.current()).visitOnNull(parent.getRoot());
-		//		}
-		//    		
-		//    }
-		public void Filter(QField field, IParentCandidate parent)
+		public void Visit(object a_tree)
 		{
-			if (parent.CreateChild(field, this))
+			QCandidate parent = (QCandidate)a_tree;
+			if (parent.CreateChild(this))
 			{
 				return;
 			}
@@ -557,20 +581,20 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-			_result.Traverse(new _IVisitor4_439(sb));
+			i_root.Traverse(new _IVisitor4_430(sb));
 			return sb.ToString();
 		}
 
-		private sealed class _IVisitor4_439 : IVisitor4
+		private sealed class _IVisitor4_430 : IVisitor4
 		{
-			public _IVisitor4_439(StringBuilder sb)
+			public _IVisitor4_430(StringBuilder sb)
 			{
 				this.sb = sb;
 			}
 
 			public void Visit(object obj)
 			{
-				QCandidateBase candidate = (QCandidateBase)obj;
+				QCandidate candidate = (QCandidate)obj;
 				sb.Append(" ");
 				sb.Append(candidate._key);
 			}
@@ -578,7 +602,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			private readonly StringBuilder sb;
 		}
 
-		public Db4objects.Db4o.Internal.Transaction Transaction()
+		public Transaction Transaction()
 		{
 			return i_trans;
 		}
@@ -586,16 +610,6 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 		public bool WasLoadedFromClassIndex()
 		{
 			return _loadedFromClassIndex;
-		}
-
-		public bool WasLoadedFromClassFieldIndex()
-		{
-			return _loadedFromClassFieldIndex;
-		}
-
-		public void WasLoadedFromClassFieldIndex(bool flag)
-		{
-			_loadedFromClassFieldIndex = flag;
 		}
 
 		public bool FitsIntoExistingConstraintHierarchy(QCon constraint)
@@ -611,7 +625,7 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 					}
 				}
 			}
-			if (_classMetadata == null || constraint.IsNullConstraint())
+			if (i_classMetadata == null || constraint.IsNullConstraint())
 			{
 				return true;
 			}
@@ -620,12 +634,12 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			{
 				return false;
 			}
-			classMetadata = _classMetadata.GetHigherOrCommonHierarchy(classMetadata);
+			classMetadata = i_classMetadata.GetHigherOrCommonHierarchy(classMetadata);
 			if (classMetadata == null)
 			{
 				return false;
 			}
-			_classMetadata = classMetadata;
+			i_classMetadata = classMetadata;
 			return true;
 		}
 

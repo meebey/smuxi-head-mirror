@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System.Collections;
 using Db4objects.Db4o.Internal.Fieldindex;
@@ -22,48 +22,46 @@ namespace Db4objects.Db4o.Internal.Fieldindex
 			{
 				return FieldIndexProcessorResult.NoIndexFound;
 			}
-			IIndexedNode resolved = ResolveFully(bestIndex);
-			if (!bestIndex.IsEmpty())
+			if (bestIndex.ResultSize() > 0)
 			{
-				bestIndex.MarkAsBestIndex(_candidates);
+				IIndexedNode resolved = ResolveFully(bestIndex);
+				if (null == resolved)
+				{
+					return FieldIndexProcessorResult.NoIndexFound;
+				}
+				resolved.MarkAsBestIndex();
 				return new FieldIndexProcessorResult(resolved);
 			}
 			return FieldIndexProcessorResult.FoundIndexButNoMatch;
 		}
 
-		private IIndexedNode ResolveFully(IIndexedNode indexedNode)
+		private IIndexedNode ResolveFully(IIndexedNode bestIndex)
 		{
-			if (null == indexedNode)
+			if (null == bestIndex)
 			{
 				return null;
 			}
-			if (indexedNode.IsResolved())
+			if (bestIndex.IsResolved())
 			{
-				return indexedNode;
+				return bestIndex;
 			}
-			return ResolveFully(indexedNode.Resolve());
+			return ResolveFully(bestIndex.Resolve());
 		}
 
 		public virtual IIndexedNode SelectBestIndex()
 		{
 			IEnumerator i = CollectIndexedNodes();
-			IIndexedNode best = null;
+			if (!i.MoveNext())
+			{
+				return null;
+			}
+			IIndexedNode best = (IIndexedNode)i.Current;
 			while (i.MoveNext())
 			{
-				IIndexedNode indexedNode = (IIndexedNode)i.Current;
-				IIndexedNode resolved = ResolveFully(indexedNode);
-				if (resolved == null)
+				IIndexedNode leaf = (IIndexedNode)i.Current;
+				if (leaf.ResultSize() < best.ResultSize())
 				{
-					continue;
-				}
-				if (best == null)
-				{
-					best = indexedNode;
-					continue;
-				}
-				if (indexedNode.ResultSize() < best.ResultSize())
-				{
-					best = indexedNode;
+					best = leaf;
 				}
 			}
 			return best;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 #if !SILVERLIGHT
 using System;
@@ -15,7 +15,6 @@ namespace Db4objects.Db4o.Tests.Common.Staging
 
 			public Item(int id)
 			{
-				// COR-1822
 				_id = id;
 			}
 		}

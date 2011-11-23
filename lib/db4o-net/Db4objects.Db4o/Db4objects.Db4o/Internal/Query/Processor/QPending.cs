@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -7,7 +7,7 @@ using Db4objects.Db4o.Internal.Query.Processor;
 namespace Db4objects.Db4o.Internal.Query.Processor
 {
 	/// <exclude></exclude>
-	public class QPending : Tree
+	internal class QPending : Tree
 	{
 		internal readonly QConJoin _join;
 

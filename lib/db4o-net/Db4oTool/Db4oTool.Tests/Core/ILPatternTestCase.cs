@@ -58,7 +58,7 @@ namespace Db4oTool.Tests.Core
 
 		static MethodDefinition CreateTestMethod(Emitter emitter)
 		{
-			TypeReference type = new TypeReference("", "Test", null, null);
+			TypeReference type = new TypeReference ("", "Test", null);
 			MethodDefinition test = new MethodDefinition("Test", MethodAttributes.Public, type);
 			emitter(test.Body.GetILProcessor());
 			return test;
@@ -66,7 +66,7 @@ namespace Db4oTool.Tests.Core
 
 		private static void TestSequence1(ILProcessor il)
 		{
-			TypeReference type = new TypeReference("", "Test", null, null);
+			TypeReference type = new TypeReference("", "Test", null);
 			FieldDefinition blank = new FieldDefinition("Test", FieldAttributes.Public, type);
 			il.Emit(OpCodes.Nop);
 			il.Emit(OpCodes.Ldsfld, blank);
@@ -76,7 +76,7 @@ namespace Db4oTool.Tests.Core
 
 		private static void TestSequence2(ILProcessor il)
 		{
-			TypeReference type = new TypeReference ("", "Test", null, null);
+			TypeReference type = new TypeReference ("", "Test", null);
 			FieldDefinition blank = new FieldDefinition("Test", FieldAttributes.Public, type);
 			il.Emit(OpCodes.Nop);
 			il.Emit(OpCodes.Ldfld, blank);

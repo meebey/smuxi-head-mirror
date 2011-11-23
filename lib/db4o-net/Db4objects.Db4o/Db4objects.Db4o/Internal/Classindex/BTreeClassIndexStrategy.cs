@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -53,7 +53,7 @@ namespace Db4objects.Db4o.Internal.Classindex
 			return _btreeIndex.GetID();
 		}
 
-		public override void TraverseIds(Transaction ta, IVisitor4 command)
+		public override void TraverseAll(Transaction ta, IVisitor4 command)
 		{
 			if (_btreeIndex != null)
 			{
@@ -155,44 +155,6 @@ namespace Db4objects.Db4o.Internal.Classindex
 		public static IEnumerator Iterate(ClassMetadata clazz, Transaction trans)
 		{
 			return Btree(clazz).AsRange(trans).Keys();
-		}
-
-		public override IIntVisitable IdVisitable(Transaction trans)
-		{
-			return new _IIntVisitable_123(this, trans);
-		}
-
-		private sealed class _IIntVisitable_123 : IIntVisitable
-		{
-			public _IIntVisitable_123(BTreeClassIndexStrategy _enclosing, Transaction trans)
-			{
-				this._enclosing = _enclosing;
-				this.trans = trans;
-			}
-
-			public void Traverse(IIntVisitor visitor)
-			{
-				this._enclosing.TraverseIds(trans, new _IVisitor4_125(visitor));
-			}
-
-			private sealed class _IVisitor4_125 : IVisitor4
-			{
-				public _IVisitor4_125(IIntVisitor visitor)
-				{
-					this.visitor = visitor;
-				}
-
-				public void Visit(object i)
-				{
-					visitor.Visit((((int)i)));
-				}
-
-				private readonly IIntVisitor visitor;
-			}
-
-			private readonly BTreeClassIndexStrategy _enclosing;
-
-			private readonly Transaction trans;
 		}
 	}
 }

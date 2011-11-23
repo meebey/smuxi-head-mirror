@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
 using Db4objects.Db4o.Foundation;
@@ -30,12 +30,10 @@ namespace Db4objects.Db4o.Internal.Freespace
 		private ITransactionalIdSystem _idSystem;
 
 		public BTreeFreespaceManager(LocalObjectContainer file, IProcedure4 slotFreedCallback
-			, int discardLimit, int remainderSizeLimit) : base(slotFreedCallback, discardLimit
-			, remainderSizeLimit)
+			, int discardLimit) : base(slotFreedCallback, discardLimit)
 		{
 			_file = file;
-			_delegate = new InMemoryFreespaceManager(slotFreedCallback, discardLimit, remainderSizeLimit
-				);
+			_delegate = new InMemoryFreespaceManager(slotFreedCallback, discardLimit);
 			_idSystem = file.SystemData().FreespaceIdSystem();
 		}
 
@@ -242,8 +240,8 @@ namespace Db4objects.Db4o.Internal.Freespace
 
 		private BTreePointer SearchBTree(BTree bTree, Slot slot, SearchTarget target)
 		{
-			BTreeNodeSearchResult searchResult = bTree.SearchLeafByObject(Transaction(), slot
-				, target);
+			BTreeNodeSearchResult searchResult = bTree.SearchLeaf(Transaction(), slot, target
+				);
 			return searchResult.FirstValidPointer();
 		}
 

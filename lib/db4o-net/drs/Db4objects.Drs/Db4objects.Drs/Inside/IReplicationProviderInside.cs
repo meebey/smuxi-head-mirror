@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -14,13 +14,20 @@ namespace Db4objects.Drs.Inside
 		/// <summary>Clear the  ReplicationReference cache</summary>
 		void ClearAllReferences();
 
-		void CommitReplicationTransaction();
+		void CommitReplicationTransaction(long raisedDatabaseVersion);
 
 		/// <summary>Destroys this provider and frees up resources.</summary>
 		/// <remarks>Destroys this provider and frees up resources.</remarks>
 		void Destroy();
 
+		/// <summary>Returns the current transaction serial number.</summary>
+		/// <remarks>Returns the current transaction serial number.</remarks>
+		/// <returns>the current transaction serial number</returns>
+		long GetCurrentVersion();
+
 		long GetLastReplicationVersion();
+
+		void RunIsolated(IBlock4 block);
 
 		string GetName();
 
@@ -76,6 +83,8 @@ namespace Db4objects.Drs.Inside
 		/// 	</param>
 		void StoreReplica(object obj);
 
+		void SyncVersionWithPeer(long maxVersion);
+
 		/// <summary>Visits the object of each cached ReplicationReference.</summary>
 		/// <remarks>Visits the object of each cached ReplicationReference.</remarks>
 		/// <param name="visitor">implements the visit functions, including copying of object states, and storing of changed objects
@@ -89,11 +98,5 @@ namespace Db4objects.Drs.Inside
 		object ReplaceIfSpecific(object value);
 
 		bool IsSecondClassObject(object obj);
-
-		void EnsureVersionsAreGenerated();
-
-		Db4objects.Drs.Foundation.TimeStamps TimeStamps();
-
-		void SyncCommitTimestamp(long syncedTimeStamp);
 	}
 }

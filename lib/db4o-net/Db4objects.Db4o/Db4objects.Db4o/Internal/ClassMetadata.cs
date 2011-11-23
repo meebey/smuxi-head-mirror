@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -83,8 +83,6 @@ namespace Db4objects.Db4o.Internal
 
 		private IAspectTraversalStrategy _aspectTraversalStrategy;
 
-		private TernaryBool _isStruct = TernaryBool.Unspecified;
-
 		internal bool CanUpdateFast()
 		{
 			if (_canUpdateFast == TernaryBool.Unspecified)
@@ -104,27 +102,27 @@ namespace Db4objects.Db4o.Internal
 			{
 				return false;
 			}
-			BooleanByRef result = new BooleanByRef(true);
-			TraverseDeclaredFields(new _IProcedure4_103(result));
-			return result.value;
+			BooleanByRef hasIndex = new BooleanByRef(false);
+			TraverseDeclaredFields(new _IProcedure4_101(hasIndex));
+			return !hasIndex.value;
 		}
 
-		private sealed class _IProcedure4_103 : IProcedure4
+		private sealed class _IProcedure4_101 : IProcedure4
 		{
-			public _IProcedure4_103(BooleanByRef result)
+			public _IProcedure4_101(BooleanByRef hasIndex)
 			{
-				this.result = result;
+				this.hasIndex = hasIndex;
 			}
 
-			public void Apply(object fieldMetadata)
+			public void Apply(object arg)
 			{
-				if (!((FieldMetadata)fieldMetadata).CanUpdateFast())
+				if (((FieldMetadata)arg).HasIndex())
 				{
-					result.value = false;
+					hasIndex.value = true;
 				}
 			}
 
-			private readonly BooleanByRef result;
+			private readonly BooleanByRef hasIndex;
 		}
 
 		public virtual bool IsInternal()
@@ -188,12 +186,12 @@ namespace Db4objects.Db4o.Internal
 			{
 				return;
 			}
-			TraverseAllAspects(new _ITraverseAspectCommand_162(context));
+			TraverseAllAspects(new _ITraverseAspectCommand_160(context));
 		}
 
-		private sealed class _ITraverseAspectCommand_162 : ITraverseAspectCommand
+		private sealed class _ITraverseAspectCommand_160 : ITraverseAspectCommand
 		{
-			public _ITraverseAspectCommand_162(IActivationContext context)
+			public _ITraverseAspectCommand_160(IActivationContext context)
 			{
 				this.context = context;
 			}
@@ -643,13 +641,13 @@ namespace Db4objects.Db4o.Internal
 		public virtual void CollectConstraints(Transaction trans, QConObject parentConstraint
 			, object obj, IVisitor4 visitor)
 		{
-			TraverseAllAspects(new _TraverseFieldCommand_536(trans, parentConstraint, obj, visitor
+			TraverseAllAspects(new _TraverseFieldCommand_534(trans, parentConstraint, obj, visitor
 				));
 		}
 
-		private sealed class _TraverseFieldCommand_536 : TraverseFieldCommand
+		private sealed class _TraverseFieldCommand_534 : TraverseFieldCommand
 		{
-			public _TraverseFieldCommand_536(Transaction trans, QConObject parentConstraint, 
+			public _TraverseFieldCommand_534(Transaction trans, QConObject parentConstraint, 
 				object obj, IVisitor4 visitor)
 			{
 				this.trans = trans;
@@ -677,12 +675,12 @@ namespace Db4objects.Db4o.Internal
 
 		public void CollectIDs(CollectIdContext context, string fieldName)
 		{
-			CollectIDs(context, new _IPredicate4_546(fieldName));
+			CollectIDs(context, new _IPredicate4_544(fieldName));
 		}
 
-		private sealed class _IPredicate4_546 : IPredicate4
+		private sealed class _IPredicate4_544 : IPredicate4
 		{
-			public _IPredicate4_546(string fieldName)
+			public _IPredicate4_544(string fieldName)
 			{
 				this.fieldName = fieldName;
 			}
@@ -697,12 +695,12 @@ namespace Db4objects.Db4o.Internal
 
 		public void CollectIDs(CollectIdContext context)
 		{
-			CollectIDs(context, new _IPredicate4_555());
+			CollectIDs(context, new _IPredicate4_553());
 		}
 
-		private sealed class _IPredicate4_555 : IPredicate4
+		private sealed class _IPredicate4_553 : IPredicate4
 		{
-			public _IPredicate4_555()
+			public _IPredicate4_553()
 			{
 			}
 
@@ -795,22 +793,22 @@ namespace Db4objects.Db4o.Internal
 		{
 			if (customTypeHandler is IInstantiatingTypeHandler)
 			{
-				return new _IFunction4_634(this);
+				return new _IFunction4_632(this);
 			}
 			if (HasObjectConstructor())
 			{
-				return new _IFunction4_642(this);
+				return new _IFunction4_640(this);
 			}
 			if (ClassReflector().EnsureCanBeInstantiated())
 			{
-				return new _IFunction4_650(this);
+				return new _IFunction4_648(this);
 			}
 			return null;
 		}
 
-		private sealed class _IFunction4_634 : IFunction4
+		private sealed class _IFunction4_632 : IFunction4
 		{
-			public _IFunction4_634(ClassMetadata _enclosing)
+			public _IFunction4_632(ClassMetadata _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -824,9 +822,9 @@ namespace Db4objects.Db4o.Internal
 			private readonly ClassMetadata _enclosing;
 		}
 
-		private sealed class _IFunction4_642 : IFunction4
+		private sealed class _IFunction4_640 : IFunction4
 		{
-			public _IFunction4_642(ClassMetadata _enclosing)
+			public _IFunction4_640(ClassMetadata _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -839,9 +837,9 @@ namespace Db4objects.Db4o.Internal
 			private readonly ClassMetadata _enclosing;
 		}
 
-		private sealed class _IFunction4_650 : IFunction4
+		private sealed class _IFunction4_648 : IFunction4
 		{
-			public _IFunction4_650(ClassMetadata _enclosing)
+			public _IFunction4_648(ClassMetadata _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -910,12 +908,12 @@ namespace Db4objects.Db4o.Internal
 
 		internal void DeactivateFields(IActivationContext context)
 		{
-			TraverseAllAspects(new _ITraverseAspectCommand_703(context));
+			TraverseAllAspects(new _ITraverseAspectCommand_701(context));
 		}
 
-		private sealed class _ITraverseAspectCommand_703 : ITraverseAspectCommand
+		private sealed class _ITraverseAspectCommand_701 : ITraverseAspectCommand
 		{
-			public _ITraverseAspectCommand_703(IActivationContext context)
+			public _ITraverseAspectCommand_701(IActivationContext context)
 			{
 				this.context = context;
 			}
@@ -1344,16 +1342,16 @@ namespace Db4objects.Db4o.Internal
 					return new IStoredField[0];
 				}
 				Collection4 storedFields = new Collection4();
-				TraverseDeclaredFields(new _IProcedure4_1039(storedFields));
+				TraverseDeclaredFields(new _IProcedure4_1037(storedFields));
 				IStoredField[] fields = new IStoredField[storedFields.Size()];
 				storedFields.ToArray(fields);
 				return fields;
 			}
 		}
 
-		private sealed class _IProcedure4_1039 : IProcedure4
+		private sealed class _IProcedure4_1037 : IProcedure4
 		{
-			public _IProcedure4_1039(Collection4 storedFields)
+			public _IProcedure4_1037(Collection4 storedFields)
 			{
 				this.storedFields = storedFields;
 			}
@@ -1374,13 +1372,13 @@ namespace Db4objects.Db4o.Internal
 		public virtual FieldMetadata FieldMetadataForName(string name)
 		{
 			ByRef byReference = new ByRef();
-			TraverseAllAspects(new _TraverseFieldCommand_1056(name, byReference));
+			TraverseAllAspects(new _TraverseFieldCommand_1054(name, byReference));
 			return (FieldMetadata)byReference.value;
 		}
 
-		private sealed class _TraverseFieldCommand_1056 : TraverseFieldCommand
+		private sealed class _TraverseFieldCommand_1054 : TraverseFieldCommand
 		{
-			public _TraverseFieldCommand_1056(string name, ByRef byReference)
+			public _TraverseFieldCommand_1054(string name, ByRef byReference)
 			{
 				this.name = name;
 				this.byReference = byReference;
@@ -2002,13 +2000,13 @@ namespace Db4objects.Db4o.Internal
 				ResolveClassReflector(i_name);
 				BitFalse(Const4.CheckedChanges);
 				CheckChanges();
-				TraverseDeclaredFields(new _IProcedure4_1584());
+				TraverseDeclaredFields(new _IProcedure4_1582());
 			}
 		}
 
-		private sealed class _IProcedure4_1584 : IProcedure4
+		private sealed class _IProcedure4_1582 : IProcedure4
 		{
-			public _IProcedure4_1584()
+			public _IProcedure4_1582()
 			{
 			}
 
@@ -2041,13 +2039,13 @@ namespace Db4objects.Db4o.Internal
 					return false;
 				}
 			}
-			TraverseDeclaredFields(new _IProcedure4_1609(oldName, newName, renamed));
+			TraverseDeclaredFields(new _IProcedure4_1607(oldName, newName, renamed));
 			return renamed.value;
 		}
 
-		private sealed class _IProcedure4_1609 : IProcedure4
+		private sealed class _IProcedure4_1607 : IProcedure4
 		{
-			public _IProcedure4_1609(string oldName, string newName, BooleanByRef renamed)
+			public _IProcedure4_1607(string oldName, string newName, BooleanByRef renamed)
 			{
 				this.oldName = oldName;
 				this.newName = newName;
@@ -2165,16 +2163,16 @@ namespace Db4objects.Db4o.Internal
 					 : _container.ClassMetadataForReflectClass(ReflectorUtils.ReflectClassFor(Reflector
 					(), fieldType));
 				ByRef foundField = new ByRef();
-				TraverseAllAspects(new _TraverseFieldCommand_1703(foundField, fieldName, fieldTypeFilter
+				TraverseAllAspects(new _TraverseFieldCommand_1701(foundField, fieldName, fieldTypeFilter
 					));
 				// TODO: implement field creation
 				return (IStoredField)foundField.value;
 			}
 		}
 
-		private sealed class _TraverseFieldCommand_1703 : TraverseFieldCommand
+		private sealed class _TraverseFieldCommand_1701 : TraverseFieldCommand
 		{
-			public _TraverseFieldCommand_1703(ByRef foundField, string fieldName, Db4objects.Db4o.Internal.ClassMetadata
+			public _TraverseFieldCommand_1701(ByRef foundField, string fieldName, Db4objects.Db4o.Internal.ClassMetadata
 				 fieldTypeFilter)
 			{
 				this.foundField = foundField;
@@ -2251,7 +2249,7 @@ namespace Db4objects.Db4o.Internal
 			ObjectContainerBase stream = trans.Container();
 			stream.Activate(trans, sc, new FixedActivationDepth(4));
 			StaticField[] existingFields = sc.fields;
-			IEnumerator staticFields = Iterators.Map(StaticReflectFields(), new _IFunction4_1763
+			IEnumerator staticFields = Iterators.Map(StaticReflectFields(), new _IFunction4_1761
 				(this, existingFields, trans));
 			sc.fields = ToStaticFieldArray(staticFields);
 			if (!stream.IsClient)
@@ -2260,9 +2258,9 @@ namespace Db4objects.Db4o.Internal
 			}
 		}
 
-		private sealed class _IFunction4_1763 : IFunction4
+		private sealed class _IFunction4_1761 : IFunction4
 		{
-			public _IFunction4_1763(ClassMetadata _enclosing, StaticField[] existingFields, Transaction
+			public _IFunction4_1761(ClassMetadata _enclosing, StaticField[] existingFields, Transaction
 				 trans)
 			{
 				this._enclosing = _enclosing;
@@ -2303,12 +2301,12 @@ namespace Db4objects.Db4o.Internal
 
 		private IEnumerator StaticReflectFieldsToStaticFields()
 		{
-			return Iterators.Map(StaticReflectFields(), new _IFunction4_1791(this));
+			return Iterators.Map(StaticReflectFields(), new _IFunction4_1789(this));
 		}
 
-		private sealed class _IFunction4_1791 : IFunction4
+		private sealed class _IFunction4_1789 : IFunction4
 		{
-			public _IFunction4_1791(ClassMetadata _enclosing)
+			public _IFunction4_1789(ClassMetadata _enclosing)
 			{
 				this._enclosing = _enclosing;
 			}
@@ -2350,12 +2348,12 @@ namespace Db4objects.Db4o.Internal
 
 		private IEnumerator StaticReflectFields()
 		{
-			return Iterators.Filter(ReflectFields(), new _IPredicate4_1820());
+			return Iterators.Filter(ReflectFields(), new _IPredicate4_1818());
 		}
 
-		private sealed class _IPredicate4_1820 : IPredicate4
+		private sealed class _IPredicate4_1818 : IPredicate4
 		{
-			public _IPredicate4_1820()
+			public _IPredicate4_1818()
 			{
 			}
 
@@ -2651,7 +2649,7 @@ namespace Db4objects.Db4o.Internal
 				}
 				IInstantiatingTypeHandler customTypeHandler = (IInstantiatingTypeHandler)_customTypeHandlerAspect
 					._typeHandler;
-				return context.SlotFormat().DoWithSlotIndirection(context, new _IClosure4_2058(customTypeHandler
+				return context.SlotFormat().DoWithSlotIndirection(context, new _IClosure4_2056(customTypeHandler
 					, context));
 			}
 			finally
@@ -2660,9 +2658,9 @@ namespace Db4objects.Db4o.Internal
 			}
 		}
 
-		private sealed class _IClosure4_2058 : IClosure4
+		private sealed class _IClosure4_2056 : IClosure4
 		{
-			public _IClosure4_2058(IInstantiatingTypeHandler customTypeHandler, UnmarshallingContext
+			public _IClosure4_2056(IInstantiatingTypeHandler customTypeHandler, UnmarshallingContext
 				 context)
 			{
 				this.customTypeHandler = customTypeHandler;
@@ -2681,12 +2679,7 @@ namespace Db4objects.Db4o.Internal
 
 		public virtual bool IsStruct()
 		{
-			if (_isStruct == TernaryBool.Unspecified)
-			{
-				_isStruct = Platform4.IsStruct(ClassReflector()) ? TernaryBool.Yes : TernaryBool.
-					No;
-			}
-			return _isStruct == TernaryBool.Yes;
+			return Platform4.IsStruct(ClassReflector());
 		}
 
 		public virtual void DropClassIndex()

@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4oUnit.Extensions;
@@ -18,8 +18,8 @@ namespace Db4objects.Db4o.Tests.Common.Defragment
 			return new Type[] { typeof(BlockSizeDefragTestCase), typeof(CommitTimestampDefragmentTestCase
 				), typeof(DefragEncryptedFileTestCase), typeof(DefragInheritedFieldIndexTestCase
 				), typeof(DefragInMemoryTestSuite), typeof(DefragmentUntypedPrimitiveArrayTestCase
-				), typeof(IdMappingTestSuite), typeof(RemovedFieldDefragmentTestCase), typeof(SlotDefragmentTestCase
-				), typeof(StoredClassFilterTestCase), typeof(TranslatedDefragTestCase) };
+				), typeof(IdMappingTestSuite), typeof(SlotDefragmentTestCase), typeof(StoredClassFilterTestCase
+				), typeof(TranslatedDefragTestCase) };
 		}
 	}
 }

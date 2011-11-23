@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using System.Collections;
@@ -11,18 +11,6 @@ namespace Db4objects.Db4o.Foundation
 		public static ISequence4 UnmodifiableList(ISequence4 orig)
 		{
 			return new Collections4.UnmodifiableSequence4(orig);
-		}
-
-		public static void Sort(ISequence4 sequence, IComparison4 comparator)
-		{
-			object[] array = sequence.ToArray();
-			Arrays4.Sort(array, comparator);
-			sequence.Clear();
-			for (int oIndex = 0; oIndex < array.Length; ++oIndex)
-			{
-				object o = array[oIndex];
-				sequence.Add(o);
-			}
 		}
 
 		private class UnmodifiableSequence4 : ISequence4

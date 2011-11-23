@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o;
@@ -50,13 +50,13 @@ namespace Db4objects.Db4o
 		/// makes sure a configuration entry is generated for each persistent
 		/// class
 		/// </summary>
-		public const bool configureAllClasses = false;
+		public const bool configureAllClasses = indexAllFields;
 
 		/// <summary>
 		/// makes sure a configuration entry is generated for each persistent
 		/// field
 		/// </summary>
-		public const bool configureAllFields = false;
+		public const bool configureAllFields = indexAllFields;
 
 		/// <summary>allows turning weak references off</summary>
 		public const bool weakReferences = true;

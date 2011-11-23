@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o.Internal;
 using Db4objects.Db4o.Internal.Query.Processor;
@@ -26,14 +26,9 @@ namespace Db4objects.Db4o.Internal.Query.Processor
 			a_candidates.Filter(this);
 		}
 
-		internal override bool Evaluate(IInternalCandidate a_candidate)
+		internal override bool Evaluate(QCandidate a_candidate)
 		{
 			return _value;
-		}
-
-		protected override bool CanResolveByFieldIndex()
-		{
-			return false;
 		}
 	}
 }

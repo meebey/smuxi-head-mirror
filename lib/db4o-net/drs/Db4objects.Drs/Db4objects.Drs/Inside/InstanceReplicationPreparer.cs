@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Db4o.Foundation;
@@ -21,6 +21,8 @@ namespace Db4objects.Drs.Inside
 		private readonly IReplicationEventListener _listener;
 
 		private readonly bool _isReplicatingOnlyDeletions;
+
+		private readonly long _lastReplicationVersion;
 
 		private readonly HashSet4 _uuidsProcessedInSession;
 
@@ -60,8 +62,8 @@ namespace Db4objects.Drs.Inside
 
 		internal InstanceReplicationPreparer(IReplicationProviderInside providerA, IReplicationProviderInside
 			 providerB, IReplicationProvider directionTo, IReplicationEventListener listener
-			, bool isReplicatingOnlyDeletions, HashSet4 uuidsProcessedInSession, ITraverser 
-			traverser, ReplicationReflector reflector, Db4objects.Drs.Inside.ICollectionHandler
+			, bool isReplicatingOnlyDeletions, long lastReplicationVersion, HashSet4 uuidsProcessedInSession
+			, ITraverser traverser, ReplicationReflector reflector, Db4objects.Drs.Inside.ICollectionHandler
 			 collectionHandler)
 		{
 			_event = new ReplicationEventImpl();
@@ -72,6 +74,7 @@ namespace Db4objects.Drs.Inside
 			_directionTo = directionTo;
 			_listener = listener;
 			_isReplicatingOnlyDeletions = isReplicatingOnlyDeletions;
+			_lastReplicationVersion = lastReplicationVersion;
 			_uuidsProcessedInSession = uuidsProcessedInSession;
 			_traverser = traverser;
 			_reflector = reflector;
@@ -161,7 +164,7 @@ namespace Db4objects.Drs.Inside
 				}
 				MarkAsProcessed(uuid);
 				long creationTime = ownerRef.Uuid().GetLongPart();
-				if (creationTime > owner.TimeStamps().From())
+				if (creationTime > _lastReplicationVersion)
 				{
 					//if it was created after the last time two ReplicationProviders were replicated it has to be treated as new.
 					if (_isReplicatingOnlyDeletions)
@@ -173,8 +176,7 @@ namespace Db4objects.Drs.Inside
 				}
 				else
 				{
-					// If it was created before the last time two ReplicationProviders were replicated it has to be treated as deleted.
-					// No, not always, in a three-way replication setup it can also be new.
+					// if it was created before the last time two ReplicationProviders were replicated it has to be treated as deleted.
 					return HandleMissingObjectInOther(_obj, ownerRef, owner, other, _referencingObject
 						, _fieldName);
 				}
@@ -218,7 +220,7 @@ namespace Db4objects.Drs.Inside
 			_providerA.Activate(objectA);
 			_providerB.Activate(objectB);
 			_event.ResetAction();
-			_event.Conflict(conflict);
+			_event._isConflict = conflict;
 			_event._creationDate = TimeStampIdGenerator.IdToMilliseconds(uuid.GetLongPart());
 			_stateInA.SetAll(objectA, false, changedInA, TimeStampIdGenerator.IdToMilliseconds
 				(ownerRef.Version()));
@@ -344,19 +346,19 @@ namespace Db4objects.Drs.Inside
 				owner.Activate(obj);
 			}
 			_event.ResetAction();
-			_event.Conflict(isConflict);
+			_event._isConflict = isConflict;
 			_event._creationDate = TimeStampIdGenerator.IdToMilliseconds(ownerRef.Uuid().GetLongPart
 				());
 			long modificationDate = TimeStampIdGenerator.IdToMilliseconds(ownerRef.Version());
 			if (owner == _providerA)
 			{
 				_stateInA.SetAll(obj, false, wasModified, modificationDate);
-				_stateInB.SetAll(null, false, false, ObjectStateImpl.Unknown);
+				_stateInB.SetAll(null, false, false, -1);
 			}
 			else
 			{
 				//owner == _providerB
-				_stateInA.SetAll(null, false, false, ObjectStateImpl.Unknown);
+				_stateInA.SetAll(null, false, false, -1);
 				_stateInB.SetAll(obj, false, wasModified, modificationDate);
 			}
 			_listener.OnReplicate(_event);
@@ -410,18 +412,18 @@ namespace Db4objects.Drs.Inside
 			if (!listenerAlreadyNotified)
 			{
 				_event.ResetAction();
-				_event.Conflict(false);
+				_event._isConflict = false;
 				_event._creationDate = TimeStampIdGenerator.IdToMilliseconds(ownerRef.Uuid().GetLongPart
 					());
 				if (owner == _providerA)
 				{
-					_stateInA.SetAll(obj, true, false, ObjectStateImpl.Unknown);
-					_stateInB.SetAll(null, false, false, ObjectStateImpl.Unknown);
+					_stateInA.SetAll(obj, true, false, -1);
+					_stateInB.SetAll(null, false, false, -1);
 				}
 				else
 				{
-					_stateInA.SetAll(null, false, false, ObjectStateImpl.Unknown);
-					_stateInB.SetAll(obj, true, false, ObjectStateImpl.Unknown);
+					_stateInA.SetAll(null, false, false, -1);
+					_stateInB.SetAll(obj, true, false, -1);
 				}
 				if (_listener != null)
 				{

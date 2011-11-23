@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 
 [assembly: AssemblyTitle("Db4oTool.Tests")]
-[assembly: AssemblyDescription("Db4oTool.Tests 8.1.197.14430 (.NET)")]
+[assembly: AssemblyDescription("Db4oTool.Tests 8.0.183.14430 (.NET)")]
 [assembly: AssemblyConfiguration(".NET")]
 [assembly: AssemblyCompany("Versant Corp., Redwood City, CA, USA")]
 [assembly: AssemblyProduct("db4o - database for objects")]
@@ -15,7 +15,7 @@ using System.Security;
 
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyVersion("8.1.197.14430")]
+[assembly: AssemblyVersion("8.0.183.14430")]
 
 [assembly: AllowPartiallyTrustedCallers]
 

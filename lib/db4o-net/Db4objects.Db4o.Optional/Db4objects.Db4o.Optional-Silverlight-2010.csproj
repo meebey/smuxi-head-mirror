@@ -1,10 +1,20 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup Condition="'$(MSBuildToolsVersion)' == '3.5'">
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     
     
   
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -57,7 +67,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>Bin\Release</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;SILVERLIGHT</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
@@ -71,10 +81,6 @@
   <ItemGroup>
 <Compile Include="Db4objects.Db4o\Cluster\Cluster.cs"/>
 <Compile Include="Db4objects.Db4o\Consistency\ConsistencyChecker.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\ConsistencyReport.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\OverlapMap.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotSource.cs"/>
-<Compile Include="Db4objects.Db4o\Consistency\SlotWithSource.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\BigSetMiscCollector.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassNode.cs"/>
 <Compile Include="Db4objects.Db4o\Filestats\ClassUsageStats.cs"/>
@@ -87,6 +93,9 @@
 <Compile Include="Db4objects.Db4o\Filestats\SlotMapImpl.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeString.cs"/>
 <Compile Include="Db4objects.Db4o\Foundation\TreeStringObject.cs"/>
+<Compile Include="Db4objects.Db4o\IO\DebugIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\MemoryIoAdapter.cs"/>
+<Compile Include="Db4objects.Db4o\IO\NonFlushingIoAdapter.cs"/>
 <Compile Include="Db4objects.Db4o\IO\SaveAsStorage.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraint.cs"/>
 <Compile Include="Db4objects.Db4o\Internal\Cluster\ClusterConstraints.cs"/>

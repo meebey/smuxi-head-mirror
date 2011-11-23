@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using System;
 using Db4objects.Drs;
@@ -17,11 +17,24 @@ namespace Db4objects.Drs
 	/// session.close();
 	/// </pre>
 	/// </remarks>
+	/// <author>Albert Kwan</author>
+	/// <author>Klaus Wuestefeld</author>
 	/// <version>1.2</version>
 	/// <seealso cref="Replication">Replication</seealso>
 	/// <since>dRS 1.0</since>
 	public interface IReplicationSession
 	{
+		/// <summary>
+		/// checks if an object has been modified in both replication providers
+		/// since the last time the two replication providers were replicated.
+		/// </summary>
+		/// <remarks>
+		/// checks if an object has been modified in both replication providers
+		/// since the last time the two replication providers were replicated.
+		/// </remarks>
+		/// <param name="obj">- the object to check for a conflict.</param>
+		void CheckConflict(object obj);
+
 		/// <summary>Closes this session and frees used resources.</summary>
 		/// <remarks>
 		/// Closes this session and frees used resources. Sessions that were opened

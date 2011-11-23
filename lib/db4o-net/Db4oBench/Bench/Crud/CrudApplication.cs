@@ -1,4 +1,4 @@
-/* Copyright (C) 2004 - 2011  Versant Inc.  http://www.db4o.com */
+/* Copyright (C) 2004 - 2009  Versant Inc.  http://www.db4o.com */
 
 using Db4objects.Db4o;
 using Db4objects.Db4o.Bench.Crud;
@@ -30,7 +30,7 @@ namespace Db4objects.Db4o.Bench.Crud
 			DeleteDbFile();
 		}
 
-		private void Create(int itemCount, IEmbeddedConfiguration config)
+		private void Create(int itemCount, IConfiguration config)
 		{
 			IObjectContainer oc = Open(config);
 			for (int i = 0; i < itemCount; i++)
@@ -46,7 +46,7 @@ namespace Db4objects.Db4o.Bench.Crud
 			oc.Close();
 		}
 
-		private void Read(IEmbeddedConfiguration config)
+		private void Read(IConfiguration config)
 		{
 			IObjectContainer oc = Open(config);
 			IObjectSet objectSet = AllItems(oc);
@@ -57,7 +57,7 @@ namespace Db4objects.Db4o.Bench.Crud
 			oc.Close();
 		}
 
-		private void Update(IEmbeddedConfiguration config)
+		private void Update(IConfiguration config)
 		{
 			IObjectContainer oc = Open(config);
 			IObjectSet objectSet = AllItems(oc);
@@ -70,7 +70,7 @@ namespace Db4objects.Db4o.Bench.Crud
 			oc.Close();
 		}
 
-		private void Delete(IEmbeddedConfiguration config)
+		private void Delete(IConfiguration config)
 		{
 			IObjectContainer oc = Open(config);
 			IObjectSet objectSet = AllItems(oc);
@@ -84,12 +84,12 @@ namespace Db4objects.Db4o.Bench.Crud
 			oc.Close();
 		}
 
-		private IEmbeddedConfiguration NewConfiguration(int itemCount)
+		private IConfiguration NewConfiguration(int itemCount)
 		{
-			FileStorage rafAdapter = new FileStorage();
-			IStorage ioAdapter = new LoggingStorage(rafAdapter, LogFileName(itemCount));
-			IEmbeddedConfiguration config = Db4oEmbedded.NewConfiguration();
-			config.File.Storage = ioAdapter;
+			RandomAccessFileAdapter rafAdapter = new RandomAccessFileAdapter();
+			IoAdapter ioAdapter = new LoggingIoAdapter(rafAdapter, LogFileName(itemCount));
+			IConfiguration config = Db4oFactory.NewConfiguration();
+			config.Io(ioAdapter);
 			return config;
 		}
 
@@ -103,9 +103,9 @@ namespace Db4objects.Db4o.Bench.Crud
 			return oc.Query(typeof(Item));
 		}
 
-		private IObjectContainer Open(IEmbeddedConfiguration config)
+		private IObjectContainer Open(IConfiguration config)
 		{
-			return Db4oEmbedded.OpenFile(config, DatabaseFile);
+			return Db4oFactory.OpenFile(config, DatabaseFile);
 		}
 
 		public static string LogFileName(int itemCount)
