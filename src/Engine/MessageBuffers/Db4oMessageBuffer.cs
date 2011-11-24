@@ -284,7 +284,7 @@ namespace Smuxi.Engine
             return range;
         }
 
-        public static int OptimizeAllBuffers()
+        public static int OptimizeAllBuffers(Db4oMessageBufferOptimizationTypes opts)
         {
             DateTime start = DateTime.UtcNow, stop;
             var dbPath = Platform.GetBuffersBasePath();
@@ -296,18 +296,22 @@ namespace Smuxi.Engine
 #endif
                 using (var buffer = new Db4oMessageBuffer(dbFile)) {
                     buffer.AggressiveGC = false;
-                    buffer.CloseDatabase();
-                    buffer.DefragDatabase();
-                    buffer.InitDatabase();
-                    buffer.RebuildIndex();
+                    if ((opts & Db4oMessageBufferOptimizationTypes.Defrag) != 0) {
+                        buffer.CloseDatabase();
+                        buffer.DefragDatabase();
+                        buffer.InitDatabase();
+                    }
+                    if ((opts & Db4oMessageBufferOptimizationTypes.Index) != 0) {
+                        buffer.RebuildIndex();
+                    }
                 }
             }
             stop = DateTime.UtcNow;
 #if LOG4NET
             Logger.Debug(
                 String.Format(
-                    "OptimizeAllBuffers(): optimizing buffers took: {0:0.0} ms",
-                    (stop - start).TotalMilliseconds
+                    "OptimizeAllBuffers(): optimizing buffers took: {0:0} second(s)",
+                    (stop - start).TotalSeconds
                 )
             );
 #endif
@@ -615,5 +619,13 @@ namespace Smuxi.Engine
         {
             return LibraryCatalog.GetString(msg, LibraryTextDomain);
         }
+    }
+
+    [Flags]
+    public enum Db4oMessageBufferOptimizationTypes : ushort {
+        None   = ushort.MinValue,
+        Defrag = 0x1,
+        Index  = 0x2,
+        All    = ushort.MaxValue
     }
 }
