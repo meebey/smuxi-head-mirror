@@ -1401,7 +1401,7 @@ namespace Smuxi.Engine
             Trace.Call();
 
             try {
-                var url = "http://news.smuxi.org/tags/planet-feed/index.atom";
+                var url = "http://news.smuxi.org/feed.php";
                 var req = WebRequest.Create(url);
                 var proxySettings = new ProxySettings();
                 proxySettings.ApplyConfig(UserConfig);
@@ -1409,7 +1409,9 @@ namespace Smuxi.Engine
                 if (req is HttpWebRequest) {
                     var httpReq = (HttpWebRequest) req;
                     httpReq.UserAgent = Engine.VersionString;
-                    httpReq.IfModifiedSince = NewsFeedLastModified;
+                    if (NewsFeedLastModified != DateTime.MinValue) {
+                        httpReq.IfModifiedSince = NewsFeedLastModified;
+                    }
                 }
                 var res = req.GetResponse();
                 if (res is HttpWebResponse) {
