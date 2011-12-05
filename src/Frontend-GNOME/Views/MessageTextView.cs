@@ -526,12 +526,20 @@ namespace Smuxi.Frontend.Gnome
         {
             Trace.Call(link);
 
+            if (link == null) {
+                throw new ArgumentNullException("link");
+            }
+
             // hopefully MS .NET / Mono finds some way to handle the URL
             ThreadPool.QueueUserWorkItem(delegate {
                 var url = link.ToString();
                 try {
                     using (var process = SysDiag.Process.Start(url)) {
-                        process.WaitForExit();
+                        // Start() might return null in case it re-used a
+                        // process instead of starting one
+                        if (process != null) {
+                            process.WaitForExit();
+                        }
                     }
                 } catch (Exception ex) {
                     // exceptions in the thread pool would kill the process, see:
