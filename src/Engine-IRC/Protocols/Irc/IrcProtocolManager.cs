@@ -566,6 +566,10 @@ namespace Smuxi.Engine
 
             switch (status) {
                 case PresenceStatus.Online:
+                    if (!_IrcClient.IsAway) {
+                        // nothing to do
+                        return;
+                    }
                     _IrcClient.RfcAway();
                     break;
                 case PresenceStatus.Away:
@@ -821,9 +825,7 @@ namespace Smuxi.Engine
             var builder = CreateMessageBuilder();
             // TRANSLATOR: this line is used as label / category for a
             // list of commands below
-            var text = builder.CreateText("[{0}]", _("IrcProtocolManager Commands"));
-            text.Bold = true;
-            builder.AppendText(text);
+            builder.AppendHeader(_("IrcProtocolManager Commands"));
             cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
 
             string[] help = {
