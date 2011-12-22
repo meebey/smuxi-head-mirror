@@ -607,13 +607,11 @@ namespace Smuxi.Frontend.Gnome
 #if GTK_SHARP_2_10
         private static void _OnUnhandledException(GLib.UnhandledExceptionArgs e)
         {
-            Trace.Call(e);
+            Trace.CallFull(e);
             
             lock (_UnhandledExceptionSyncRoot) {
                 if (e.ExceptionObject is Exception) {
                     ShowException((Exception) e.ExceptionObject);
-                    
-                    Quit();
                 }
             }
         }
