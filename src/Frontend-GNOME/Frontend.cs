@@ -272,6 +272,9 @@ namespace Smuxi.Frontend.Gnome
                 _FrontendManagerCheckerQueue.Queue(delegate {
                     // keep looping as long as the checker returns true
                     while (CheckFrontendManagerStatus()) {
+                        // FIXME: bail out somehow when we lost the connection
+                        // without an exception in the meantime
+
                         // only check once per minute
                         Thread.Sleep(60 * 1000);
                     }
@@ -282,33 +285,44 @@ namespace Smuxi.Frontend.Gnome
 #endif
                 });
             }
+            MainWindow.ChatViewManager.IsSensitive = true;
         }
         
         public static void DisconnectEngineFromGUI()
         {
-            Trace.Call();
+            DisconnectEngineFromGUI(true);
+        }
 
-            try {
-                // sync tab positions
-                if (!IsLocalEngine && !UseLowBandwidthMode) {
-                    _MainWindow.Notebook.SyncPagePositions();
-                }
+        public static void DisconnectEngineFromGUI(bool cleanly)
+        {
+            Trace.Call(cleanly);
 
-                if (_FrontendManager != null) {
-                    _FrontendManager.IsFrontendDisconnecting = true;
+            MainWindow.ChatViewManager.IsSensitive = false;
+            if (cleanly) {
+                try {
+                    // sync tab positions
+                    if (!IsLocalEngine && !UseLowBandwidthMode) {
+                        _MainWindow.Notebook.SyncPagePositions();
+                    }
+
+                    if (_FrontendManager != null) {
+                        _FrontendManager.IsFrontendDisconnecting = true;
+                    }
+                    if (_Session != null) {
+                        _Session.DeregisterFrontendUI(_MainWindow.UI);
+                    }
+                } catch (System.Net.Sockets.SocketException) {
+                    // ignore as the connection is maybe already broken
+                } catch (System.Runtime.Remoting.RemotingException) {
+                    // ignore as the connection is maybe already broken
                 }
-                if (_Session != null) {
-                    _Session.DeregisterFrontendUI(_MainWindow.UI);
-                }
-            } catch (System.Net.Sockets.SocketException) {
-                // ignore as the connection is maybe already broken
-            } catch (System.Runtime.Remoting.RemotingException) {
-                // ignore as the connection is maybe already broken
             }
-            _MainWindow.Hide();
+            _FrontendManagerCheckerQueue.Dispose();
             _MainWindow.ChatViewManager.Clear();
             // make sure no stray SSH tunnel leaves behind
             _MainWindow.EngineManager.Disconnect();
+            _MainWindow.NetworkStatus = null;
+            _MainWindow.Status = _("Disconnected from engine.");
 
             _FrontendManager = null;
             Session = null;
@@ -316,13 +330,68 @@ namespace Smuxi.Frontend.Gnome
 
         public static void ReconnectEngineToGUI()
         {
-            Trace.Call();
+            ReconnectEngineToGUI(true);
+        }
 
-            Frontend.DisconnectEngineFromGUI();
-            _MainWindow.EngineManager.Reconnect();
-            Session = _MainWindow.EngineManager.Session;
-            _UserConfig = _MainWindow.EngineManager.UserConfig;
-            Frontend.ConnectEngineToGUI();
+        public static void ReconnectEngineToGUI(bool cleanly)
+        {
+            Trace.Call(cleanly);
+
+            if (_InReconnectHandler) {
+#if LOG4NET
+                _Logger.Debug("ReconnectEngineToGUI(): already in reconnect " +
+                              "handler, ignoring reconnect...");
+#endif
+                return;
+            }
+
+            _InReconnectHandler = true;
+            var disconnectedEvent = new AutoResetEvent(false);
+            ThreadPool.QueueUserWorkItem(delegate {
+                try {
+                    // delay the disconnect to give the reconnect some extra
+                    // time as NetworkManager is not accurate about when the
+                    // network is really ready
+                    GLib.Timeout.Add(5 * 1000, delegate {
+                        MainWindow.ChatViewManager.IsSensitive = false;
+                        Frontend.DisconnectEngineFromGUI(cleanly);
+                        disconnectedEvent.Set();
+                        return false;
+                    });
+
+                    var successful = false;
+                    var attempt = 1;
+                    while (!successful) {
+                        Gtk.Application.Invoke(delegate {
+                            MainWindow.NetworkStatus = null;
+                            MainWindow.Status = String.Format(
+                                _("Reconnecting to engine... (attempt {0})"),
+                                attempt++
+                            );
+                        });
+                        try {
+                            disconnectedEvent.WaitOne();
+                            _MainWindow.EngineManager.Reconnect();
+                            successful = true;
+                        } catch (ApplicationException ex) {
+#if LOG4NET
+                            _Logger.Debug("ReconnectEngineToGUI(): Exception", ex);
+#endif
+                            disconnectedEvent.Set();
+                            Thread.Sleep(10 * 1000);
+                        }
+                    }
+                    Session = _MainWindow.EngineManager.Session;
+                    _UserConfig = _MainWindow.EngineManager.UserConfig;
+
+                    Gtk.Application.Invoke(delegate {
+                        Frontend.ConnectEngineToGUI();
+                        MainWindow.ChatViewManager.IsSensitive = true;
+                    });
+                } finally {
+                    _InReconnectHandler = false;
+                }
+            });
         }
 
         public static void Quit()
@@ -459,16 +528,12 @@ namespace Smuxi.Frontend.Gnome
                     // one reconnect is good enough and a crash we won't survive
                     return;
                 }
-                _InReconnectHandler = true;
                 if (MainWindow.HasToplevelFocus) {
                     ShowReconnectDialog(parent);
                 } else {
                     // the user isn't paying attention, no need to ask
-                    MainWindow.ChatViewManager.IsSensitive = false;
                     Frontend.ReconnectEngineToGUI();
-                    MainWindow.ChatViewManager.IsSensitive = true;
                 }
-                _InReconnectHandler = false;
                 return;
             }
 
