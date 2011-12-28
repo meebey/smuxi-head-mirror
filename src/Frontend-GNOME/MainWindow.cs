@@ -1162,7 +1162,7 @@ namespace Smuxi.Frontend.Gnome
         {
             Trace.Call(sender, e);
 
-            e.ChatView.OutputMessageTextView.MessageHighlighted += OnChatViewMessageHighlighted;
+            e.ChatView.MessageHighlighted += OnChatViewMessageHighlighted;
             UpdateProgressBar();
         }
         
@@ -1177,13 +1177,15 @@ namespace Smuxi.Frontend.Gnome
         {
             Trace.Call(sender, e);
             
-            e.ChatView.OutputMessageTextView.MessageHighlighted -= OnChatViewMessageHighlighted;
+            e.ChatView.MessageHighlighted -= OnChatViewMessageHighlighted;
         }
         
-        protected void OnChatViewMessageHighlighted(object sender, MessageTextViewMessageHighlightedEventArgs e)
+        protected void OnChatViewMessageHighlighted(object sender, ChatViewMessageHighlightedEventArgs e)
         {
+#if MSG_DEBUG
             Trace.Call(sender, e);
-            
+#endif
+
             if (!HasToplevelFocus) {
                 UrgencyHint = true;
             }
