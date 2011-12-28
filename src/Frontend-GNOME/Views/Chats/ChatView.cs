@@ -629,28 +629,6 @@ namespace Smuxi.Frontend.Gnome
         
         protected virtual void OnMessageTextViewMessageHighlighted(object sender, MessageTextViewMessageHighlightedEventArgs e)
         {
-            // HACK: out of scope?
-            // only beep if the main windows has no focus (the user is
-            // elsewhere) and the chat is was already synced, as during sync we
-            // would get insane from all beeping caused by the old highlights
-            if (!Frontend.MainWindow.HasToplevelFocus &&
-                _IsSynced &&
-                Frontend.UserConfig["Sound/BeepOnHighlight"] != null &&
-                (bool) Frontend.UserConfig["Sound/BeepOnHighlight"]) {
-#if LOG4NET
-                _Logger.Debug("OnMessageTextViewMessageHighlighted(): BEEP!");
-#endif
-                try {
-                    if (Display != null) {
-                        Display.Beep();
-                    }
-                } catch (Exception ex) {
-#if LOG4NET
-                    _Logger.Error("OnMessageTextViewMessageHighlighted(): Exception", ex);
-#endif
-                }
-            }
-
             if (_IsSynced) {
                 bool isActiveChat = IsActive;
 
@@ -699,8 +677,31 @@ namespace Smuxi.Frontend.Gnome
                 }
             }
 
-            if (e.Message.TimeStamp <= SyncedLastSeenHighlight) {
+            if (e.Message.TimeStamp > SyncedLastSeenHighlight) {
                 // unseen highlight
+
+                // HACK: out of scope?
+                // only beep if the main windows has no focus (the user is
+                // elsewhere) and the chat is was already synced, as during sync we
+                // would get insane from all beeping caused by the old highlights
+                if (!Frontend.MainWindow.HasToplevelFocus &&
+                    _IsSynced &&
+                    Frontend.UserConfig["Sound/BeepOnHighlight"] != null &&
+                    (bool) Frontend.UserConfig["Sound/BeepOnHighlight"]) {
+#if LOG4NET
+                    _Logger.Debug("OnMessageTextViewMessageHighlighted(): BEEP!");
+#endif
+                    try {
+                        if (Display != null) {
+                            Display.Beep();
+                        }
+                    } catch (Exception ex) {
+#if LOG4NET
+                        _Logger.Error("OnMessageTextViewMessageHighlighted(): Exception", ex);
+#endif
+                    }
+                }
+
                 if (MessageHighlighted != null) {
                     MessageHighlighted(this, new ChatViewMessageHighlightedEventArgs(e.Message));
                 }
