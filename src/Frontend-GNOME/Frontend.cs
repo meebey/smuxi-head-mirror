@@ -124,7 +124,7 @@ namespace Smuxi.Frontend.Gnome
 
         public static bool IsLocalEngine {
             get {
-                return _Session == _LocalSession;
+                return _LocalSession != null && _Session == _LocalSession;
             }
         }
 
@@ -528,12 +528,8 @@ namespace Smuxi.Frontend.Gnome
                     // one reconnect is good enough and a crash we won't survive
                     return;
                 }
-                if (MainWindow.HasToplevelFocus) {
-                    ShowReconnectDialog(parent);
-                } else {
-                    // the user isn't paying attention, no need to ask
-                    Frontend.ReconnectEngineToGUI();
-                }
+
+                Frontend.ReconnectEngineToGUI();
                 return;
             }
 
