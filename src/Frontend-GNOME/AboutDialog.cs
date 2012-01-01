@@ -1,13 +1,7 @@
 /*
- * $Id$
- * $URL$
- * $Rev$
- * $Author$
- * $Date$
- *
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2006 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2006-2012 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -28,6 +22,7 @@
 
 using System;
 using System.Linq;
+using Smuxi.Common;
 
 namespace Smuxi.Frontend.Gnome
 {
@@ -41,15 +36,21 @@ namespace Smuxi.Frontend.Gnome
             
             TransientFor = parent;
             Name = Frontend.Name;
-            Version = "\n Frontend: " + Frontend.UIName + " " + Frontend.Version +
+            var version = Frontend.Version.ToString();
+            var distVersion = Defines.DistVersion;
+            if (!String.IsNullOrEmpty(distVersion)) {
+                version = String.Format("{0} ({1})", version, distVersion);
+            }
+            Version = "\n Frontend: " + Frontend.UIName + " " + version  +
                       "\n Engine: " + Frontend.EngineVersion;
-            Copyright = "Copyright © 2005-2010 Mirco Bauer <meebey@meebey.net>";
+            Copyright = "Copyright © 2005-2012 Mirco Bauer <meebey@meebey.net>";
             Authors = new string[] {
                 "Mirco Bauer <meebey@meebey.net>",
                 "David Paleino <dapal@debian.org>",
                 "Clément Bourgeois <moonpyk@gmail.com>",
                 "Chris Le Sueur <c.m.lesueur@gmail.com>",
-                "Tuukka Hastrup <Tuukka.Hastrup@iki.fi>"
+                "Tuukka Hastrup <Tuukka.Hastrup@iki.fi>",
+                "Bianca Mix <heavydemon@freenet.de>"
             };
             Artists = new string[] {
                 "Jakub Steiner <jimmac@ximian.com>",
