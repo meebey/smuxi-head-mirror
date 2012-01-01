@@ -1498,16 +1498,19 @@ namespace Smuxi.Engine
                     NewsFeedLastModified = httpRes.LastModified;
                 }
                 var feed = AtomFeed.Load(res.GetResponseStream());
-                var msg = new FeedMessageBuilder();
-                foreach (var entry in feed.Entry) {
+                var sortedEntries = feed.Entry.OrderBy(x => x.Published);
+                foreach (var entry in sortedEntries) {
                     if (SeenNewsFeedIds.Contains(entry.Id)) {
                         continue;
                     }
-                    msg.Append(entry);
                     SeenNewsFeedIds.Add(entry.Id);
-                }
-                if (!msg.IsEmpty) {
-                    AddMessageToChat(SessionChat, msg.ToMessage());
+
+                    var msg = new FeedMessageBuilder();
+                    msg.Append(entry);
+                    if (!msg.IsEmpty) {
+                        msg.AppendText("\n");
+                        AddMessageToChat(SessionChat, msg.ToMessage());
+                    }
                 }
             } catch (WebException ex) {
                 switch (ex.Status) {
