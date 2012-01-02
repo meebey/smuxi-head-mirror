@@ -326,6 +326,7 @@ namespace Smuxi.Frontend.Gnome
                 _FrontendManagerCheckerQueue.Dispose();
             }
             _MainWindow.ChatViewManager.Clear();
+            _MainWindow.UpdateProgressBar();
             // make sure no stray SSH tunnel leaves behind
             _MainWindow.EngineManager.Disconnect();
             _MainWindow.NetworkStatus = null;
@@ -360,7 +361,6 @@ namespace Smuxi.Frontend.Gnome
                     // time as NetworkManager is not accurate about when the
                     // network is really ready
                     GLib.Timeout.Add(5 * 1000, delegate {
-                        MainWindow.ChatViewManager.IsSensitive = false;
                         Frontend.DisconnectEngineFromGUI(cleanly);
                         disconnectedEvent.Set();
                         return false;
@@ -380,12 +380,12 @@ namespace Smuxi.Frontend.Gnome
                             disconnectedEvent.WaitOne();
                             _MainWindow.EngineManager.Reconnect();
                             successful = true;
-                        } catch (ApplicationException ex) {
+                        } catch (Exception ex) {
 #if LOG4NET
                             _Logger.Debug("ReconnectEngineToGUI(): Exception", ex);
 #endif
                             disconnectedEvent.Set();
-                            Thread.Sleep(10 * 1000);
+                            Thread.Sleep(30 * 1000);
                         }
                     }
                     Session = _MainWindow.EngineManager.Session;
@@ -393,8 +393,9 @@ namespace Smuxi.Frontend.Gnome
 
                     Gtk.Application.Invoke(delegate {
                         Frontend.ConnectEngineToGUI();
-                        MainWindow.ChatViewManager.IsSensitive = true;
                     });
+                } catch (Exception ex) {
+                    Frontend.ShowException(ex);
                 } finally {
                     _InReconnectHandler = false;
                 }
