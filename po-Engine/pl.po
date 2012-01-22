@@ -3,211 +3,227 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Dean Lee <xslidian@gmail.com>, 2011, 2012.
+#   <lukasznaw@gmail.com>, 2012.
+#   <okwell@gmail.com>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Smuxi - IRC client\n"
 "Report-Msgid-Bugs-To: http://www.smuxi.org/issues\n"
 "POT-Creation-Date: 2012-01-01 18:47+0100\n"
-"PO-Revision-Date: 2012-01-07 09:53+0000\n"
-"Last-Translator: Dean Lee <xslidian@gmail.com>\n"
-"Language-Team: Chinese (China) (http://www.transifex.net/projects/p/smuxi/team/zh_CN/)\n"
+"PO-Revision-Date: 2012-01-07 11:23+0000\n"
+"Last-Translator: lukasznaw <lukasznaw@gmail.com>\n"
+"Language-Team: Polish (http://www.transifex.net/projects/p/smuxi/team/pl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Language: pl\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
 #: ../src/Engine/FrontendManager.cs:233
 msgid "No network connections"
-msgstr "无网络连接"
+msgstr "Brak połączeń"
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:295
 #, csharp-format
 msgid "Optimizing: {0}..."
-msgstr "正在优化: {0}..."
+msgstr "Optymalizowanie: {0}..."
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:313
 #, csharp-format
 msgid "Failed to optimize: {0}. Reason: {1}"
-msgstr "优化失败: {0}。原因: {1}"
+msgstr "Optymalizacja nieudana: {0}. Powód: {1}"
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:347
 msgid ""
 "Your chat history is no longer available because of an error but will be "
 "preserved from now on."
-msgstr "由于发生错误，您的聊天历史不再可用；但今后的聊天历史将会保留。"
+msgstr ""
+"Z powodu błędu, twoja historia czatu nie jest dostępna, ale od teraz będzie "
+"zachowywana."
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:170
 msgid "Not connected to server"
-msgstr "未连接到服务器"
+msgstr "Nie połączony z serwerem"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:178
 #: ../src/Engine/Session.cs:778
 #, csharp-format
 msgid "Not enough parameters for {0} command"
-msgstr "{0} 命令参数不足"
+msgstr "Zbyt mało parametrów dla komendy {0}"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:189
 #, csharp-format
 msgid "Connected to {0}"
-msgstr "已连接到 {0}"
+msgstr "Połączono z {0}"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:207
 #, csharp-format
 msgid "Disconnected from {0}"
-msgstr "已从 {0} 断开连接"
+msgstr "Rozłączono z {0}"
 
 #: ../src/Engine/Session.cs:218
 #, csharp-format
 msgid "Automatic connect to {0} failed!"
-msgstr "自动连接 {0} 失败!"
+msgstr "Automatyczne łączenie z {0} nie powiodło się!"
 
 #. TRANSLATOR: this line is used as a label / category for a
 #. list of commands below
 #: ../src/Engine/Session.cs:416
 msgid "Engine Commands"
-msgstr "引擎命令"
+msgstr "Komendy silnika"
 
 #: ../src/Engine/Session.cs:527
 msgid "Connect failed!"
-msgstr "连接失败!"
+msgstr "Połączenie nieudane!"
 
 #: ../src/Engine/Session.cs:550
 #, csharp-format
 msgid "Disconnect failed - could not find server: {0}"
-msgstr "连接断开失败 - 找不到服务器: {0}"
+msgstr "Rozłączenie nieudane -  nie znaleziono serwera: {0}"
 
 #: ../src/Engine/Session.cs:589
 msgid "Reconnect failed!"
-msgstr "重新连接失败!"
+msgstr "Ponowne połączenie nieudane!"
 
 #: ../src/Engine/Session.cs:608
 msgid "Configuration reloaded"
-msgstr "配置已重新载入"
+msgstr "Ustawienia wczytane ponownie"
 
 #: ../src/Engine/Session.cs:613
 msgid "Configuration saved"
-msgstr "配置已保存"
+msgstr "Ustawienia zapisane"
 
 #: ../src/Engine/Session.cs:617
 msgid "Invalid parameter for config; use load or save"
-msgstr "config 的参数无效; 使用 load 或 save"
+msgstr ""
+"Nieprawidłowy parametr dla config (konfiguracji); użyj save (załaduj) albo "
+"load (wczytaj)"
 
 #: ../src/Engine/Session.cs:676
 msgid "Invalid parameter for network; use list, switch, or close"
-msgstr "network 的参数无效; 使用 list、switch 或 close"
+msgstr ""
+"Nieprawidłowy parametr dla network (sieci); użyj list (wypisz), switch "
+"(zmień) albo close (zamknij)"
 
 #: ../src/Engine/Session.cs:687
 msgid "Networks"
-msgstr "网络"
+msgstr "Sieci"
 
 #: ../src/Engine/Session.cs:691
 msgid "Protocol"
-msgstr "协议"
+msgstr "Protokół"
 
 #: ../src/Engine/Session.cs:692
 msgid "Network"
-msgstr "网络"
+msgstr "Sieć"
 
 #: ../src/Engine/Session.cs:693
 msgid "Host"
-msgstr "主机"
+msgstr "Serwer"
 
 #: ../src/Engine/Session.cs:694
 msgid "Port"
-msgstr "端口"
+msgstr "Port"
 
 #: ../src/Engine/Session.cs:709
 #, csharp-format
 msgid "Network close failed - could not find network: {0}"
-msgstr "网络关闭失败——无法找到网络: {0}"
+msgstr "Nie udało się zamknąć sieci - nie znaleziono sieci: {0}"
 
 #: ../src/Engine/Session.cs:748
 #, csharp-format
 msgid "Network switch failed - could not find network: {0}"
-msgstr "网络切换失败——无法找到网络: {0}"
+msgstr "Nie udało się zmienić sieci - nie znaleziono sieci: {0}"
 
 #: ../src/Engine/Session.cs:767
 msgid "Not connected to any network"
-msgstr "未连接到任何网络"
+msgstr "Nie połączono z żadną siecią"
 
 #: ../src/Engine/Session.cs:1013
 #, csharp-format
 msgid ""
 "Failed to write to chat history. Your chat history will not be preserved. "
 "Reason: {0}"
-msgstr "无法写入聊天历史。您的聊天历史将不会保存。原因: {0}"
+msgstr ""
+"Nie udało się zapisać historii czatu. Twoja historia czatu nie będzie "
+"zachowana. Powód: {0}"
 
 #. just in case the ProtocolManager is not setting the
 #. protocol chat
 #: ../src/Engine/Session.cs:1185
 msgid "Connect failed."
-msgstr "连接失败。"
+msgstr "Połączenie nie powiodło się."
 
 #: ../src/Engine/Session.cs:1216
 #, csharp-format
 msgid "No protocol manager found for the protocol: {0}"
-msgstr "未找到该协议的协议管理器: {0}"
+msgstr "Nie znaleziono menedżera protokołu dla: {0}"
 
 #: ../src/Engine/Session.cs:1448
 msgid "Welcome to Smuxi"
-msgstr "欢迎来到 Smuxi"
+msgstr "Witaj w Smuxi"
 
 #: ../src/Engine/Session.cs:1455
 msgid "Type /help to get a list of available commands."
-msgstr "输入 /help 获取可用命令列表。"
+msgstr "Wpisz /help aby uzyskać listę dostępnych komend."
 
 #: ../src/Engine/Session.cs:1461
 msgid ""
 "After you have made a connection the list of available commands changes. Go "
 "to the newly opened connection tab and use the /help command again to see "
 "the extended command list."
-msgstr "连接后可用命令列表将有所变化。请访问新打开的连接页面，再次使用 /help 命令查看扩展后的命令列表。"
+msgstr ""
+"Po tym, jak się połączysz zmienia się lista dostępnych komend. Kliknij na "
+"nowo otwartą kartę połączenia i użyj komendy /help, aby zobaczyć powiększoną"
+" listę komend."
 
 #: ../src/Engine/Config/UserListController.cs:117
 msgid "Username must not be empty."
-msgstr "用户名不能为空。"
+msgstr "Pole użytkownika nie może być puste."
 
 #: ../src/Engine/Config/UserListController.cs:127
 msgid "Password must not be empty."
-msgstr "密码不能为空。"
+msgstr "Pole hasła nie może być puste"
 
 #: ../src/Engine/Config/UserListController.cs:136
 #, csharp-format
 msgid "User \"{0}\" doesn't exist."
-msgstr "用户 \"{0}\" 不存在。"
+msgstr "Użytkownik \"{0}\" nie istnieje."
 
 #: ../src/Engine/Config/UserListController.cs:145
 #, csharp-format
 msgid "User \"{0}\" already exists."
-msgstr "用户名 \"{0}\" 已存在。"
+msgstr "Użytkownik \"{0}\" istnieje."
 
 #: ../src/Engine/Config/ServerListController.cs:131
 msgid "Server hostname must not be empty."
-msgstr "服务器主机名不能为空。"
+msgstr "Pole adresu serwera nie może być puste."
 
 #: ../src/Engine/Config/ServerListController.cs:134
 msgid "Server hostname contains invalid characters (newline)."
-msgstr "服务器主机名包含无效字符 (换行)。"
+msgstr "Adres serwera zawiera niepoprawne znaki. (newline)"
 
 #: ../src/Engine/Config/ServerListController.cs:140
 #, csharp-format
 msgid "Server '{0}' already exists."
-msgstr "服务器 '{0}' 已存在。"
+msgstr "Serwer '{0}' już istnieje."
 
 #: ../src/Engine/Chats/ChatModel.cs:105
 #, csharp-format
 msgid ""
 "Failed to load chat history. Your chat history will not be preserved. "
 "Reason: {0}"
-msgstr "无法加载聊天历史。您的聊天历史将不会保留。原因: {0}"
+msgstr ""
+"Nie udało się załadować historii czatu. Twoja historia czatu nie będzie "
+"zachowana. Powód: {0}"
 
 #: ../src/Engine/Chats/ChatModel.cs:290
 #, csharp-format
 msgid ""
 "Failed to open chat history for writing. Your chat history will not be "
 "preserved. Reason: {0}"
-msgstr "聊天历史无法打开写入。您的聊天历史将不会保留。原因: {0}"
+msgstr ""
+"Nie udało się otworzyć (do zapisywania) historii czatu. Twoja historia czatu"
+" nie będzie zachowana. Powód: {0}"
 
 
