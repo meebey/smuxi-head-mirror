@@ -5,21 +5,20 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{BE7B2AE6-765A-4EB6-BBB6-F402B1939EC4}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>Smuxi.Frontend.Wpf</RootNamespace>
+    <ProjectGuid>{CD3D60C4-0A53-4B4C-B30C-1C4F2D68A21E}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Benchmark</RootNamespace>
     <ApplicationIcon>.</ApplicationIcon>
-    <AssemblyName>smuxi-frontend-wpf</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <AssemblyName>benchmark</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;LOG4NET</DefineConstants>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\..\bin\mono\debug</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunWithWarnings>false</RunWithWarnings>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <Execution>
       <Execution clr-version="Net_2_0" />
@@ -28,43 +27,27 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\bin\release</OutputPath>
+    <OutputPath>..\..\..\bin\mono\release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunWithWarnings>false</RunWithWarnings>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <Execution>
       <Execution clr-version="Net_2_0" />
     </Execution>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="App.xaml.cs" />
-    <Compile Include="NotImplementedMessageDialog.cs" />
-    <Compile Include="..\AssemblyVersion.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.xaml" />
-    <None Include="SplashScreenWindow.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Engine\Engine.csproj">
-      <Project>{BCD52FCF-B7A8-42FB-AA8D-CF9921FF593E}</Project>
-      <Name>Engine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Frontend\Frontend.csproj">
-      <Project>{7B1E3AB2-FB8C-4439-A2B4-2129EDBD79F8}</Project>
-      <Name>Frontend</Name>
+    <ProjectReference Include="..\..\SmartIrc4net.csproj">
+      <Project>{91D3003B-7E65-4EAF-8EE1-DA43832E7A9C}</Project>
+      <Name>SmartIrc4net</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Mono.Posix" />
+    <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ProjectExtensions>
-    <MonoDevelop>
-      <Properties>
-        <Deployment.LinuxDeployData scriptName="smuxi-frontend-wpf" />
-      </Properties>
-    </MonoDevelop>
-  </ProjectExtensions>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="benchmark.cs" />
+  </ItemGroup>
 </Project>
