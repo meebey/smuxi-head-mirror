@@ -63,6 +63,8 @@ namespace Smuxi.Frontend.Gnome
             NetworkWebsiteUrls = new Dictionary<string, string>(
                 StringComparer.InvariantCultureIgnoreCase
             );
+
+            // IRC
             NetworkWebsiteUrls.Add("OFTC", "http://www.oftc.net/");
             NetworkWebsiteUrls.Add("freenode", "http://freenode.net/");
             NetworkWebsiteUrls.Add("QuakeNet", "http://www.quakenet.org/");
@@ -72,6 +74,13 @@ namespace Smuxi.Frontend.Gnome
             NetworkWebsiteUrls.Add("GSDnet", "http://www.gsd-software.net/");
             NetworkWebsiteUrls.Add("ustream", "http://www.ustream.tv/");
             NetworkWebsiteUrls.Add("Infinity-IRC", "http://www.infinityirc.com/");
+
+            // Twitter
+            NetworkWebsiteUrls.Add("Twitter", "http://www.twitter.com/");
+
+            // XMPP
+            NetworkWebsiteUrls.Add("talk.google.com", "http://www.google.com/talk/");
+            NetworkWebsiteUrls.Add("chat.facebook.com", "http://www.facebook.com/");
         }
 
         public ProtocolChatView(ChatModel chat) : base(chat)
@@ -234,10 +243,9 @@ namespace Smuxi.Frontend.Gnome
             }
             string faviconUrl = null;
             if (String.IsNullOrEmpty(faviconRel)) {
-                faviconUrl = String.Format("{0}favicon.ico", websiteUrl);
-            } else {
-                faviconUrl = new Uri(new Uri(websiteUrl), faviconRel).AbsoluteUri;
+                faviconRel = "/favicon.ico";
             }
+            faviconUrl = new Uri(new Uri(websiteUrl), faviconRel).ToString();
 #if LOG4NET
             f_Logger.DebugFormat("DownloadServerIcon(): favicon URL: {0}",
                                  faviconUrl);
@@ -247,33 +255,32 @@ namespace Smuxi.Frontend.Gnome
             iconRequest.Proxy = proxy;
             if (iconRequest is HttpWebRequest) {
                 var iconHttpRequest = (HttpWebRequest) iconRequest;
-                if (iconFile.Exists && iconFile.Length > 0) {
+                if (iconFile.Exists) {
                     iconHttpRequest.IfModifiedSince = iconFile.LastWriteTime;
                 }
             }
 
-            using (var iconStream = iconFile.OpenWrite()) {
-                WebResponse iconResponse;
-                try {
-                    iconResponse = iconRequest.GetResponse();
-                } catch (WebException ex) {
-                    if (ex.Response is HttpWebResponse) {
-                        var iconHttpResponse = (HttpWebResponse) ex.Response;
-                        if (iconHttpResponse.StatusCode == HttpStatusCode.NotModified) {
-                            // icon hasn't changed, nothing to do
-                            return;
-                        }
+            WebResponse iconResponse;
+            try {
+                iconResponse = iconRequest.GetResponse();
+            } catch (WebException ex) {
+                if (ex.Response is HttpWebResponse) {
+                    var iconHttpResponse = (HttpWebResponse) ex.Response;
+                    if (iconHttpResponse.StatusCode == HttpStatusCode.NotModified) {
+                        // icon hasn't changed, nothing to do
+                        return;
                     }
-                    throw;
                 }
+                throw;
+            }
 
-                // save new or modified icon file
-                using (var httpStream = iconResponse.GetResponseStream()) {
-                    byte[] buffer = new byte[4096];
-                    int read;
-                    while ((read = httpStream.Read(buffer, 0, buffer.Length)) > 0) {
-                        iconStream.Write(buffer, 0, read);
-                    }
+            // save new or modified icon file
+            using (var iconStream = iconFile.OpenWrite())
+            using (var httpStream = iconResponse.GetResponseStream()) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = httpStream.Read(buffer, 0, buffer.Length)) > 0) {
+                    iconStream.Write(buffer, 0, read);
                 }
             }
         }
