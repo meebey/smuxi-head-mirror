@@ -260,20 +260,14 @@ namespace Smuxi.Frontend.Gnome
 
             item = new Gtk.ImageMenuItem(Gtk.Stock.Preferences, agrp);
             item.Activated += new EventHandler(_OnPreferencesButtonClicked);
-            item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(item);
             
             menu.Append(new Gtk.SeparatorMenuItem());
             
             item = new Gtk.ImageMenuItem(Gtk.Stock.Quit, agrp);
             item.Activated += new EventHandler(_OnQuitButtonClicked);
-            item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(item);
             
             // Menu - Server
@@ -312,10 +306,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelMods = Gdk.ModifierType.ControlMask;
             akey.Key = Gdk.Key.L;
             _OpenChatMenuItem.AddAccelerator("activate", agrp, akey);
-            _OpenChatMenuItem.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            _OpenChatMenuItem.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(_OpenChatMenuItem);
                     
             _FindGroupChatMenuItem = new Gtk.ImageMenuItem(_("_Find Group Chat"));
@@ -339,10 +330,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelMods = Gdk.ModifierType.ControlMask;
             akey.Key = Gdk.Key.Page_Down;
             image_item.AddAccelerator("activate", agrp, akey);
-            image_item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            image_item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(image_item);
             
             image_item = new Gtk.ImageMenuItem(_("_Previous Chat"));
@@ -353,10 +341,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelMods = Gdk.ModifierType.ControlMask;
             akey.Key = Gdk.Key.Page_Up;
             image_item.AddAccelerator("activate", agrp, akey);
-            image_item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            image_item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(image_item);
             
             menu.Append(new Gtk.SeparatorMenuItem());
@@ -409,10 +394,7 @@ namespace Smuxi.Frontend.Gnome
 
             _CloseChatMenuItem = new Gtk.ImageMenuItem(Gtk.Stock.Close, agrp);
             _CloseChatMenuItem.Activated += OnCloseChatMenuItemActivated;
-            _CloseChatMenuItem.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            _CloseChatMenuItem.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(_CloseChatMenuItem);
 
             // Menu - Engine
@@ -449,10 +431,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelFlags = Gtk.AccelFlags.Visible;
             akey.Key = Gdk.Key.F7;
             item.AddAccelerator("activate", agrp, akey);
-            item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(item);
             
             item = new Gtk.CheckMenuItem(_("_Browse Mode"));
@@ -467,10 +446,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelFlags = Gtk.AccelFlags.Visible;
             akey.Key = Gdk.Key.F8;
             item.AddAccelerator("activate", agrp, akey);
-            item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(item);
 
             _ShowMenuBarItem = new Gtk.CheckMenuItem(_("Show _Menubar"));
@@ -506,10 +482,7 @@ namespace Smuxi.Frontend.Gnome
             akey.AccelFlags = Gtk.AccelFlags.Visible;
             akey.Key = Gdk.Key.F11;
             item.AddAccelerator("activate", agrp, akey);
-            item.AccelCanActivate += delegate(object o, Gtk.AccelCanActivateArgs args) {
-                // allow the accelerator to be used even when the menu bar is hidden
-                args.RetVal = true;
-            };
+            item.AccelCanActivate += AccelCanActivateSensitive;
             menu.Append(item);
 
             // Menu - Help
@@ -525,7 +498,8 @@ namespace Smuxi.Frontend.Gnome
             // TODO: network treeview
             _Notebook = new Notebook();
             _Notebook.SwitchPage += OnNotebookSwitchPage;
-            
+            _Notebook.FocusInEvent += OnNotebookFocusInEvent;
+
             _ChatViewManager = new ChatViewManager(_Notebook, null);
             Assembly asm = Assembly.GetExecutingAssembly();
             _ChatViewManager.Load(asm);
@@ -1037,9 +1011,23 @@ namespace Smuxi.Frontend.Gnome
                     _OpenLogChatMenuItem.Sensitive =
                         File.Exists(chatView.ChatModel.LogFile);
                 }
+
+                // HACK: Gtk.Notebook moves the focus to the child after the
+                // page has been switched, so move the focus back to the entry
+                GLib.Idle.Add(delegate {
+                    Entry.GrabFocus();
+                    return false;
+                });
             } catch (Exception ex) {
                 Frontend.ShowException(this, ex);
             }
+        }
+
+        protected virtual void OnNotebookFocusInEvent(object sender, Gtk.FocusInEventArgs e)
+        {
+            // HACK: having the focus in the notebook doesn't make any sense,
+            // so move focus back to the entry
+            Entry.GrabFocus();
         }
 
         protected virtual void OnJoinWidgetActivated(object sender, EventArgs e)
@@ -1080,6 +1068,18 @@ namespace Smuxi.Frontend.Gnome
             } catch (Exception ex) {
                 Frontend.ShowException(this, ex);
             }
+        }
+
+        protected static void AccelCanActivateSensitive(object sender, Gtk.AccelCanActivateArgs e)
+        {
+            var widget = sender as Gtk.Widget;
+            if (widget != null && !widget.Sensitive) {
+                e.RetVal = false;
+                return;
+            }
+
+            // allow the accelerator to be used even when the menu bar is hidden
+            e.RetVal = true;
         }
 
         private void _OnAboutButtonClicked(object obj, EventArgs args)
