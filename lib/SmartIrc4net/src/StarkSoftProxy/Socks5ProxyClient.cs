@@ -395,7 +395,7 @@ namespace Starksoft.Net.Proxy
                 //       +----+------+----------+------+----------+
 
                 byte[] credentials = new byte[_proxyUserName.Length + _proxyPassword.Length + 3];
-                credentials[0] = SOCKS5_VERSION_NUMBER;
+                credentials[0] = 1;
                 credentials[1] = (byte)_proxyUserName.Length; 
                 Array.Copy(ASCIIEncoding.ASCII.GetBytes(_proxyUserName), 0, credentials, 2, _proxyUserName.Length); 
                 credentials[_proxyUserName.Length + 2] = (byte)_proxyPassword.Length;
@@ -414,6 +414,15 @@ namespace Starksoft.Net.Proxy
                 // A STATUS field of X'00' indicates success. If the server returns a
                 // `failure' (STATUS value other than X'00') status, it MUST close the
                 // connection.
+                stream.Write(credentials, 0, credentials.Length);
+                byte[] crResponse = new byte[2];
+                stream.Read(crResponse, 0, crResponse.Length);
+
+                if (crResponse[1] != 0)
+                {
+                    _tcpClient.Close();
+                    throw new ProxyException("Proxy authentification failure!");
+                }
             }
         }
 
@@ -533,12 +542,12 @@ namespace Starksoft.Net.Proxy
             byte[] response = new byte[255];
             
             // read proxy server response
-            stream.Read(response, 0, response.Length);
+            var responseSize = stream.Read(response, 0, response.Length);
             
             byte replyCode = response[1];
 
             //  evaluate the reply code for an error condition
-            if (replyCode != SOCKS5_CMD_REPLY_SUCCEEDED)
+            if (responseSize < 2  || replyCode != SOCKS5_CMD_REPLY_SUCCEEDED)
                 HandleProxyCommandError(response, destinationHost, destinationPort );
         }
 
