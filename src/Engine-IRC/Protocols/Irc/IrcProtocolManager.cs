@@ -307,12 +307,6 @@ namespace Smuxi.Engine
 
             ApplyConfig(Session.UserConfig, server);
 
-            // add fallbacks if only one nick was specified, else we get random
-            // number nicks when nick collisions happen
-            if (_Nicknames.Length == 1) {
-                _Nicknames = new string[] { _Nicknames[0], _Nicknames[0] + "_", _Nicknames[0] + "__" };
-            }
-
             // TODO: use config for single network chat or once per network manager
             _NetworkChat = Session.CreateChat<ProtocolChatModel>(
                 _Network, "IRC " + _Network, this
@@ -2135,6 +2129,12 @@ namespace Smuxi.Engine
                 _Nicknames = (string[]) config["Connection/Nicknames"];
             }
 
+            // add fallbacks if only one nick was specified, else we get random
+            // number nicks when nick collisions happen
+            if (_Nicknames.Length == 1) {
+                _Nicknames = new string[] { _Nicknames[0], _Nicknames[0] + "_", _Nicknames[0] + "__" };
+            }
+
             string encodingName = (string) config["Connection/Encoding"];
             if (String.IsNullOrEmpty(encodingName)) {
                 _IrcClient.Encoding = Encoding.Default;
@@ -2568,7 +2568,7 @@ namespace Smuxi.Engine
 
         private void _OnChannelMessage(object sender, IrcEventArgs e)
         {
-            ChatModel chat = GetChat(e.Data.Channel, ChatType.Group) ?? _NetworkChat;
+            var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
 
             var builder = CreateMessageBuilder();
             builder.AppendMessage(GetPerson(chat, e.Data.Nick), e.Data.Message);
@@ -2580,7 +2580,7 @@ namespace Smuxi.Engine
         
         private void _OnChannelAction(object sender, ActionEventArgs e)
         {
-            ChatModel chat = GetChat(e.Data.Channel, ChatType.Group);
+            var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
 
             var builder = CreateMessageBuilder();
             builder.AppendActionPrefix();
@@ -2595,7 +2595,7 @@ namespace Smuxi.Engine
         
         private void _OnChannelNotice(object sender, IrcEventArgs e)
         {
-            ChatModel chat = GetChat(e.Data.Channel, ChatType.Group);
+            var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
 
             var builder = CreateMessageBuilder();
             builder.AppendText("-{0}:{1}- ", e.Data.Nick, e.Data.Channel);
@@ -3109,7 +3109,7 @@ namespace Smuxi.Engine
                 case ReceiveType.ChannelModeChange:
                     modechange = String.Join(" ", e.Data.RawMessageArray, 3,
                                              e.Data.RawMessageArray.Length - 3);
-                    target = GetChat(e.Data.Channel, ChatType.Group);
+                    target = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
 
                     // TRANSLATOR: do NOT change the position of {2}!
                     builder.AppendText(_("mode/{0} [{1}] by {2}"),
@@ -3340,9 +3340,6 @@ namespace Smuxi.Engine
 
         private IrcPersonModel GetPerson(ChatModel chat, string nick)
         {
-            if (chat == null) {
-                throw new ArgumentNullException("chat");
-            }
             if (nick == null) {
                 throw new ArgumentNullException("nick");
             }
@@ -3360,10 +3357,15 @@ namespace Smuxi.Engine
                 }
             }
 
-            if (person == null) {
 #if LOG4NET
+            if (chat == null) {
+                _Logger.Warn("GetPerson(" + chat + ", " + nick + "): chat is null!");
+            }
+            if (person == null) {
                 _Logger.Warn("GetPerson(" + chat + ", " + nick + "): person is null!");
+            }
 #endif
+            if (chat == null || person == null) {
                 person = CreatePerson(nick);
             }
 
