@@ -65,6 +65,7 @@ namespace Smuxi.Engine
         private ConferenceManager _ConferenceManager;
         private FrontendManager _FrontendManager;
         private ChatModel       _NetworkChat;
+        private GroupChatModel  _ContactChat;
         private PresenceManager _PresenceManager;
 
         PersonModel MyPerson { get; set; }
@@ -113,9 +114,13 @@ namespace Smuxi.Engine
 
             _RosterManager = new RosterManager();
             _RosterManager.Stream = _JabberClient;
+            _RosterManager.OnRosterItem += OnRosterItem;
 
             _PresenceManager = new PresenceManager();
             _PresenceManager.Stream = _JabberClient;
+
+
+            _JabberClient.OnPresence += OnPresence;
 
             _ConferenceManager = new ConferenceManager();
             _ConferenceManager.Stream = _JabberClient;
@@ -148,6 +153,12 @@ namespace Smuxi.Engine
             );
             Session.AddChat(_NetworkChat);
             Session.SyncChat(_NetworkChat);
+
+            _ContactChat = Session.CreateChat<GroupChatModel>(
+                NetworkID, "Jabber " + Host + " Contacts", this
+                );
+            Session.AddChat(_ContactChat);
+            Session.SyncChat(_ContactChat);
 
             if (!String.IsNullOrEmpty(_JabberClient.ProxyHost)) {
                 var builder = CreateMessageBuilder();
@@ -208,7 +219,15 @@ namespace Smuxi.Engine
         {
             Trace.Call(fm, chat);
             
-            throw new NotImplementedException();
+            CommandModel cmd = new CommandModel(fm, _NetworkChat, chat.ID);
+            switch (chat.ChatType) {
+                case ChatType.Person:
+                    CommandMessageQuery(cmd);
+                    break;
+                case ChatType.Group:
+                    CommandJoin(cmd);
+                    break;
+            }
         }
 
         public override void CloseChat(FrontendManager fm, ChatModel chat)
@@ -396,26 +415,33 @@ namespace Smuxi.Engine
         {
             ChatModel chat = null;
             if (cd.DataArray.Length >= 2) {
-                string nickname = cd.DataArray[1];
+                string arg = cd.DataArray[1];
+                Item it = _RosterManager[arg];
                 JID jid = null;
-                foreach (JID j in _RosterManager) {
-                    Item item = _RosterManager[j];
-                    if (item.Nickname != null &&
-                        item.Nickname.Replace(" ", "_") == nickname) {
-                        jid = item.JID;
-                        break;
+                // arg is not a jid in our rostermanager
+                if (it == null) {
+                    // find a jid to which the nickname belongs
+                    foreach (JID j in _RosterManager) {
+                        Item item = _RosterManager[j];
+                        if (item.Nickname != null &&
+                            item.Nickname.Replace(" ", "_") == arg) {
+                            jid = item.JID;
+                            break;
+                        }
                     }
-                }
-                if (jid == null) {
-                    jid = nickname; // TODO check validity
+                    if (jid == null) {
+                        // not found in roster, message directly to jid
+                        // TODO: check jid for validity
+                        jid = arg;
+                    }
+                } else {
+                    jid = it.JID;
                 }
 
                 chat = GetChat(jid, ChatType.Person);
                 if (chat == null) {
-                    PersonModel person = new PersonModel(jid, nickname,
-                                                         NetworkID, Protocol,
-                                                         this);
-                    chat = Session.CreatePersonChat(person, jid, nickname, this);
+                    PersonModel person = CreatePerson(jid);
+                    chat = Session.CreatePersonChat(person, jid, person.IdentityName, this);
                     Session.AddChat(chat);
                     Session.SyncChat(chat);
                 }
@@ -513,6 +539,9 @@ namespace Smuxi.Engine
             if (!chat.IsEnabled) {
                 return;
             }
+            if (chat == _ContactChat) {
+                return;
+            }
             
             if (send) {
                 string target = chat.ID;
@@ -597,6 +626,77 @@ namespace Smuxi.Engine
                 _Logger.Error("OnWriteText(): Exception", ex);
 #endif
             }
+        }
+
+        public void OnRosterItem(object sender, Item ri)
+        {
+            string jid = ri.JID.Bare;
+
+            lock (_ContactChat) {
+                PersonModel oldp = _ContactChat.GetPerson(jid);
+                if (oldp == null) {
+                    // doesn't exist, don't need to do anything
+                    return;
+                }
+                PersonModel newp = CreatePerson(jid);
+                Session.UpdatePersonInGroupChat(_ContactChat, oldp, newp);
+            }
+        }
+
+        void OnPresence(object sender, Presence pres)
+        {
+            string jid = pres.From.Bare;
+
+            MessageBuilder builder = CreateMessageBuilder();
+            builder.AppendEventPrefix();
+            PersonModel person = CreatePerson(jid);
+            builder.AppendIdendityName(person);
+            builder.AppendText(" [{0}]", jid);
+
+            switch (pres.Type) {
+                case PresenceType.available:
+                    // anyone who is online/away/dnd will be added to the list
+                    lock (_ContactChat) {
+                        PersonModel p = _ContactChat.GetPerson(jid);
+                        if (p != null) {
+                            // p already exists, don't add a new person
+                            Session.UpdatePersonInGroupChat(_ContactChat, p, person);
+                        } else {
+                            Session.AddPersonToGroupChat(_ContactChat, person);
+                        }
+                    }
+                    if (pres.Show == null) {
+                        builder.AppendText(_(" is now available"));
+                    } else if (pres.Show == "away") {
+                        builder.AppendText(_(" is now away"));
+                    } else if (pres.Show == "dnd") {
+                        builder.AppendText(_(" wishes not to be disturbed"));
+                    } else {
+                        builder.AppendText(_(" set status to {0}"), pres.Show);
+                    }
+                    if (pres.Status == null) break;
+                    if (pres.Status.Length == 0) break;
+                    builder.AppendText(": {0}", pres.Status);
+                    break;
+                case PresenceType.unavailable:
+                    builder.AppendText(_(" is now offline"));
+                    lock (_ContactChat) {
+                        PersonModel p = _ContactChat.GetPerson(jid);
+                        if (p == null) {
+                            // doesn't exist, got an offline message w/o a preceding online message?
+                            return;
+                        }
+                        Session.RemovePersonFromGroupChat(_ContactChat, p);
+                    }
+                    break;
+                case PresenceType.subscribe:
+                    builder.AppendText(_(" wishes to subscribe to you"));
+                    break;
+                case PresenceType.subscribed:
+                    builder.AppendText(_(" allows you to subscribe"));
+                    break;
+            }
+            Session.AddMessageToChat(_ContactChat, builder.ToMessage());
         }
 
         private void OnMessage(object sender, Message msg)
@@ -753,16 +853,14 @@ namespace Smuxi.Engine
                 Session.SyncChat(chat);
             }
 
-            PersonModel person;
-            lock(chat.UnsafePersons) {
-                person = chat.GetPerson(nickname);
+            lock (chat) {
+                var person = chat.GetPerson(nickname);
                 if (person != null) {
                     return;
                 }
 
                 person = new PersonModel(nickname, nickname,
                                          NetworkID, Protocol, this);
-                chat.UnsafePersons.Add(nickname, person);
                 Session.AddPersonToGroupChat(chat, person);
             }
         }
@@ -773,14 +871,12 @@ namespace Smuxi.Engine
             var chat = (GroupChatModel) Session.GetChat(jid, ChatType.Group, this);
             string nickname = roomParticipant.Nick;
 
-            PersonModel person;
-            lock(chat.UnsafePersons) {
-                person = chat.GetPerson(nickname);
+            lock (chat) {
+                var person = chat.GetPerson(nickname);
                 if (person == null) {
                     return;
                 }
 
-                chat.UnsafePersons.Remove(nickname);
                 Session.RemovePersonFromGroupChat(chat, person);
             }
         }

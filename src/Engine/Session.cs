@@ -881,6 +881,18 @@ namespace Smuxi.Engine
         }
 
         public PersonChatModel CreatePersonChat(PersonModel person,
+                                                IProtocolManager protocolManager)
+        {
+            Trace.Call(person, protocolManager);
+
+            if (person == null) {
+                throw new ArgumentNullException("person");
+            }
+            return CreatePersonChat(person, person.ID, person.IdentityName,
+                                    protocolManager);
+        }
+
+        public PersonChatModel CreatePersonChat(PersonModel person,
                                                 string id, string name,
                                                 IProtocolManager protocolManager)
         {
@@ -1103,6 +1115,7 @@ namespace Smuxi.Engine
 #if LOG4NET
             f_Logger.Debug("AddPersonToGroupChat() groupChat.Name: "+groupChat.Name+" person.IdentityName: "+person.IdentityName);
 #endif
+            groupChat.UnsafePersons.Add(person.ID.ToLower(), person);
             lock (_FrontendManagers) {
                 foreach (FrontendManager fm in _FrontendManagers.Values) {
                     fm.AddPersonToGroupChat(groupChat, person);
