@@ -65,7 +65,10 @@ namespace Smuxi.Engine
         private ConferenceManager _ConferenceManager;
         private FrontendManager _FrontendManager;
         private ChatModel       _NetworkChat;
-        
+        private PresenceManager _PresenceManager;
+
+        PersonModel MyPerson { get; set; }
+
         public override string NetworkID {
             get {
                 if (!String.IsNullOrEmpty(_JabberClient.NetworkHost)) {
@@ -110,6 +113,9 @@ namespace Smuxi.Engine
 
             _RosterManager = new RosterManager();
             _RosterManager.Stream = _JabberClient;
+
+            _PresenceManager = new PresenceManager();
+            _PresenceManager.Stream = _JabberClient;
 
             _ConferenceManager = new ConferenceManager();
             _ConferenceManager.Stream = _JabberClient;
@@ -279,6 +285,10 @@ namespace Smuxi.Engine
                             CommandAway(command);
                             handled = true;
                             break;
+                        case "roster":
+                            CommandRoster(command);
+                            handled = true;
+                            break;
                     }
                 } else {
                     _Say(command.Chat, command.Data);
@@ -307,20 +317,14 @@ namespace Smuxi.Engine
             return handled;
         }
 
-        public void CommandHelp(CommandModel cd)
+        public void CommandHelp(CommandModel cmd)
         {
-            MessageModel fmsg = new MessageModel();
-            TextMessagePartModel fmsgti;
-
-            fmsgti = new TextMessagePartModel();
+            var builder = CreateMessageBuilder();
             // TRANSLATOR: this line is used as a label / category for a
             // list of commands below
-            fmsgti.Text = "[" + _("XMPP Commands") + "]";
-            fmsgti.Bold = true;
-            fmsg.MessageParts.Add(fmsgti);
-            
-            Session.AddMessageToChat(cd.Chat, fmsg);
-            
+            builder.AppendHeader(_("XMPP Commands"));
+            cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
+
             string[] help = {
             "help",
             "connect xmpp/jabber server port username password [resource]",
@@ -332,7 +336,10 @@ namespace Smuxi.Engine
             };
             
             foreach (string line in help) { 
-                cd.FrontendManager.AddTextToChat(cd.Chat, "-!- " + line);
+                builder = CreateMessageBuilder();
+                builder.AppendEventPrefix();
+                builder.AppendText(line);
+                cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
             }
         }
         
@@ -459,6 +466,38 @@ namespace Smuxi.Engine
             }
         }
 
+        public void CommandRoster(CommandModel cd)
+        {
+            bool full = false;
+            if (cd.Parameter == "full") {
+                full = true;
+            }
+
+            MessageBuilder builder = CreateMessageBuilder();
+            builder.AppendHeader("Roster");
+            cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+
+            foreach (JID j in _RosterManager) {
+                string status = "+";
+                if (!_PresenceManager.IsAvailable(j)) {
+                    if (!full) continue;
+                    status = "-";
+                }
+                string nick = _RosterManager[j].Nickname;
+                string mesg = "";
+                Presence item = _PresenceManager[j];
+                if (item != null) {
+                    if (item.Show != null && item.Show.Length != 0) {
+                        status = item.Show;
+                    }
+                    mesg = item.Status;
+                }
+                builder = CreateMessageBuilder();
+                builder.AppendText("{0}\t{1}\t({2}): {3}", status, nick, j, mesg);
+                cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+            }
+        }
+
         public void CommandSay(CommandModel cd)
         {
             _Say(cd.Chat, cd.Parameter);
@@ -491,28 +530,10 @@ namespace Smuxi.Engine
                 }
             }
 
-            MessageModel msg = new MessageModel();
-            TextMessagePartModel msgPart;
-            
-            msgPart = new TextMessagePartModel();
-            msgPart.Text = "<";
-            msg.MessageParts.Add(msgPart);
-            
-            msgPart = new TextMessagePartModel();
-            msgPart.Text = _JabberClient.User;
-            //msgPart.ForegroundColor = IrcTextColor.Blue;
-            msgPart.ForegroundColor = new TextColor(0x0000FF);
-            msg.MessageParts.Add(msgPart);
-            
-            msgPart = new TextMessagePartModel();
-            msgPart.Text = "> ";
-            msg.MessageParts.Add(msgPart);
-                
-            msgPart = new TextMessagePartModel();
-            msgPart.Text = text;
-            msg.MessageParts.Add(msgPart);
-            
-            this.Session.AddMessageToChat(chat, msg);
+            var builder = CreateMessageBuilder();
+            builder.AppendSenderPrefix(MyPerson);
+            builder.AppendMessage(text);
+            Session.AddMessageToChat(chat, builder.ToMessage());
         }
         
         void OnStreamInit(object sender, ElementStream stream)
@@ -594,20 +615,14 @@ namespace Smuxi.Engine
             ChatModel chat = null;
             PersonModel person = null;
             if (msg.Type != XmppMessageType.groupchat) {
-                string jid = msg.From.Bare;
-                var contact = _RosterManager[jid];
-                string nickname = null;
-                if (contact == null || String.IsNullOrEmpty(contact.Nickname)) {
-                    nickname = jid;
-                } else {
-                    nickname = contact.Nickname;
-                }
-                PersonChatModel personChat = (PersonChatModel) Session.GetChat(jid, ChatType.Person, this);
+                var sender_jid = msg.From.Bare;
+                var personChat = (PersonChatModel) Session.GetChat(
+                    sender_jid, ChatType.Person, this
+                );
                 if (personChat == null) {
-                    person = new PersonModel(jid, nickname, NetworkID,
-                                             Protocol, this);
+                    person = CreatePerson(msg.From);
                     personChat = Session.CreatePersonChat(
-                        person, jid, nickname, this
+                        person, sender_jid, person.IdentityName, this
                     );
                     Session.AddChat(personChat);
                     Session.SyncChat(personChat);
@@ -804,7 +819,10 @@ namespace Smuxi.Engine
 
             IsConnected = true;
 
-            Session.AddTextToChat(_NetworkChat, "Authenticated");
+            var builder = CreateMessageBuilder();
+            builder.AppendEventPrefix();
+            builder.AppendText(_("Authenticated"));
+            Session.AddMessageToChat(Chat, builder.ToMessage());
 
             // send initial presence
             SetPresenceStatus(PresenceStatus.Online, null);
@@ -826,6 +844,17 @@ namespace Smuxi.Engine
             }
             _JabberClient.Port = server.Port;
             _JabberClient.Password = server.Password;
+
+            MyPerson = CreatePerson(
+                String.Format("{0}@{1}",
+                    _JabberClient.User,
+                    _JabberClient.Server
+                ),
+                _JabberClient.User
+            );
+            MyPerson.IdentityNameColored.ForegroundColor = new TextColor(0, 0, 255);
+            MyPerson.IdentityNameColored.BackgroundColor = TextColor.None;
+            MyPerson.IdentityNameColored.Bold = true;
 
             // XMPP specific settings
             if (server is XmppServerModel) {
@@ -881,6 +910,26 @@ namespace Smuxi.Engine
                                          SslPolicyErrors sslPolicyErrors)
         {
             return true;
+        }
+
+        PersonModel CreatePerson(JID jid)
+        {
+            if (jid == null) {
+                throw new ArgumentNullException("jid");
+            }
+            var contact = _RosterManager[jid.Bare];
+            string nickname = null;
+            if (contact == null || String.IsNullOrEmpty(contact.Nickname)) {
+                nickname = jid.Bare;
+            } else {
+                nickname = contact.Nickname;
+            }
+            return CreatePerson(jid.Bare, nickname);
+        }
+
+        PersonModel CreatePerson(string jid, string nickname)
+        {
+            return new PersonModel(jid, nickname, NetworkID, Protocol, this);
         }
 
         private static string _(string msg)
