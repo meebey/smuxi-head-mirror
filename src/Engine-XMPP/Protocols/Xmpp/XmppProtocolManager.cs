@@ -63,7 +63,6 @@ namespace Smuxi.Engine
         private JabberClient    _JabberClient;
         private RosterManager   _RosterManager;
         private ConferenceManager _ConferenceManager;
-        private FrontendManager _FrontendManager;
         private ChatModel       _NetworkChat;
         private GroupChatModel  _ContactChat;
         private PresenceManager _PresenceManager;
@@ -141,7 +140,6 @@ namespace Smuxi.Engine
                 throw new ArgumentNullException("server");
             }
 
-            _FrontendManager = fm;
             Host = server.Hostname;
             Port = server.Port;
 
@@ -404,11 +402,9 @@ namespace Smuxi.Engine
                 try {
                     server.Port = Int32.Parse(cd.DataArray[3]);
                 } catch (FormatException) {
-                    fm.AddTextToChat(
-                        cd.Chat,
-                        "-!- " + String.Format(
-                                    _("Invalid port: {0}"),
-                                    cd.DataArray[3]));
+                    var builder = CreateMessageBuilder();
+                    builder.AppendText(_("Invalid port: {0}"), cd.DataArray[3]);
+                    fm.AddMessageToChat(cd.Chat, builder.ToMessage());
                     return;
                 }
             } else {
