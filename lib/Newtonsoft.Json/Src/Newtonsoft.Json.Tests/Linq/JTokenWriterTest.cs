@@ -26,14 +26,25 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
 using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Tests.Linq
 {
+  [TestFixture]
   public class JTokenWriterTest : TestFixtureBase
   {
     [Test]
@@ -63,7 +74,7 @@ namespace Newtonsoft.Json.Tests.Linq
         root = jsonWriter.Token;
       }
 
-      Assert.IsInstanceOfType(typeof(JArray), root);
+      CustomAssert.IsInstanceOfType(typeof(JArray), root);
       Assert.AreEqual(13, root.Children().Count());
       Assert.AreEqual("@", (string)root[0]);
       Assert.AreEqual("\r\n\t\f\b?{\\r\\n\"\'", (string)root[1]);
@@ -162,6 +173,22 @@ namespace Newtonsoft.Json.Tests.Linq
   fail,
   fail
 ]", writer.Token.ToString());
+    }
+
+    [Test]
+    public void DateTimeZoneHandling()
+    {
+      JTokenWriter writer = new JTokenWriter
+      {
+        DateTimeZoneHandling = Json.DateTimeZoneHandling.Utc
+      };
+
+      writer.WriteValue(new DateTime(2000, 1, 1, 1, 1, 1, DateTimeKind.Unspecified));
+
+      JValue value = (JValue) writer.Token;
+      DateTime dt = (DateTime)value.Value;
+
+      Assert.AreEqual(new DateTime(2000, 1, 1, 1, 1, 1, DateTimeKind.Utc), dt);
     }
   }
 }

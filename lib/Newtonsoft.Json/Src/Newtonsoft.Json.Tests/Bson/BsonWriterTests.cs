@@ -25,19 +25,48 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Bson;
 using System.IO;
 using Newtonsoft.Json.Utilities;
 using Newtonsoft.Json.Tests.TestObjects;
 using System.Globalization;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Tests.Bson
 {
+  [TestFixture]
   public class BsonWriterTests : TestFixtureBase
   {
+    [Test]
+    public void CloseOutput()
+    {
+      MemoryStream ms = new MemoryStream();
+      BsonWriter writer = new BsonWriter(ms);
+
+      Assert.IsTrue(ms.CanRead);
+      writer.Close();
+      Assert.IsFalse(ms.CanRead);
+
+      ms = new MemoryStream();
+      writer = new BsonWriter(ms) { CloseOutput = false };
+
+      Assert.IsTrue(ms.CanRead);
+      writer.Close();
+      Assert.IsTrue(ms.CanRead);
+    }
+
     [Test]
     public void WriteSingleObject()
     {
@@ -78,7 +107,7 @@ namespace Newtonsoft.Json.Tests.Bson
       writer.WriteEnd();
 
       string bson = MiscellaneousUtils.BytesToHex(ms.ToArray());
-      Assert.AreEqual("8C-00-00-00-12-30-00-FF-FF-FF-FF-FF-FF-FF-7F-12-31-00-FF-FF-FF-FF-FF-FF-FF-7F-10-32-00-FF-FF-FF-7F-10-33-00-FF-FF-FF-7F-10-34-00-FF-00-00-00-10-35-00-7F-00-00-00-02-36-00-02-00-00-00-61-00-01-37-00-00-00-00-00-00-00-F0-45-01-38-00-FF-FF-FF-FF-FF-FF-EF-7F-01-39-00-00-00-00-E0-FF-FF-EF-47-08-31-30-00-01-05-31-31-00-05-00-00-00-02-00-01-02-03-04-09-31-32-00-40-C5-E2-BA-E3-00-00-00-09-31-33-00-40-C5-E2-BA-E3-00-00-00-00", bson);
+      Assert.AreEqual("8C-00-00-00-12-30-00-FF-FF-FF-FF-FF-FF-FF-7F-12-31-00-FF-FF-FF-FF-FF-FF-FF-7F-10-32-00-FF-FF-FF-7F-10-33-00-FF-FF-FF-7F-10-34-00-FF-00-00-00-10-35-00-7F-00-00-00-02-36-00-02-00-00-00-61-00-01-37-00-00-00-00-00-00-00-F0-45-01-38-00-FF-FF-FF-FF-FF-FF-EF-7F-01-39-00-00-00-00-E0-FF-FF-EF-47-08-31-30-00-01-05-31-31-00-05-00-00-00-00-00-01-02-03-04-09-31-32-00-40-C5-E2-BA-E3-00-00-00-09-31-33-00-40-C5-E2-BA-E3-00-00-00-00", bson);
     }
 #endif
 
@@ -120,10 +149,19 @@ namespace Newtonsoft.Json.Tests.Bson
 
       ms.Seek(0, SeekOrigin.Begin);
 
-      string expected = "2B-00-00-00-02-30-00-02-00-00-00-61-00-02-31-00-02-00-00-00-62-00-05-32-00-0C-00-00-00-02-48-65-6C-6C-6F-20-77-6F-72-6C-64-21-00";
+      string expected = "2B-00-00-00-02-30-00-02-00-00-00-61-00-02-31-00-02-00-00-00-62-00-05-32-00-0C-00-00-00-00-48-65-6C-6C-6F-20-77-6F-72-6C-64-21-00";
       string bson = MiscellaneousUtils.BytesToHex(ms.ToArray());
 
       Assert.AreEqual(expected, bson);
+
+      BsonReader reader = new BsonReader(new MemoryStream(ms.ToArray()));
+      reader.ReadRootValueAsArray = true;
+      reader.Read();
+      reader.Read();
+      reader.Read();
+      reader.Read();
+      Assert.AreEqual(JsonToken.Bytes, reader.TokenType);
+      CollectionAssert.AreEquivalent(data, (byte[])reader.Value);
     }
 
     [Test]
@@ -157,7 +195,7 @@ namespace Newtonsoft.Json.Tests.Bson
 
       ms.Seek(0, SeekOrigin.Begin);
 
-      string expected = "87-00-00-00-05-5F-69-64-00-0C-00-00-00-02-4A-78-93-79-17-22-00-00-00-00-61-CF-04-61-00-5D-00-00-00-01-30-00-00-00-00-00-00-00-F0-3F-01-31-00-00-00-00-00-00-00-00-40-01-32-00-00-00-00-00-00-00-08-40-01-33-00-00-00-00-00-00-00-10-40-01-34-00-00-00-00-00-00-00-14-50-01-35-00-00-00-00-00-00-00-18-40-01-36-00-00-00-00-00-00-00-1C-40-01-37-00-00-00-00-00-00-00-20-40-00-02-62-00-05-00-00-00-74-65-73-74-00-00";
+      string expected = "87-00-00-00-05-5F-69-64-00-0C-00-00-00-00-4A-78-93-79-17-22-00-00-00-00-61-CF-04-61-00-5D-00-00-00-01-30-00-00-00-00-00-00-00-F0-3F-01-31-00-00-00-00-00-00-00-00-40-01-32-00-00-00-00-00-00-00-08-40-01-33-00-00-00-00-00-00-00-10-40-01-34-00-00-00-00-00-00-00-14-50-01-35-00-00-00-00-00-00-00-18-40-01-36-00-00-00-00-00-00-00-1C-40-01-37-00-00-00-00-00-00-00-20-40-00-02-62-00-05-00-00-00-74-65-73-74-00-00";
       string bson = MiscellaneousUtils.BytesToHex(ms.ToArray());
 
       Assert.AreEqual(expected, bson);
@@ -210,7 +248,7 @@ namespace Newtonsoft.Json.Tests.Bson
 
       serializer.Serialize(writer1, s1);
 
-      Assert.AreEqual(ms.ToArray(), ms1.ToArray());
+      CollectionAssert.AreEquivalent(ms.ToArray(), ms1.ToArray());
 
       string s = JsonConvert.SerializeObject(s1);
       byte[] textData = Encoding.UTF8.GetBytes(s);
@@ -338,47 +376,59 @@ namespace Newtonsoft.Json.Tests.Bson
     }
 
     [Test]
-    [ExpectedException(typeof(JsonWriterException), ExpectedMessage = "Cannot write JSON comment as BSON.")]
     public void WriteComment()
     {
-      MemoryStream ms = new MemoryStream();
-      BsonWriter writer = new BsonWriter(ms);
+      ExceptionAssert.Throws<JsonWriterException>("Cannot write JSON comment as BSON. Path ''.",
+      () =>
+      {
+        MemoryStream ms = new MemoryStream();
+        BsonWriter writer = new BsonWriter(ms);
 
-      writer.WriteStartArray();
-      writer.WriteComment("fail");
+        writer.WriteStartArray();
+        writer.WriteComment("fail");
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(JsonWriterException), ExpectedMessage = "Cannot write JSON constructor as BSON.")]
     public void WriteConstructor()
     {
-      MemoryStream ms = new MemoryStream();
-      BsonWriter writer = new BsonWriter(ms);
+      ExceptionAssert.Throws<JsonWriterException>("Cannot write JSON constructor as BSON. Path ''.",
+      () =>
+      {
+        MemoryStream ms = new MemoryStream();
+        BsonWriter writer = new BsonWriter(ms);
 
-      writer.WriteStartArray();
-      writer.WriteStartConstructor("fail");
+        writer.WriteStartArray();
+        writer.WriteStartConstructor("fail");
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(JsonWriterException), ExpectedMessage = "Cannot write raw JSON as BSON.")]
     public void WriteRaw()
     {
-      MemoryStream ms = new MemoryStream();
-      BsonWriter writer = new BsonWriter(ms);
+      ExceptionAssert.Throws<JsonWriterException>("Cannot write raw JSON as BSON. Path ''.",
+      () =>
+      {
+        MemoryStream ms = new MemoryStream();
+        BsonWriter writer = new BsonWriter(ms);
 
-      writer.WriteStartArray();
-      writer.WriteRaw("fail");
+        writer.WriteStartArray();
+        writer.WriteRaw("fail");
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(JsonWriterException), ExpectedMessage = "Cannot write raw JSON as BSON.")]
     public void WriteRawValue()
     {
-      MemoryStream ms = new MemoryStream();
-      BsonWriter writer = new BsonWriter(ms);
+      ExceptionAssert.Throws<JsonWriterException>("Cannot write raw JSON as BSON. Path ''.",
+      () =>
+      {
+        MemoryStream ms = new MemoryStream();
+        BsonWriter writer = new BsonWriter(ms);
 
-      writer.WriteStartArray();
-      writer.WriteRawValue("fail");
+        writer.WriteStartArray();
+        writer.WriteRawValue("fail");
+      });
     }
 
     [Test]
@@ -449,7 +499,7 @@ namespace Newtonsoft.Json.Tests.Bson
 
       Assert.IsTrue(reader.Read());
       Assert.AreEqual(JsonToken.Bytes, reader.TokenType);
-      Assert.AreEqual(oid, reader.Value);
+      CollectionAssert.AreEquivalent(oid, (byte[])reader.Value);
 
       Assert.IsTrue(reader.Read());
       Assert.AreEqual(JsonToken.EndObject, reader.TokenType);
@@ -470,7 +520,7 @@ namespace Newtonsoft.Json.Tests.Bson
 
       byte[] expected = MiscellaneousUtils.HexToBytes("29000000075F6964004ABBED9D1D8B0F02180000010274657374000900000031323334C2A335360000");
 
-      Assert.AreEqual(expected, ms.ToArray());
+      CollectionAssert.AreEquivalent(expected, ms.ToArray());
     }
 
     [Test]
@@ -488,7 +538,7 @@ namespace Newtonsoft.Json.Tests.Bson
 
       byte[] expected = MiscellaneousUtils.HexToBytes("1A-00-00-00-0B-72-65-67-65-78-00-61-62-63-00-69-00-0B-74-65-73-74-00-00-00-00");
 
-      Assert.AreEqual(expected, ms.ToArray());
+      CollectionAssert.AreEquivalent(expected, ms.ToArray());
     }
 
     [Test]
@@ -597,6 +647,38 @@ namespace Newtonsoft.Json.Tests.Bson
       Assert.AreEqual(JsonToken.EndArray, reader.TokenType);
 
       Assert.IsFalse(reader.Read());
+    }
+
+    [Test]
+    public void WriteValueOutsideOfObjectOrArray()
+    {
+      ExceptionAssert.Throws<JsonWriterException>("Error writing String value. BSON must start with an Object or Array. Path ''.",
+      () =>
+      {
+        MemoryStream stream = new MemoryStream();
+
+        using (BsonWriter writer = new BsonWriter(stream))
+        {
+          writer.WriteValue("test");
+          writer.Flush();
+        }
+      });
+    }
+
+    [Test]
+    public void DateTimeZoneHandling()
+    {
+      MemoryStream ms = new MemoryStream();
+      JsonWriter writer = new BsonWriter(ms)
+      {
+        DateTimeZoneHandling = Json.DateTimeZoneHandling.Utc
+      };
+
+      writer.WriteStartArray();
+      writer.WriteValue(new DateTime(2000, 1, 1, 1, 1, 1, DateTimeKind.Unspecified));
+      writer.WriteEndArray();
+
+      Assert.AreEqual("10-00-00-00-09-30-00-C8-88-07-6B-DC-00-00-00-00", (BitConverter.ToString(ms.ToArray())));
     }
   }
 }

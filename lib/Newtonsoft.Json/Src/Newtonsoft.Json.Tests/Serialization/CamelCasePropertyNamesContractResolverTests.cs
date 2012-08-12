@@ -25,10 +25,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json.Serialization;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Tests.TestObjects;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
@@ -36,6 +40,7 @@ using Newtonsoft.Json.Utilities;
 
 namespace Newtonsoft.Json.Tests.Serialization
 {
+  [TestFixture]
   public class CamelCasePropertyNamesContractResolverTests : TestFixtureBase
   {
     [Test]
@@ -53,8 +58,8 @@ namespace Newtonsoft.Json.Tests.Serialization
 
       Assert.AreEqual(@"{
   ""name"": ""Name!"",
-  ""birthDate"": ""\/Date(974764544000)\/"",
-  ""lastModified"": ""\/Date(974764544000)\/""
+  ""birthDate"": ""2000-11-20T23:55:44Z"",
+  ""lastModified"": ""2000-11-20T23:55:44Z""
 }", json);
 
       Person deserializedPerson = JsonConvert.DeserializeObject<Person>(json, new JsonSerializerSettings
@@ -69,8 +74,8 @@ namespace Newtonsoft.Json.Tests.Serialization
       json = JsonConvert.SerializeObject(person, Formatting.Indented);
       Assert.AreEqual(@"{
   ""Name"": ""Name!"",
-  ""BirthDate"": ""\/Date(974764544000)\/"",
-  ""LastModified"": ""\/Date(974764544000)\/""
+  ""BirthDate"": ""2000-11-20T23:55:44Z"",
+  ""LastModified"": ""2000-11-20T23:55:44Z""
 }", json);
 
     }
@@ -97,6 +102,7 @@ namespace Newtonsoft.Json.Tests.Serialization
       string json = o.ToString();
     }
 
+#if !NETFX_CORE
     [Test]
     public void MemberSearchFlags()
     {
@@ -128,6 +134,7 @@ namespace Newtonsoft.Json.Tests.Serialization
       // readonly
       Assert.AreEqual(0, ReflectionUtils.GetMemberValue(typeof(PrivateMembersClass).GetField("i", BindingFlags.Instance | BindingFlags.NonPublic), deserializedPrivateMembersClass));
     }
+#endif
 
     [Test]
     public void BlogPostExample()
@@ -160,13 +167,58 @@ namespace Newtonsoft.Json.Tests.Serialization
 
       Assert.AreEqual(@"{
   ""name"": ""Widget"",
-  ""expiryDate"": ""\/Date(1292868060000)\/"",
+  ""expiryDate"": ""2010-12-20T18:01:00Z"",
   ""price"": 9.99,
   ""sizes"": [
     ""Small"",
     ""Medium"",
     ""Large""
   ]
+}", json);
+    }
+
+#if !(NET35 || NET20 || WINDOWS_PHONE || PORTABLE)
+    [Test]
+    public void DynamicCamelCasePropertyNames()
+    {
+      dynamic o = new TestDynamicObject();
+      o.Text = "Text!";
+      o.Integer = int.MaxValue;
+
+      string json = JsonConvert.SerializeObject(o, Formatting.Indented,
+        new JsonSerializerSettings
+        {
+          ContractResolver = new CamelCasePropertyNamesContractResolver()
+        });
+
+      Assert.AreEqual(@"{
+  ""explicit"": false,
+  ""text"": ""Text!"",
+  ""integer"": 2147483647,
+  ""int"": 0,
+  ""childObject"": null
+}", json);
+    }
+#endif
+
+    [Test]
+    public void DictionaryCamelCasePropertyNames()
+    {
+      Dictionary<string, string> values = new Dictionary<string, string>
+        {
+          {"First", "Value1!"},
+          {"Second", "Value2!"}
+        };
+
+      string json = JsonConvert.SerializeObject(values, Formatting.Indented,
+        new JsonSerializerSettings
+        {
+          ContractResolver = new CamelCasePropertyNamesContractResolver()
+        });
+
+      Assert.AreEqual(@"{
+  ""first"": ""Value1!"",
+  ""second"": ""Value2!""
 }", json);
     }
   }

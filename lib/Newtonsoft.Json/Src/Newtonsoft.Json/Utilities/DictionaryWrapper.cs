@@ -1,13 +1,42 @@
-﻿using System;
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Collections;
 using System.Threading;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Utilities
 {
-  internal interface IWrappedDictionary : IDictionary
+  internal interface IWrappedDictionary
+    : IDictionary
   {
     object UnderlyingDictionary { get; }
   }
@@ -34,38 +63,34 @@ namespace Newtonsoft.Json.Utilities
 
     public void Add(TKey key, TValue value)
     {
-      if (_genericDictionary != null)
-        _genericDictionary.Add(key, value);
-      else
+      if (_dictionary != null)
         _dictionary.Add(key, value);
+      else
+        _genericDictionary.Add(key, value);
     }
 
     public bool ContainsKey(TKey key)
     {
-      if (_genericDictionary != null)
-        return _genericDictionary.ContainsKey(key);
-      else
+      if (_dictionary != null)
         return _dictionary.Contains(key);
+      else
+        return _genericDictionary.ContainsKey(key);
     }
 
     public ICollection<TKey> Keys
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary.Keys;
-        else
+        if (_dictionary != null)
           return _dictionary.Keys.Cast<TKey>().ToList();
+        else
+          return _genericDictionary.Keys;
       }
     }
 
     public bool Remove(TKey key)
     {
-      if (_genericDictionary != null)
-      {
-        return _genericDictionary.Remove(key);
-      }
-      else
+      if (_dictionary != null)
       {
         if (_dictionary.Contains(key))
         {
@@ -77,15 +102,13 @@ namespace Newtonsoft.Json.Utilities
           return false;
         }
       }
+
+      return _genericDictionary.Remove(key);
     }
 
     public bool TryGetValue(TKey key, out TValue value)
     {
-      if (_genericDictionary != null)
-      {
-        return _genericDictionary.TryGetValue(key, out value);
-      }
-      else
+      if (_dictionary != null)
       {
         if (!_dictionary.Contains(key))
         {
@@ -98,16 +121,18 @@ namespace Newtonsoft.Json.Utilities
           return true;
         }
       }
+
+      return _genericDictionary.TryGetValue(key, out value);
     }
 
     public ICollection<TValue> Values
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary.Values;
-        else
+        if (_dictionary != null)
           return _dictionary.Values.Cast<TValue>().ToList();
+        else
+          return _genericDictionary.Values;
       }
     }
 
@@ -115,56 +140,55 @@ namespace Newtonsoft.Json.Utilities
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary[key];
-        else
+        if (_dictionary != null)
           return (TValue)_dictionary[key];
+        return _genericDictionary[key];
       }
       set
       {
-        if (_genericDictionary != null)
-          _genericDictionary[key] = value;
-        else
+        if (_dictionary != null)
           _dictionary[key] = value;
+        else
+          _genericDictionary[key] = value;
       }
     }
 
     public void Add(KeyValuePair<TKey, TValue> item)
     {
-      if (_genericDictionary != null)
-        _genericDictionary.Add(item);
-      else
+      if (_dictionary != null)
         ((IList)_dictionary).Add(item);
+      else
+        _genericDictionary.Add(item);
     }
 
     public void Clear()
     {
-      if (_genericDictionary != null)
-        _genericDictionary.Clear();
-      else
+      if (_dictionary != null)
         _dictionary.Clear();
+      else
+        _genericDictionary.Clear();
     }
 
     public bool Contains(KeyValuePair<TKey, TValue> item)
     {
-      if (_genericDictionary != null)
-        return _genericDictionary.Contains(item);
-      else
+      if (_dictionary != null)
         return ((IList)_dictionary).Contains(item);
+      else
+        return _genericDictionary.Contains(item);
     }
 
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
-      if (_genericDictionary != null)
-      {
-        _genericDictionary.CopyTo(array, arrayIndex);
-      }
-      else
+      if (_dictionary != null)
       {
         foreach (DictionaryEntry item in _dictionary)
         {
           array[arrayIndex++] = new KeyValuePair<TKey, TValue>((TKey)item.Key, (TValue)item.Value);
         }
+      }
+      else
+      {
+        _genericDictionary.CopyTo(array, arrayIndex);
       }
     }
 
@@ -172,10 +196,10 @@ namespace Newtonsoft.Json.Utilities
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary.Count;
-        else
+        if (_dictionary != null)
           return _dictionary.Count;
+        else
+          return _genericDictionary.Count;
       }
     }
 
@@ -183,20 +207,16 @@ namespace Newtonsoft.Json.Utilities
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary.IsReadOnly;
-        else
+        if (_dictionary != null)
           return _dictionary.IsReadOnly;
+        else
+          return _genericDictionary.IsReadOnly;
       }
     }
 
     public bool Remove(KeyValuePair<TKey, TValue> item)
     {
-      if (_genericDictionary != null)
-      {
-        return _genericDictionary.Remove(item);
-      }
-      else
+      if (_dictionary != null)
       {
         if (_dictionary.Contains(item.Key))
         {
@@ -217,14 +237,18 @@ namespace Newtonsoft.Json.Utilities
           return true;
         }
       }
+      else
+      {
+        return _genericDictionary.Remove(item);
+      }
     }
 
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-      if (_genericDictionary != null)
-        return _genericDictionary.GetEnumerator();
-      else
+      if (_dictionary != null)
         return _dictionary.Cast<DictionaryEntry>().Select(de => new KeyValuePair<TKey, TValue>((TKey)de.Key, (TValue)de.Value)).GetEnumerator();
+      else
+        return _genericDictionary.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -234,18 +258,28 @@ namespace Newtonsoft.Json.Utilities
 
     void IDictionary.Add(object key, object value)
     {
-      if (_genericDictionary != null)
-        _genericDictionary.Add((TKey)key, (TValue)value);
-      else
+      if (_dictionary != null)
         _dictionary.Add(key, value);
+      else
+        _genericDictionary.Add((TKey)key, (TValue)value);
     }
 
-    bool IDictionary.Contains(object key)
+    object IDictionary.this[object key]
     {
-      if (_genericDictionary != null)
-        return _genericDictionary.ContainsKey((TKey)key);
-      else
-        return _dictionary.Contains(key);
+      get
+      {
+        if (_dictionary != null)
+          return _dictionary[key];
+        else
+          return _genericDictionary[(TKey)key];
+      }
+      set
+      {
+        if (_dictionary != null)
+          _dictionary[key] = value;
+        else
+          _genericDictionary[(TKey)key] = (TValue)value;
+      }
     }
 
     private struct DictionaryEnumerator<TEnumeratorKey, TEnumeratorValue> : IDictionaryEnumerator
@@ -291,10 +325,18 @@ namespace Newtonsoft.Json.Utilities
 
     IDictionaryEnumerator IDictionary.GetEnumerator()
     {
-      if (_genericDictionary != null)
-        return new DictionaryEnumerator<TKey, TValue>(_genericDictionary.GetEnumerator());
-      else
+      if (_dictionary != null)
         return _dictionary.GetEnumerator();
+      else
+        return new DictionaryEnumerator<TKey, TValue>(_genericDictionary.GetEnumerator());
+    }
+
+    bool IDictionary.Contains(object key)
+    {
+      if (_genericDictionary != null)
+        return _genericDictionary.ContainsKey((TKey)key);
+      else
+        return _dictionary.Contains(key);
     }
 
     bool IDictionary.IsFixedSize
@@ -321,10 +363,10 @@ namespace Newtonsoft.Json.Utilities
 
     public void Remove(object key)
     {
-      if (_genericDictionary != null)
-        _genericDictionary.Remove((TKey)key);
-      else
+      if (_dictionary != null)
         _dictionary.Remove(key);
+      else
+        _genericDictionary.Remove((TKey)key);
     }
 
     ICollection IDictionary.Values
@@ -338,40 +380,22 @@ namespace Newtonsoft.Json.Utilities
       }
     }
 
-    object IDictionary.this[object key]
-    {
-      get
-      {
-        if (_genericDictionary != null)
-          return _genericDictionary[(TKey)key];
-        else
-          return _dictionary[key];
-      }
-      set
-      {
-        if (_genericDictionary != null)
-          _genericDictionary[(TKey)key] = (TValue)value;
-        else
-          _dictionary[key] = value;
-      }
-    }
-
     void ICollection.CopyTo(Array array, int index)
     {
-      if (_genericDictionary != null)
-        _genericDictionary.CopyTo((KeyValuePair<TKey, TValue>[])array, index);
-      else
+      if (_dictionary != null)
         _dictionary.CopyTo(array, index);
+      else
+        _genericDictionary.CopyTo((KeyValuePair<TKey, TValue>[])array, index);
     }
 
     bool ICollection.IsSynchronized
     {
       get
       {
-        if (_genericDictionary != null)
-          return false;
-        else
+        if (_dictionary != null)
           return _dictionary.IsSynchronized;
+        else
+          return false;
       }
     }
 
@@ -390,10 +414,10 @@ namespace Newtonsoft.Json.Utilities
     {
       get
       {
-        if (_genericDictionary != null)
-          return _genericDictionary;
-        else
+        if (_dictionary != null)
           return _dictionary;
+        else
+          return _genericDictionary;
       }
     }
   }

@@ -1,7 +1,31 @@
-﻿using System;
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Utilities;
 using System.Reflection;
 
@@ -12,6 +36,9 @@ namespace Newtonsoft.Json.Converters
   /// </summary>
   public class KeyValuePairConverter : JsonConverter
   {
+    private const string KeyName = "Key";
+    private const string ValueName = "Value";
+
     /// <summary>
     /// Writes the JSON representation of the object.
     /// </summary>
@@ -21,13 +48,16 @@ namespace Newtonsoft.Json.Converters
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
       Type t = value.GetType();
-      PropertyInfo keyProperty = t.GetProperty("Key");
-      PropertyInfo valueProperty = t.GetProperty("Value");
+      PropertyInfo keyProperty = t.GetProperty(KeyName);
+      PropertyInfo valueProperty = t.GetProperty(ValueName);
+
+      DefaultContractResolver resolver = serializer.ContractResolver as DefaultContractResolver;
 
       writer.WriteStartObject();
-      writer.WritePropertyName("Key");
+
+      writer.WritePropertyName((resolver != null) ? resolver.GetResolvedPropertyName(KeyName) : KeyName);
       serializer.Serialize(writer, ReflectionUtils.GetMemberValue(keyProperty, value));
-      writer.WritePropertyName("Value");
+      writer.WritePropertyName((resolver != null) ? resolver.GetResolvedPropertyName(ValueName) : ValueName);
       serializer.Serialize(writer, ReflectionUtils.GetMemberValue(valueProperty, value));
       writer.WriteEndObject();
     }
@@ -42,19 +72,51 @@ namespace Newtonsoft.Json.Converters
     /// <returns>The object value.</returns>
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-      IList<Type> genericArguments = objectType.GetGenericArguments();
+      bool isNullable = ReflectionUtils.IsNullableType(objectType);
+
+      if (reader.TokenType == JsonToken.Null)
+      {
+        if (!isNullable)
+          throw JsonSerializationException.Create(reader, "Cannot convert null value to KeyValuePair.");
+
+        return null;
+      }
+
+      Type t = (isNullable)
+       ? Nullable.GetUnderlyingType(objectType)
+       : objectType;
+
+      IList<Type> genericArguments = t.GetGenericArguments();
       Type keyType = genericArguments[0];
       Type valueType = genericArguments[1];
 
-      reader.Read();
-      reader.Read();
-      object key = serializer.Deserialize(reader, keyType);
-      reader.Read();
-      reader.Read();
-      object value = serializer.Deserialize(reader, valueType);
+      object key = null;
+      object value = null;
+
       reader.Read();
 
-      return ReflectionUtils.CreateInstance(objectType, key, value);
+      while (reader.TokenType == JsonToken.PropertyName)
+      {
+        string propertyName = reader.Value.ToString();
+        if (string.Equals(propertyName, KeyName, StringComparison.OrdinalIgnoreCase))
+        {
+          reader.Read();
+          key = serializer.Deserialize(reader, keyType);
+        }
+        else if (string.Equals(propertyName, ValueName, StringComparison.OrdinalIgnoreCase))
+        {
+          reader.Read();
+          value = serializer.Deserialize(reader, valueType);
+        }
+        else
+        {
+          reader.Skip();
+        }
+
+        reader.Read();
+      }
+
+      return ReflectionUtils.CreateInstance(t, key, value);
     }
 
     /// <summary>
@@ -66,8 +128,12 @@ namespace Newtonsoft.Json.Converters
     /// </returns>
     public override bool CanConvert(Type objectType)
     {
-      if (objectType.IsValueType && objectType.IsGenericType)
-        return (objectType.GetGenericTypeDefinition() == typeof (KeyValuePair<,>));
+      Type t = (ReflectionUtils.IsNullableType(objectType))
+        ? Nullable.GetUnderlyingType(objectType)
+        : objectType;
+
+      if (t.IsValueType() && t.IsGenericType())
+        return (t.GetGenericTypeDefinition() == typeof(KeyValuePair<,>));
 
       return false;
     }

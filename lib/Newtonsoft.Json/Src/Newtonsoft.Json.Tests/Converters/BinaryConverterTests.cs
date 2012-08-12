@@ -1,19 +1,49 @@
-﻿using System;
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+using System;
 using System.Collections.Generic;
-#if !SILVERLIGHT && !PocketPC && !NET20
+#if !SILVERLIGHT && !PocketPC && !NET20 && !NETFX_CORE
 using System.Data.Linq;
 #endif
-#if !SILVERLIGHT
+#if !(SILVERLIGHT || NETFX_CORE)
 using System.Data.SqlTypes;
 #endif
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Converters;
+#if !NETFX_CORE
 using NUnit.Framework;
-using Newtonsoft.Json.Tests.TestObjects;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 
 namespace Newtonsoft.Json.Tests.Converters
 {
+  [TestFixture]
   public class BinaryConverterTests : TestFixtureBase
   {
     private static readonly byte[] TestData = Encoding.UTF8.GetBytes("This is some test data!!!");
@@ -24,7 +54,7 @@ namespace Newtonsoft.Json.Tests.Converters
       public byte[] NullByteArray { get; set; }
     }
 
-#if !SILVERLIGHT && !PocketPC && !NET20
+#if !(SILVERLIGHT || NET20 || NETFX_CORE || PORTABLE)
     [Test]
     public void DeserializeBinaryClass()
     {
@@ -36,6 +66,20 @@ namespace Newtonsoft.Json.Tests.Converters
       BinaryClass binaryClass = JsonConvert.DeserializeObject<BinaryClass>(json, new BinaryConverter());
 
       Assert.AreEqual(new Binary(TestData), binaryClass.Binary);
+      Assert.AreEqual(null, binaryClass.NullBinary);
+    }
+
+    [Test]
+    public void DeserializeBinaryClassFromJsonArray()
+    {
+      string json = @"{
+  ""Binary"": [0, 1, 2, 3],
+  ""NullBinary"": null
+}";
+
+      BinaryClass binaryClass = JsonConvert.DeserializeObject<BinaryClass>(json, new BinaryConverter());
+
+      Assert.AreEqual(new byte[] { 0, 1, 2, 3 }, binaryClass.Binary.ToArray());
       Assert.AreEqual(null, binaryClass.NullBinary);
     }
 
@@ -68,7 +112,7 @@ namespace Newtonsoft.Json.Tests.Converters
       byteArrayClass.ByteArray = TestData;
       byteArrayClass.NullByteArray = null;
 
-      string json = JsonConvert.SerializeObject(byteArrayClass, Formatting.Indented, new BinaryConverter());
+      string json = JsonConvert.SerializeObject(byteArrayClass, Formatting.Indented);
 
       Assert.AreEqual(@"{
   ""ByteArray"": ""VGhpcyBpcyBzb21lIHRlc3QgZGF0YSEhIQ=="",
@@ -76,7 +120,7 @@ namespace Newtonsoft.Json.Tests.Converters
 }", json);
     }
 
-#if !SILVERLIGHT
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
     public class SqlBinaryClass
     {
       public SqlBinary SqlBinary { get; set; }
@@ -126,11 +170,24 @@ namespace Newtonsoft.Json.Tests.Converters
   ""NullByteArray"": null
 }";
 
-      ByteArrayClass byteArrayClass = JsonConvert.DeserializeObject<ByteArrayClass>(json, new BinaryConverter());
+      ByteArrayClass byteArrayClass = JsonConvert.DeserializeObject<ByteArrayClass>(json);
 
-      Assert.AreEqual(TestData, byteArrayClass.ByteArray);
+      CollectionAssert.AreEquivalent(TestData, byteArrayClass.ByteArray);
       Assert.AreEqual(null, byteArrayClass.NullByteArray);
     }
 
+    [Test]
+    public void DeserializeByteArrayFromJsonArray()
+    {
+      string json = @"{
+  ""ByteArray"": [0, 1, 2, 3],
+  ""NullByteArray"": null
+}";
+
+      ByteArrayClass c = JsonConvert.DeserializeObject<ByteArrayClass>(json);
+      Assert.IsNotNull(c.ByteArray);
+      Assert.AreEqual(4, c.ByteArray.Length);
+      CollectionAssert.AreEquivalent(new byte[] { 0, 1, 2, 3 }, c.ByteArray);
+    }
   }
 }

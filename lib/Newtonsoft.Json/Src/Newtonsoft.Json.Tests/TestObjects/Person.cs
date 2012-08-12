@@ -29,7 +29,7 @@ using System.ComponentModel;
 namespace Newtonsoft.Json.Tests.TestObjects
 {
   [JsonObject(Id = "Person", Title = "Title!", Description = "JsonObjectAttribute description!", MemberSerialization = MemberSerialization.OptIn)]
-#if !PocketPC
+#if !PocketPC && !NETFX_CORE
   [Description("DescriptionAttribute description!")]
 #endif
   public class Person
@@ -50,5 +50,22 @@ namespace Newtonsoft.Json.Tests.TestObjects
 
     // not serialized
     public string Department { get; set; }
+  }
+
+  public interface IPerson
+  {
+    string FirstName { get; set; }
+    string LastName { get; set; }
+    DateTime BirthDate { get; set; }
+  }
+
+  public class Employee : IPerson
+  {
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public DateTime BirthDate { get; set; }
+
+    public string Department { get; set; }
+    public string JobTitle { get; set; }
   }
 }

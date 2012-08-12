@@ -25,19 +25,25 @@
 
 #if !PocketPC
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
-using System.Text;
-using Newtonsoft.Json.Tests;
+using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Tests.TestObjects;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Utilities;
 
 namespace Newtonsoft.Json.Tests.Serialization
 {
+  [TestFixture]
   public class SerializationEventAttributeTests : TestFixtureBase
   {
     [Test]
@@ -232,7 +238,33 @@ namespace Newtonsoft.Json.Tests.Serialization
       // This value was set after deserialization.
     }
 
-#if !SILVERLIGHT
+    public class SerializationEventBaseTestObject
+    {
+      public string TestMember { get; set; }
+
+      [OnSerializing]
+      internal void OnSerializingMethod(StreamingContext context)
+      {
+        TestMember = "Set!";
+      }
+    }
+
+    public class SerializationEventContextSubClassTestObject : SerializationEventBaseTestObject
+    {
+    }
+
+    [Test]
+    public void SerializationEventContextTestObjectSubClassTest()
+    {
+      SerializationEventContextSubClassTestObject obj = new SerializationEventContextSubClassTestObject();
+
+      string json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+      Assert.AreEqual(@"{
+  ""TestMember"": ""Set!""
+}", json);
+    }
+
+#if !SILVERLIGHT && !NETFX_CORE
     public class SerializationEventContextTestObject
     {
       public string TestMember { get; set; }
@@ -262,6 +294,47 @@ namespace Newtonsoft.Json.Tests.Serialization
 }", json);
     }
 #endif
+
+    public void WhenSerializationErrorDetectedBySerializer_ThenCallbackIsCalled()
+    {
+      // Verify contract is properly finding our callback
+      var resolver = new DefaultContractResolver().ResolveContract(typeof(FooEvent));
+
+      Debug.Assert(resolver.OnError != null);
+      Debug.Assert(resolver.OnError == typeof(FooEvent).GetMethod("OnError", BindingFlags.Instance | BindingFlags.NonPublic));
+
+      var serializer = JsonSerializer.Create(new JsonSerializerSettings
+      {
+        // If I don't specify Error here, the callback isn't called
+        // either, but no exception is thrown.
+        MissingMemberHandling = MissingMemberHandling.Error,
+      });
+
+      // This throws with missing member exception, rather than calling my callback.
+      var foo = serializer.Deserialize<FooEvent>(new JsonTextReader(new StringReader("{ Id: 25 }")));
+
+      // When fixed, this would pass.
+      Debug.Assert(foo.Identifier == 25);
+    }
+
+    public class FooEvent
+    {
+      public int Identifier { get; set; }
+
+      [OnError]
+      private void OnError(StreamingContext context, ErrorContext error)
+      {
+        this.Identifier = 25;
+
+        // Here we could for example manually copy the
+        // persisted "Id" value into the renamed "Identifier"
+        // property, etc.
+        error.Handled = true;
+
+        // We never get here :(
+        Console.WriteLine("Error has been fixed");
+      }
+    }
   }
 }
 #endif

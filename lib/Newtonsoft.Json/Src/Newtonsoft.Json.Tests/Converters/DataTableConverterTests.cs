@@ -1,12 +1,41 @@
-﻿#if !SILVERLIGHT
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
 using System;
+#if !NETFX_CORE
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json.Converters;
 using NUnit.Framework;
-using Newtonsoft.Json.Tests.TestObjects;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
+#if !NETFX_CORE
 using System.Data;
+#endif
 
 namespace Newtonsoft.Json.Tests.Converters
 {
@@ -97,7 +126,7 @@ namespace Newtonsoft.Json.Tests.Converters
     ""Int32Col"": 2147483647,
     ""BooleanCol"": true,
     ""TimeSpanCol"": ""10.22:10:15.1000000"",
-    ""DateTimeCol"": ""\/Date(978048000000)\/"",
+    ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
     ""DecimalCol"": 64.0021
   }
 ]", json);
@@ -107,7 +136,7 @@ namespace Newtonsoft.Json.Tests.Converters
     {
       public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
       {
-        DataTable d = (DataTable) value;
+        DataTable d = (DataTable)value;
         writer.WriteValue(d.TableName);
       }
 
@@ -121,7 +150,7 @@ namespace Newtonsoft.Json.Tests.Converters
 
       public override bool CanConvert(Type objectType)
       {
-        return (objectType == typeof (DataTable));
+        return (objectType == typeof(DataTable));
       }
     }
 
@@ -135,6 +164,111 @@ namespace Newtonsoft.Json.Tests.Converters
 
       DataTable t2 = JsonConvert.DeserializeObject<DataTable>(json, new TestDataTableConverter());
       Assert.AreEqual(t1.TableName, t2.TableName);
+    }
+
+    [Test]
+    public void SerializeDataTableWithNull()
+    {
+      var table = new DataTable();
+      table.Columns.Add("item");
+      table.Columns.Add("price", typeof(double));
+      table.Rows.Add("shirt", 49.99);
+      table.Rows.Add("pants", 54.99);
+      table.Rows.Add("shoes"); // no price
+
+      var json = JsonConvert.SerializeObject(table);
+      Assert.AreEqual(@"["
+      + @"{""item"":""shirt"",""price"":49.99},"
+      + @"{""item"":""pants"",""price"":54.99},"
+      + @"{""item"":""shoes"",""price"":null}]", json);
+    }
+
+    [Test]
+    public void SerializeDataTableWithNullAndIgnoreNullHandling()
+    {
+      var table = new DataTable();
+      table.Columns.Add("item");
+      table.Columns.Add("price", typeof(double));
+      table.Rows.Add("shirt", 49.99);
+      table.Rows.Add("pants", 54.99);
+      table.Rows.Add("shoes"); // no price
+
+      var json = JsonConvert.SerializeObject(table, Formatting.None, new JsonSerializerSettings
+        {
+          NullValueHandling = NullValueHandling.Ignore
+        });
+      Assert.AreEqual(@"["
+      + @"{""item"":""shirt"",""price"":49.99},"
+      + @"{""item"":""pants"",""price"":54.99},"
+      + @"{""item"":""shoes""}]", json);
+    }
+
+    [Test]
+    public void DerializeDataTableWithImplicitNull()
+    {
+      const string json = @"["
+      + @"{""item"":""shirt"",""price"":49.99},"
+      + @"{""item"":""pants"",""price"":54.99},"
+      + @"{""item"":""shoes""}]";
+      var table = JsonConvert.DeserializeObject<DataTable>(json);
+      Assert.AreEqual("shirt", table.Rows[0]["item"]);
+      Assert.AreEqual("pants", table.Rows[1]["item"]);
+      Assert.AreEqual("shoes", table.Rows[2]["item"]);
+      Assert.AreEqual(49.99, (double)table.Rows[0]["price"], 0.01);
+      Assert.AreEqual(54.99, (double)table.Rows[1]["price"], 0.01);
+      Assert.IsInstanceOfType(typeof(System.DBNull), table.Rows[2]["price"]);
+    }
+
+    [Test]
+    public void DerializeDataTableWithExplicitNull()
+    {
+      const string json = @"["
+      + @"{""item"":""shirt"",""price"":49.99},"
+      + @"{""item"":""pants"",""price"":54.99},"
+      + @"{""item"":""shoes"",""price"":null}]";
+      var table = JsonConvert.DeserializeObject<DataTable>(json);
+      Assert.AreEqual("shirt", table.Rows[0]["item"]);
+      Assert.AreEqual("pants", table.Rows[1]["item"]);
+      Assert.AreEqual("shoes", table.Rows[2]["item"]);
+      Assert.AreEqual(49.99, (double)table.Rows[0]["price"], 0.01);
+      Assert.AreEqual(54.99, (double)table.Rows[1]["price"], 0.01);
+      Assert.IsInstanceOfType(typeof(System.DBNull), table.Rows[2]["price"]);
+    }
+
+    [Test]
+    public void SerializeKeyValuePairWithDataTableKey()
+    {
+      DataTable table = new DataTable();
+      DataColumn idColumn = new DataColumn("id", typeof(int));
+      idColumn.AutoIncrement = true;
+
+      DataColumn itemColumn = new DataColumn("item");
+      table.Columns.Add(idColumn);
+      table.Columns.Add(itemColumn);
+
+      DataRow r = table.NewRow();
+      r["item"] = "item!";
+      r.EndEdit();
+      table.Rows.Add(r);
+
+      KeyValuePair<DataTable, int> pair = new KeyValuePair<DataTable, int>(table, 1);
+      string serializedpair = JsonConvert.SerializeObject(pair, Formatting.Indented);
+
+      Assert.AreEqual(@"{
+  ""Key"": [
+    {
+      ""id"": 0,
+      ""item"": ""item!""
+    }
+  ],
+  ""Value"": 1
+}", serializedpair);
+
+      var pair2 = (KeyValuePair<DataTable, int>)JsonConvert.DeserializeObject(serializedpair, typeof(KeyValuePair<DataTable, int>));
+
+      Assert.AreEqual(1, pair2.Value);
+      Assert.AreEqual(1, pair2.Key.Rows.Count);
+      Assert.AreEqual("item!", pair2.Key.Rows[0]["item"]);
     }
   }
 }

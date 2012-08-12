@@ -1,10 +1,39 @@
-﻿#if !SILVERLIGHT
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json.Converters;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
+using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Tests.TestObjects;
 using System.Data;
 
@@ -169,7 +198,7 @@ namespace Newtonsoft.Json.Tests.Converters
   ]
 }";
 
-      DataSet ds = JsonConvert.DeserializeObject<DataSet>(json, new IsoDateTimeConverter());
+      DataSet ds = JsonConvert.DeserializeObject<DataSet>(json);
       Assert.IsNotNull(ds);
 
       Assert.AreEqual(2, ds.Tables.Count);
@@ -186,7 +215,7 @@ namespace Newtonsoft.Json.Tests.Converters
       Assert.AreEqual("TimeSpanCol", dt.Columns[3].ColumnName);
       Assert.AreEqual(typeof(string), dt.Columns[3].DataType);
       Assert.AreEqual("DateTimeCol", dt.Columns[4].ColumnName);
-      Assert.AreEqual(typeof(string), dt.Columns[4].DataType);
+      Assert.AreEqual(typeof(DateTime), dt.Columns[4].DataType);
       Assert.AreEqual("DecimalCol", dt.Columns[5].ColumnName);
       Assert.AreEqual(typeof(double), dt.Columns[5].DataType);
 
@@ -239,6 +268,140 @@ namespace Newtonsoft.Json.Tests.Converters
       }
 
       return myTable;
+    }
+
+    public class DataSetAndTableTestClass
+    {
+      public string Before { get; set; }
+      public DataSet Set { get; set; }
+      public string Middle { get; set; }
+      public DataTable Table { get; set; }
+      public string After { get; set; }
+    }
+
+    [Test]
+    public void SerializeWithCamelCaseResolver()
+    {
+      DataSet ds = new DataSet();
+      ds.Tables.Add(CreateDataTable("FirstTable", 2));
+      ds.Tables.Add(CreateDataTable("SecondTable", 1));
+
+      string json = JsonConvert.SerializeObject(ds, Formatting.Indented, new JsonSerializerSettings
+        {
+          ContractResolver = new CamelCasePropertyNamesContractResolver()
+        });
+
+      Assert.AreEqual(@"{
+  ""firstTable"": [
+    {
+      ""stringCol"": ""Item Name"",
+      ""int32Col"": 1,
+      ""booleanCol"": true,
+      ""timeSpanCol"": ""10.22:10:15.1000000"",
+      ""dateTimeCol"": ""2000-12-29T00:00:00Z"",
+      ""decimalCol"": 64.0021
+    },
+    {
+      ""stringCol"": ""Item Name"",
+      ""int32Col"": 2,
+      ""booleanCol"": true,
+      ""timeSpanCol"": ""10.22:10:15.1000000"",
+      ""dateTimeCol"": ""2000-12-29T00:00:00Z"",
+      ""decimalCol"": 64.0021
+    }
+  ],
+  ""secondTable"": [
+    {
+      ""stringCol"": ""Item Name"",
+      ""int32Col"": 1,
+      ""booleanCol"": true,
+      ""timeSpanCol"": ""10.22:10:15.1000000"",
+      ""dateTimeCol"": ""2000-12-29T00:00:00Z"",
+      ""decimalCol"": 64.0021
+    }
+  ]
+}", json);
+    }
+
+    [Test]
+    public void SerializeDataSetProperty()
+    {
+      DataSet ds = new DataSet();
+      ds.Tables.Add(CreateDataTable("FirstTable", 2));
+      ds.Tables.Add(CreateDataTable("SecondTable", 1));
+
+      DataSetAndTableTestClass c = new DataSetAndTableTestClass
+        {
+          Before = "Before",
+          Set = ds,
+          Middle = "Middle",
+          Table = CreateDataTable("LoneTable", 2),
+          After = "After"
+        };
+
+      string json = JsonConvert.SerializeObject(c, Formatting.Indented, new IsoDateTimeConverter());
+
+      Assert.AreEqual(@"{
+  ""Before"": ""Before"",
+  ""Set"": {
+    ""FirstTable"": [
+      {
+        ""StringCol"": ""Item Name"",
+        ""Int32Col"": 1,
+        ""BooleanCol"": true,
+        ""TimeSpanCol"": ""10.22:10:15.1000000"",
+        ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
+        ""DecimalCol"": 64.0021
+      },
+      {
+        ""StringCol"": ""Item Name"",
+        ""Int32Col"": 2,
+        ""BooleanCol"": true,
+        ""TimeSpanCol"": ""10.22:10:15.1000000"",
+        ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
+        ""DecimalCol"": 64.0021
+      }
+    ],
+    ""SecondTable"": [
+      {
+        ""StringCol"": ""Item Name"",
+        ""Int32Col"": 1,
+        ""BooleanCol"": true,
+        ""TimeSpanCol"": ""10.22:10:15.1000000"",
+        ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
+        ""DecimalCol"": 64.0021
+      }
+    ]
+  },
+  ""Middle"": ""Middle"",
+  ""Table"": [
+    {
+      ""StringCol"": ""Item Name"",
+      ""Int32Col"": 1,
+      ""BooleanCol"": true,
+      ""TimeSpanCol"": ""10.22:10:15.1000000"",
+      ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
+      ""DecimalCol"": 64.0021
+    },
+    {
+      ""StringCol"": ""Item Name"",
+      ""Int32Col"": 2,
+      ""BooleanCol"": true,
+      ""TimeSpanCol"": ""10.22:10:15.1000000"",
+      ""DateTimeCol"": ""2000-12-29T00:00:00Z"",
+      ""DecimalCol"": 64.0021
+    }
+  ],
+  ""After"": ""After""
+}", json);
+
+      DataSetAndTableTestClass c2 = JsonConvert.DeserializeObject<DataSetAndTableTestClass>(json, new IsoDateTimeConverter());
+
+      Assert.AreEqual(c.Before, c2.Before);
+      Assert.AreEqual(c.Set.Tables.Count, c2.Set.Tables.Count);
+      Assert.AreEqual(c.Middle, c2.Middle);
+      Assert.AreEqual(c.Table.Rows.Count, c2.Table.Rows.Count);
+      Assert.AreEqual(c.After, c2.After);
     }
   }
 }

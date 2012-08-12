@@ -1,4 +1,8 @@
-﻿<Project ToolsVersion="3.5" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(MSBuildToolsVersion)' == '3.5'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,8 +13,8 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Newtonsoft.Json</RootNamespace>
-    <AssemblyName>Newtonsoft.Json.Silverlight</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <AssemblyName>Newtonsoft.Json</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <SilverlightApplication>false</SilverlightApplication>
     <ValidateXaml>true</ValidateXaml>
     <ThrowErrorsInValidation>false</ThrowErrorsInValidation>
@@ -19,6 +23,25 @@
     <OldToolsVersion>3.5</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,7 +53,9 @@
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>Bin\Debug\Silverlight\Newtonsoft.Json.Silverlight.xml</DocumentationFile>
+    <DocumentationFile>Bin\Debug\Silverlight\Newtonsoft.Json.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>Newtonsoft.Json.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -41,7 +66,8 @@
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>Bin\Release\Silverlight\Newtonsoft.Json.Silverlight.xml</DocumentationFile>
+    <DocumentationFile>Bin\Release\Silverlight\Newtonsoft.Json.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Runtime.Serialization" />
@@ -69,24 +95,33 @@
     <Compile Include="Converters\DataTableConverter.cs" />
     <Compile Include="Converters\DateTimeConverterBase.cs" />
     <Compile Include="Converters\EntityKeyMemberConverter.cs" />
+    <Compile Include="Converters\ExpandoObjectConverter.cs" />
     <Compile Include="Converters\IsoDateTimeConverter.cs" />
     <Compile Include="Converters\JavaScriptDateTimeConverter.cs" />
-    <Compile Include="Converters\JsonDateTimeSerializationMode.cs" />
     <Compile Include="Converters\KeyValuePairConverter.cs" />
     <Compile Include="Converters\RegexConverter.cs" />
     <Compile Include="Converters\StringEnumConverter.cs" />
+    <Compile Include="Converters\VersionConverter.cs" />
     <Compile Include="Converters\XmlNodeConverter.cs" />
+    <Compile Include="DateFormatHandling.cs" />
+    <Compile Include="DateParseHandling.cs" />
+    <Compile Include="DateTimeZoneHandling.cs" />
     <Compile Include="FormatterAssemblyStyle.cs" />
     <Compile Include="DefaultValueHandling.cs" />
+    <Compile Include="Formatting.cs" />
     <Compile Include="IJsonLineInfo.cs" />
     <Compile Include="JsonArrayAttribute.cs" />
+    <Compile Include="JsonConstructorAttribute.cs" />
     <Compile Include="JsonContainerAttribute.cs" />
     <Compile Include="JsonConvert.cs" />
     <Compile Include="JsonConverter.cs" />
     <Compile Include="JsonConverterAttribute.cs" />
     <Compile Include="JsonConverterCollection.cs" />
+    <Compile Include="JsonDictionaryAttribute.cs" />
+    <Compile Include="JsonException.cs" />
     <Compile Include="JsonIgnoreAttribute.cs" />
     <Compile Include="JsonObjectAttribute.cs" />
+    <Compile Include="JsonPosition.cs" />
     <Compile Include="JsonPropertyAttribute.cs" />
     <Compile Include="JsonReader.cs" />
     <Compile Include="JsonReaderException.cs" />
@@ -99,9 +134,6 @@
     <Compile Include="JsonValidatingReader.cs" />
     <Compile Include="JsonWriter.cs" />
     <Compile Include="JsonWriterException.cs" />
-    <Compile Include="Linq\ComponentModel\JPropertyDescriptor.cs" />
-    <Compile Include="Linq\ComponentModel\JTypeDescriptionProvider.cs" />
-    <Compile Include="Linq\ComponentModel\JTypeDescriptor.cs" />
     <Compile Include="Linq\Extensions.cs" />
     <Compile Include="Linq\IJEnumerable.cs" />
     <Compile Include="Linq\JArray.cs" />
@@ -111,6 +143,8 @@
     <Compile Include="Linq\JObject.cs" />
     <Compile Include="Linq\JPath.cs" />
     <Compile Include="Linq\JProperty.cs" />
+    <Compile Include="Linq\JPropertyDescriptor.cs" />
+    <Compile Include="Linq\JPropertyKeyedCollection.cs" />
     <Compile Include="Linq\JRaw.cs" />
     <Compile Include="Linq\JToken.cs" />
     <Compile Include="Linq\JTokenEqualityComparer.cs" />
@@ -139,8 +173,10 @@
     <Compile Include="Serialization\IReferenceResolver.cs" />
     <Compile Include="Serialization\IValueProvider.cs" />
     <Compile Include="Serialization\JsonArrayContract.cs" />
+    <Compile Include="Serialization\JsonContainerContract.cs" />
     <Compile Include="Serialization\JsonContract.cs" />
     <Compile Include="Serialization\JsonDictionaryContract.cs" />
+    <Compile Include="Serialization\JsonDynamicContract.cs" />
     <Compile Include="Serialization\JsonFormatterConverter.cs" />
     <Compile Include="Serialization\JsonISerializableContract.cs" />
     <Compile Include="Serialization\JsonLinqContract.cs" />
@@ -166,7 +202,10 @@
     <Compile Include="Utilities\ConvertUtils.cs" />
     <Compile Include="Utilities\DateTimeUtils.cs" />
     <Compile Include="Utilities\DictionaryWrapper.cs" />
+    <Compile Include="Utilities\DynamicProxy.cs" />
+    <Compile Include="Utilities\DynamicProxyMetaObject.cs" />
     <Compile Include="Utilities\DynamicReflectionDelegateFactory.cs" />
+    <Compile Include="Utilities\DynamicUtils.cs" />
     <Compile Include="Utilities\DynamicWrapper.cs" />
     <Compile Include="Utilities\EnumUtils.cs" />
     <Compile Include="Utilities\EnumValue.cs" />
@@ -181,8 +220,10 @@
     <Compile Include="Utilities\ReflectionDelegateFactory.cs" />
     <Compile Include="Utilities\ReflectionUtils.cs" />
     <Compile Include="Utilities\StringBuffer.cs" />
+    <Compile Include="Utilities\StringReference.cs" />
     <Compile Include="Utilities\StringUtils.cs" />
     <Compile Include="Utilities\ThreadSafeStore.cs" />
+    <Compile Include="Utilities\TypeExtensions.cs" />
     <Compile Include="Utilities\ValidationUtils.cs" />
     <Compile Include="Schema\Extensions.cs" />
     <Compile Include="Schema\JsonSchemaException.cs" />
@@ -201,8 +242,26 @@
     <Compile Include="Schema\JsonSchemaResolver.cs" />
     <Compile Include="Schema\JsonSchemaType.cs" />
     <Compile Include="Serialization\JsonTypeReflector.cs" />
+    <Compile Include="WriteState.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\v3.0\Microsoft.Silverlight.CSharp.targets" Condition="" />
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

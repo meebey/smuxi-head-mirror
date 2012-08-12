@@ -24,13 +24,14 @@
 #endregion
 
 using System;
+using Newtonsoft.Json.Utilities;
 
 namespace Newtonsoft.Json.Converters
 {
   /// <summary>
   /// Create a custom object
   /// </summary>
-  /// <typeparam name="T"></typeparam>
+  /// <typeparam name="T">The object type to convert.</typeparam>
   public abstract class CustomCreationConverter<T> : JsonConverter
   {
     /// <summary>
@@ -69,7 +70,7 @@ namespace Newtonsoft.Json.Converters
     /// Creates an object which will then be populated by the serializer.
     /// </summary>
     /// <param name="objectType">Type of the object.</param>
-    /// <returns></returns>
+    /// <returns>The created object.</returns>
     public abstract T Create(Type objectType);
 
     /// <summary>

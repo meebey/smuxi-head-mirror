@@ -23,17 +23,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if !PocketPC && !SILVERLIGHT
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
 using NUnit.Framework;
 using System.Web.UI;
 using Newtonsoft.Json.Linq;
 
 namespace Newtonsoft.Json.Tests.Linq.ComponentModel
 {
+  [TestFixture]
   public class BindingTests : TestFixtureBase
   {
     [Test]

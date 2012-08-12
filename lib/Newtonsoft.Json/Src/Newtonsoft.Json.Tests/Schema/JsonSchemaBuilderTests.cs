@@ -24,16 +24,20 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Schema;
 using System.IO;
 using Newtonsoft.Json.Linq;
 
 namespace Newtonsoft.Json.Tests.Schema
 {
+  [TestFixture]
   public class JsonSchemaBuilderTests : TestFixtureBase
   {
     [Test]
@@ -116,18 +120,33 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 
     [Test]
-    public void Optional()
+    public void Required()
     {
       string json = @"{
-  ""description"":""Optional"",
-  ""optional"":true
+  ""description"":""Required"",
+  ""required"":true
 }";
 
       JsonSchemaBuilder builder = new JsonSchemaBuilder(new JsonSchemaResolver());
       JsonSchema schema = builder.Parse(new JsonTextReader(new StringReader(json)));
 
-      Assert.AreEqual("Optional", schema.Description);
-      Assert.AreEqual(true, schema.Optional);
+      Assert.AreEqual("Required", schema.Description);
+      Assert.AreEqual(true, schema.Required);
+    }
+
+    [Test]
+    public void ExclusiveMinimum_ExclusiveMaximum()
+    {
+      string json = @"{
+  ""exclusiveMinimum"":true,
+  ""exclusiveMaximum"":true
+}";
+
+      JsonSchemaBuilder builder = new JsonSchemaBuilder(new JsonSchemaResolver());
+      JsonSchema schema = builder.Parse(new JsonTextReader(new StringReader(json)));
+
+      Assert.AreEqual(true, schema.ExclusiveMinimum);
+      Assert.AreEqual(true, schema.ExclusiveMaximum);
     }
 
     [Test]
@@ -279,7 +298,7 @@ namespace Newtonsoft.Json.Tests.Schema
   ""maxItems"":2,
   ""minLength"":5,
   ""maxLength"":50,
-  ""maxDecimal"":3,
+  ""divisibleBy"":3,
 }";
 
       JsonSchemaBuilder builder = new JsonSchemaBuilder(new JsonSchemaResolver());
@@ -292,7 +311,7 @@ namespace Newtonsoft.Json.Tests.Schema
       Assert.AreEqual(2, schema.MaximumItems);
       Assert.AreEqual(5, schema.MinimumLength);
       Assert.AreEqual(50, schema.MaximumLength);
-      Assert.AreEqual(3, schema.MaximumDecimals);
+      Assert.AreEqual(3, schema.DivisibleBy);
     }
 
     [Test]
@@ -420,18 +439,38 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 
     [Test]
-    [ExpectedException(typeof(Exception), ExpectedMessage = @"Could not resolve schema reference for Id 'MyUnresolvedReference'.")]
     public void UnresolvedReference()
     {
-      string json = @"{
+      ExceptionAssert.Throws<Exception>(@"Could not resolve schema reference for Id 'MyUnresolvedReference'.",
+      () =>
+      {
+        string json = @"{
   ""id"":""CircularReferenceArray"",
   ""description"":""CircularReference"",
   ""type"":[""array""],
   ""items"":{""$ref"":""MyUnresolvedReference""}
 }";
 
+        JsonSchemaBuilder builder = new JsonSchemaBuilder(new JsonSchemaResolver());
+        JsonSchema schema = builder.Parse(new JsonTextReader(new StringReader(json)));
+      });
+    }
+
+    [Test]
+    public void PatternProperties()
+    {
+      string json = @"{
+  ""patternProperties"": {
+    ""[abc]"": { ""id"":""Blah"" }
+  }
+}";
+
       JsonSchemaBuilder builder = new JsonSchemaBuilder(new JsonSchemaResolver());
       JsonSchema schema = builder.Parse(new JsonTextReader(new StringReader(json)));
+
+      Assert.IsNotNull(schema.PatternProperties);
+      Assert.AreEqual(1, schema.PatternProperties.Count);
+      Assert.AreEqual("Blah", schema.PatternProperties["[abc]"].Id);
     }
   }
 }

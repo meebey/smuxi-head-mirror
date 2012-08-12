@@ -25,15 +25,45 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Runtime.Serialization;
 using System.Text;
+using System.Xml;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json;
 using System.IO;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Utilities;
 
 namespace Newtonsoft.Json.Tests
 {
+  [TestFixture]
   public class JsonTextWriterTest : TestFixtureBase
   {
+    [Test]
+    public void CloseOutput()
+    {
+      MemoryStream ms = new MemoryStream();
+      JsonTextWriter writer = new JsonTextWriter(new StreamWriter(ms));
+
+      Assert.IsTrue(ms.CanRead);
+      writer.Close();
+      Assert.IsFalse(ms.CanRead);
+
+      ms = new MemoryStream();
+      writer = new JsonTextWriter(new StreamWriter(ms)) { CloseOutput = false };
+
+      Assert.IsTrue(ms.CanRead);
+      writer.Close();
+      Assert.IsTrue(ms.CanRead);
+    }
+    
     [Test]
     public void ValueFormatting()
     {
@@ -114,9 +144,9 @@ namespace Newtonsoft.Json.Tests
       string expected;
 
 #if !PocketPC && !NET20
-      expected = @"[null,""c"",null,true,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1.1,null,1.1,null,1.1,null,""\/Date(0)\/"",null,""\/Date(0+0000)\/""]";
+      expected = @"[null,""c"",null,true,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1.1,null,1.1,null,1.1,null,""1970-01-01T00:00:00Z"",null,""1970-01-01T00:00:00+00:00""]";
 #else
-      expected = @"[null,""c"",null,true,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1.1,null,1.1,null,1.1,null,""\/Date(0)\/""]";
+      expected = @"[null,""c"",null,true,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1,null,1.1,null,1.1,null,1.1,null,""1970-01-01T00:00:00Z""]";
 #endif
 
       Assert.AreEqual(expected, json);
@@ -142,16 +172,20 @@ namespace Newtonsoft.Json.Tests
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = @"Unsupported type: System.Version. Use the JsonSerializer class to get the object's JSON representation.")]
     public void WriteValueObjectWithUnsupportedValue()
     {
-      StringWriter sw = new StringWriter();
-      using (JsonTextWriter jsonWriter = new JsonTextWriter(sw))
-      {
-        jsonWriter.WriteStartArray();
-        jsonWriter.WriteValue(new Version(1, 1, 1, 1));
-        jsonWriter.WriteEndArray();
-      }
+      ExceptionAssert.Throws<JsonWriterException>(
+        @"Unsupported type: System.Version. Use the JsonSerializer class to get the object's JSON representation. Path ''.",
+        () =>
+        {
+          StringWriter sw = new StringWriter();
+          using (JsonTextWriter jsonWriter = new JsonTextWriter(sw))
+          {
+            jsonWriter.WriteStartArray();
+            jsonWriter.WriteValue(new Version(1, 1, 1, 1));
+            jsonWriter.WriteEndArray();
+          }
+        });
     }
 
     [Test]
@@ -181,6 +215,85 @@ namespace Newtonsoft.Json.Tests
     }
 
     [Test]
+    public void WriteEnd()
+    {
+      StringBuilder sb = new StringBuilder();
+      StringWriter sw = new StringWriter(sb);
+
+      using (JsonWriter jsonWriter = new JsonTextWriter(sw))
+      {
+        jsonWriter.Formatting = Formatting.Indented;
+
+        jsonWriter.WriteStartObject();
+        jsonWriter.WritePropertyName("CPU");
+        jsonWriter.WriteValue("Intel");
+        jsonWriter.WritePropertyName("PSU");
+        jsonWriter.WriteValue("500W");
+        jsonWriter.WritePropertyName("Drives");
+        jsonWriter.WriteStartArray();
+        jsonWriter.WriteValue("DVD read/writer");
+        jsonWriter.WriteComment("(broken)");
+        jsonWriter.WriteValue("500 gigabyte hard drive");
+        jsonWriter.WriteValue("200 gigabype hard drive");
+        jsonWriter.WriteEndObject();
+        Assert.AreEqual(WriteState.Start, jsonWriter.WriteState);
+      }
+
+      string expected = @"{
+  ""CPU"": ""Intel"",
+  ""PSU"": ""500W"",
+  ""Drives"": [
+    ""DVD read/writer""
+    /*(broken)*/,
+    ""500 gigabyte hard drive"",
+    ""200 gigabype hard drive""
+  ]
+}";
+      string result = sb.ToString();
+
+      Assert.AreEqual(expected, result);
+    }
+
+    [Test]
+    public void CloseWithRemainingContent()
+    {
+      StringBuilder sb = new StringBuilder();
+      StringWriter sw = new StringWriter(sb);
+
+      using (JsonWriter jsonWriter = new JsonTextWriter(sw))
+      {
+        jsonWriter.Formatting = Formatting.Indented;
+
+        jsonWriter.WriteStartObject();
+        jsonWriter.WritePropertyName("CPU");
+        jsonWriter.WriteValue("Intel");
+        jsonWriter.WritePropertyName("PSU");
+        jsonWriter.WriteValue("500W");
+        jsonWriter.WritePropertyName("Drives");
+        jsonWriter.WriteStartArray();
+        jsonWriter.WriteValue("DVD read/writer");
+        jsonWriter.WriteComment("(broken)");
+        jsonWriter.WriteValue("500 gigabyte hard drive");
+        jsonWriter.WriteValue("200 gigabype hard drive");
+        jsonWriter.Close();
+      }
+
+      string expected = @"{
+  ""CPU"": ""Intel"",
+  ""PSU"": ""500W"",
+  ""Drives"": [
+    ""DVD read/writer""
+    /*(broken)*/,
+    ""500 gigabyte hard drive"",
+    ""200 gigabype hard drive""
+  ]
+}";
+      string result = sb.ToString();
+
+      Assert.AreEqual(expected, result);
+    }
+
+    [Test]
     public void Indenting()
     {
       StringBuilder sb = new StringBuilder();
@@ -203,6 +316,7 @@ namespace Newtonsoft.Json.Tests
         jsonWriter.WriteValue("200 gigabype hard drive");
         jsonWriter.WriteEnd();
         jsonWriter.WriteEndObject();
+        Assert.AreEqual(WriteState.Start, jsonWriter.WriteState);
       }
 
       // {
@@ -228,9 +342,6 @@ namespace Newtonsoft.Json.Tests
 }";
       string result = sb.ToString();
 
-      Console.WriteLine("Indenting");
-      Console.WriteLine(result);
-
       Assert.AreEqual(expected, result);
     }
 
@@ -246,27 +357,34 @@ namespace Newtonsoft.Json.Tests
 
         jsonWriter.WriteStartObject();
         Assert.AreEqual(WriteState.Object, jsonWriter.WriteState);
+        Assert.AreEqual("", jsonWriter.Path);
 
         jsonWriter.WritePropertyName("CPU");
         Assert.AreEqual(WriteState.Property, jsonWriter.WriteState);
+        Assert.AreEqual("CPU", jsonWriter.Path);
 
         jsonWriter.WriteValue("Intel");
         Assert.AreEqual(WriteState.Object, jsonWriter.WriteState);
+        Assert.AreEqual("CPU", jsonWriter.Path);
 
         jsonWriter.WritePropertyName("Drives");
         Assert.AreEqual(WriteState.Property, jsonWriter.WriteState);
+        Assert.AreEqual("Drives", jsonWriter.Path);
 
         jsonWriter.WriteStartArray();
         Assert.AreEqual(WriteState.Array, jsonWriter.WriteState);
 
         jsonWriter.WriteValue("DVD read/writer");
         Assert.AreEqual(WriteState.Array, jsonWriter.WriteState);
+        Assert.AreEqual("Drives[0]", jsonWriter.Path);
 
         jsonWriter.WriteEnd();
         Assert.AreEqual(WriteState.Object, jsonWriter.WriteState);
+        Assert.AreEqual("Drives", jsonWriter.Path);
 
         jsonWriter.WriteEndObject();
         Assert.AreEqual(WriteState.Start, jsonWriter.WriteState);
+        Assert.AreEqual("", jsonWriter.Path);
       }
     }
 
@@ -476,35 +594,43 @@ namespace Newtonsoft.Json.Tests
     }
 
     [Test]
-    [ExpectedException(typeof(JsonWriterException), ExpectedMessage = "No token to close.")]
     public void BadWriteEndArray()
     {
-      StringBuilder sb = new StringBuilder();
-      StringWriter sw = new StringWriter(sb);
+      ExceptionAssert.Throws<JsonWriterException>(
+        "No token to close. Path ''.",
+        () =>
+        {
+          StringBuilder sb = new StringBuilder();
+          StringWriter sw = new StringWriter(sb);
 
-      using (JsonWriter jsonWriter = new JsonTextWriter(sw))
-      {
-        jsonWriter.WriteStartArray();
+          using (JsonWriter jsonWriter = new JsonTextWriter(sw))
+          {
+            jsonWriter.WriteStartArray();
 
-        jsonWriter.WriteValue(0.0);
+            jsonWriter.WriteValue(0.0);
 
-        jsonWriter.WriteEndArray();
-        jsonWriter.WriteEndArray();
-      }
+            jsonWriter.WriteEndArray();
+            jsonWriter.WriteEndArray();
+          }
+        });
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = @"Invalid JavaScript string quote character. Valid quote characters are ' and "".")]
     public void InvalidQuoteChar()
     {
-      StringBuilder sb = new StringBuilder();
-      StringWriter sw = new StringWriter(sb);
+      ExceptionAssert.Throws<ArgumentException>(
+        @"Invalid JavaScript string quote character. Valid quote characters are ' and "".",
+        () =>
+        {
+          StringBuilder sb = new StringBuilder();
+          StringWriter sw = new StringWriter(sb);
 
-      using (JsonTextWriter jsonWriter = new JsonTextWriter(sw))
-      {
-        jsonWriter.Formatting = Formatting.Indented;
-        jsonWriter.QuoteChar = '*';
-      }
+          using (JsonTextWriter jsonWriter = new JsonTextWriter(sw))
+          {
+            jsonWriter.Formatting = Formatting.Indented;
+            jsonWriter.QuoteChar = '*';
+          }
+        });
     }
 
     [Test]
@@ -599,6 +725,132 @@ _____'propertyName': NaN
       string result = sb.ToString();
 
       Assert.AreEqual(expected, result);
+    }
+
+    [Test]
+    public void Path()
+    {
+      StringBuilder sb = new StringBuilder();
+      StringWriter sw = new StringWriter(sb);
+
+      string text = "Hello world.";
+      byte[] data = Encoding.UTF8.GetBytes(text);
+
+      using (JsonTextWriter writer = new JsonTextWriter(sw))
+      {
+        writer.Formatting = Formatting.Indented;
+
+        writer.WriteStartArray();
+        Assert.AreEqual("", writer.Path);
+        writer.WriteStartObject();
+        Assert.AreEqual("[0]", writer.Path);
+        writer.WritePropertyName("Property1");
+        Assert.AreEqual("[0].Property1", writer.Path);
+        writer.WriteStartArray();
+        Assert.AreEqual("[0].Property1", writer.Path);
+        writer.WriteValue(1);
+        Assert.AreEqual("[0].Property1[0]", writer.Path);
+        writer.WriteStartArray();
+        Assert.AreEqual("[0].Property1[1]", writer.Path);
+        writer.WriteStartArray();
+        Assert.AreEqual("[0].Property1[1][0]", writer.Path);
+        writer.WriteStartArray();
+        Assert.AreEqual("[0].Property1[1][0][0]", writer.Path);
+        writer.WriteEndObject();
+        Assert.AreEqual("[0]", writer.Path);
+        writer.WriteStartObject();
+        Assert.AreEqual("[1]", writer.Path);
+        writer.WritePropertyName("Property2");
+        Assert.AreEqual("[1].Property2", writer.Path);
+        writer.WriteStartConstructor("Constructor1");
+        Assert.AreEqual("[1].Property2", writer.Path);
+        writer.WriteNull();
+        Assert.AreEqual("[1].Property2[0]", writer.Path);
+        writer.WriteStartArray();
+        Assert.AreEqual("[1].Property2[1]", writer.Path);
+        writer.WriteValue(1);
+        Assert.AreEqual("[1].Property2[1][0]", writer.Path);
+        writer.WriteEnd();
+        Assert.AreEqual("[1].Property2[1]", writer.Path);
+        writer.WriteEndObject();
+        Assert.AreEqual("[1]", writer.Path);
+        writer.WriteEndArray();
+        Assert.AreEqual("", writer.Path);
+      }
+
+      Assert.AreEqual(@"[
+  {
+    ""Property1"": [
+      1,
+      [
+        [
+          []
+        ]
+      ]
+    ]
+  },
+  {
+    ""Property2"": new Constructor1(
+      null,
+      [
+        1
+      ]
+    )
+  }
+]", sb.ToString());
+    }
+
+    [Test]
+    public void BuildStateArray()
+    {
+      JsonWriter.State[][] stateArray = JsonWriter.BuildStateArray();
+
+      var valueStates = JsonWriter.StateArrayTempate[7];
+
+      foreach (JsonToken valueToken in EnumUtils.GetValues(typeof(JsonToken)))
+      {
+        switch (valueToken)
+        {
+          case JsonToken.Integer:
+          case JsonToken.Float:
+          case JsonToken.String:
+          case JsonToken.Boolean:
+          case JsonToken.Null:
+          case JsonToken.Undefined:
+          case JsonToken.Date:
+          case JsonToken.Bytes:
+            Assert.AreEqual(valueStates, stateArray[(int)valueToken], "Error for " + valueToken + " states.");
+            break;
+        }
+      }
+    }
+
+    [Test]
+    public void DateTimeZoneHandling()
+    {
+      StringWriter sw = new StringWriter();
+      JsonTextWriter writer = new JsonTextWriter(sw)
+        {
+          DateTimeZoneHandling = Json.DateTimeZoneHandling.Utc
+        };
+
+      writer.WriteValue(new DateTime(2000, 1, 1, 1, 1, 1, DateTimeKind.Unspecified));
+
+      Assert.AreEqual(@"""2000-01-01T01:01:01Z""", sw.ToString());
+    }
+
+    [Test]
+    public void WriteEndOnProperty()
+    {
+      StringWriter sw = new StringWriter();
+      JsonTextWriter writer = new JsonTextWriter(sw);
+      writer.QuoteChar = '\'';
+
+      writer.WriteStartObject();
+      writer.WritePropertyName("Blah");
+      writer.WriteEnd();
+
+      Assert.AreEqual("{'Blah':null}", sw.ToString());
     }
   }
 }

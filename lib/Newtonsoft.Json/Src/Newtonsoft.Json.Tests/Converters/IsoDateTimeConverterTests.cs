@@ -24,18 +24,21 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json.Tests.TestObjects;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Utilities;
 using System.Globalization;
-using System.Xml;
 
 namespace Newtonsoft.Json.Tests.Converters
 {
+  [TestFixture]
   public class IsoDateTimeConverterTests : TestFixtureBase
   {
     [Test]
@@ -73,7 +76,7 @@ namespace Newtonsoft.Json.Tests.Converters
 
       d = new DateTime(2000, 12, 15, 22, 11, 3, 55, DateTimeKind.Local);
       result = JsonConvert.SerializeObject(d, converter);
-      Assert.AreEqual(@"""2000-12-15T22:11:03.055" + d.GetLocalOffset() + @"""", result);
+      Assert.AreEqual(@"""2000-12-15T22:11:03.055" + d.GetUtcOffsetText() + @"""", result);
     }
 
     [Test]
@@ -112,7 +115,7 @@ namespace Newtonsoft.Json.Tests.Converters
       Assert.AreEqual(2006, d.Year);
     }
 
-#if !SILVERLIGHT
+#if !SILVERLIGHT && !NETFX_CORE
     [Test]
     public void SerializeFormattedDateTimeNewZealandCulture()
     {
@@ -202,46 +205,6 @@ namespace Newtonsoft.Json.Tests.Converters
     }
 
     [Test]
-    public void DeserializeUTC()
-    {
-      DateTimeTestClass c =
-        JsonConvert.DeserializeObject<DateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":""2008-12-12T12:12:12Z"",""DateTimeOffsetField"":""2008-12-12T12:12:12Z"",""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
-
-      Assert.AreEqual(new DateTime(2008, 12, 12, 12, 12, 12, 0, DateTimeKind.Utc).ToLocalTime(), c.DateTimeField);
-      Assert.AreEqual(new DateTimeOffset(2008, 12, 12, 12, 12, 12, 0, TimeSpan.Zero), c.DateTimeOffsetField);
-      Assert.AreEqual("Pre", c.PreField);
-      Assert.AreEqual("Post", c.PostField);
-
-      DateTimeTestClass c2 =
-       JsonConvert.DeserializeObject<DateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":""2008-01-01T01:01:01Z"",""DateTimeOffsetField"":""2008-01-01T01:01:01Z"",""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
-
-      Assert.AreEqual(new DateTime(2008, 1, 1, 1, 1, 1, 0, DateTimeKind.Utc).ToLocalTime(), c2.DateTimeField);
-      Assert.AreEqual(new DateTimeOffset(2008, 1, 1, 1, 1, 1, 0, TimeSpan.Zero), c2.DateTimeOffsetField);
-      Assert.AreEqual("Pre", c2.PreField);
-      Assert.AreEqual("Post", c2.PostField);
-    }
-
-    [Test]
-    public void NullableDeserializeUTC()
-    {
-      NullableDateTimeTestClass c =
-        JsonConvert.DeserializeObject<NullableDateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":""2008-12-12T12:12:12Z"",""DateTimeOffsetField"":""2008-12-12T12:12:12Z"",""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
-
-      Assert.AreEqual(new DateTime(2008, 12, 12, 12, 12, 12, 0, DateTimeKind.Utc).ToLocalTime(), c.DateTimeField);
-      Assert.AreEqual(new DateTimeOffset(2008, 12, 12, 12, 12, 12, 0, TimeSpan.Zero), c.DateTimeOffsetField);
-      Assert.AreEqual("Pre", c.PreField);
-      Assert.AreEqual("Post", c.PostField);
-
-      NullableDateTimeTestClass c2 =
-       JsonConvert.DeserializeObject<NullableDateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":null,""DateTimeOffsetField"":null,""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
-
-      Assert.AreEqual(null, c2.DateTimeField);
-      Assert.AreEqual(null, c2.DateTimeOffsetField);
-      Assert.AreEqual("Pre", c2.PreField);
-      Assert.AreEqual("Post", c2.PostField);
-    }
-
-    [Test]
     public void NullableDeserializeEmptyString()
     {
       string json = @"{""DateTimeField"":""""}";
@@ -252,24 +215,36 @@ namespace Newtonsoft.Json.Tests.Converters
     }
 
     [Test]
-    [ExpectedException(typeof(Exception), ExpectedMessage = "Cannot convert null value to System.DateTime.")]
     public void DeserializeNullToNonNullable()
     {
-      DateTimeTestClass c2 =
-       JsonConvert.DeserializeObject<DateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":null,""DateTimeOffsetField"":null,""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
+      ExceptionAssert.Throws<JsonSerializationException>("Cannot convert null value to System.DateTime. Path 'DateTimeField', line 1, position 38.",
+      () =>
+      {
+        DateTimeTestClass c2 =
+         JsonConvert.DeserializeObject<DateTimeTestClass>(@"{""PreField"":""Pre"",""DateTimeField"":null,""DateTimeOffsetField"":null,""PostField"":""Post""}", new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
+      });
     }
 
     [Test]
     public void SerializeShouldChangeNonUTCDates()
     {
+      DateTime localDateTime = new DateTime(2008, 1, 1, 1, 1, 1, 0, DateTimeKind.Local);
+
       DateTimeTestClass c = new DateTimeTestClass();
-      c.DateTimeField = new DateTime(2008, 1, 1, 1, 1, 1, 0, DateTimeKind.Local);
+      c.DateTimeField = localDateTime;
       c.PreField = "Pre";
       c.PostField = "Post";
       string json = JsonConvert.SerializeObject(c, new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal }); //note that this fails without the Utc converter...
       c.DateTimeField = new DateTime(2008, 1, 1, 1, 1, 1, 0, DateTimeKind.Utc);
       string json2 = JsonConvert.SerializeObject(c, new IsoDateTimeConverter() { DateTimeStyles = DateTimeStyles.AssumeUniversal });
-      Assert.AreNotEqual(json, json2);
+
+      TimeSpan offset = localDateTime.GetUtcOffset();
+
+      // if the current timezone is utc then local already equals utc
+      if (offset == TimeSpan.Zero)
+        Assert.AreEqual(json, json2);
+      else
+        Assert.AreNotEqual(json, json2);
     }
 #endif
 

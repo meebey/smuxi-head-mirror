@@ -25,19 +25,24 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using Newtonsoft.Json.Tests.TestObjects;
-#if !SILVERLIGHT
+#if !(SILVERLIGHT || NETFX_CORE)
 using System.Data;
 #endif
 
 namespace Newtonsoft.Json.Tests.Schema
 {
+  [TestFixture]
   public class ExtensionsTests : TestFixtureBase
   {
     [Test]
@@ -47,8 +52,15 @@ namespace Newtonsoft.Json.Tests.Schema
       JToken stringToken = JToken.FromObject("pie");
       JToken integerToken = JToken.FromObject(1);
 
-      Assert.AreEqual(false, stringToken.IsValid(schema));
+      IList<string> errorMessages;
       Assert.AreEqual(true, integerToken.IsValid(schema));
+      Assert.AreEqual(true, integerToken.IsValid(schema, out errorMessages));
+      Assert.AreEqual(0, errorMessages.Count);
+
+      Assert.AreEqual(false, stringToken.IsValid(schema));
+      Assert.AreEqual(false, stringToken.IsValid(schema, out errorMessages));
+      Assert.AreEqual(1, errorMessages.Count);
+      Assert.AreEqual("Invalid type. Expected Integer but got String.", errorMessages[0]);
     }
 
     [Test]
@@ -70,12 +82,15 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 
     [Test]
-    [ExpectedException(typeof(JsonSchemaException), ExpectedMessage = @"String 'pie' does not match regex pattern 'lol'.")]
     public void ValidateWithOutEventHandlerFailure()
     {
-      JsonSchema schema = JsonSchema.Parse("{'pattern':'lol'}");
-      JToken stringToken = JToken.FromObject("pie");
-      stringToken.Validate(schema);
+      ExceptionAssert.Throws<JsonSchemaException>(@"String 'pie' does not match regex pattern 'lol'.",
+      () =>
+      {
+        JsonSchema schema = JsonSchema.Parse("{'pattern':'lol'}");
+        JToken stringToken = JToken.FromObject("pie");
+        stringToken.Validate(schema);
+      });
     }
 
     [Test]
@@ -89,13 +104,13 @@ namespace Newtonsoft.Json.Tests.Schema
     [Test]
     public void ValidateFailureWithOutLineInfoBecauseOfEndToken()
     {
-      JsonSchema schema = JsonSchema.Parse("{'properties':{'lol':{}}}");
+      JsonSchema schema = JsonSchema.Parse("{'properties':{'lol':{'required':true}}}");
       JObject o = JObject.Parse("{}");
 
       List<string> errors = new List<string>();
       o.Validate(schema, (sender, args) => errors.Add(args.Message));
 
-      Assert.AreEqual("Non-optional properties are missing from object: lol.", errors[0]);
+      Assert.AreEqual("Required properties are missing from object: lol.", errors[0]);
       Assert.AreEqual(1, errors.Count);
     }
 
@@ -106,9 +121,10 @@ namespace Newtonsoft.Json.Tests.Schema
       JObject o = JObject.Parse("{'lol':1}");
 
       List<string> errors = new List<string>();
-      o.Validate(schema, (sender, args) => errors.Add(args.Message));
+      o.Validate(schema, (sender, args) => errors.Add(args.Path + " - " + args.Message));
 
-      Assert.AreEqual("Invalid type. Expected String but got Integer. Line 1, position 9.", errors[0]);
+      Assert.AreEqual("lol - Invalid type. Expected String but got Integer. Line 1, position 8.", errors[0]);
+      Assert.AreEqual("1", o.SelectToken("lol").ToString());
       Assert.AreEqual(1, errors.Count);
     }
 
@@ -186,7 +202,7 @@ namespace Newtonsoft.Json.Tests.Schema
 #if !NET20 && !PocketPC
       GenerateSchemaAndSerializeFromType(new NullableDateTimeTestClass());
 #endif
-#if !SILVERLIGHT
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
       GenerateSchemaAndSerializeFromType(new DataSet());
 #endif
       GenerateSchemaAndSerializeFromType(new object());
@@ -194,8 +210,104 @@ namespace Newtonsoft.Json.Tests.Schema
       GenerateSchemaAndSerializeFromType("Hi");
       GenerateSchemaAndSerializeFromType(new DateTime(2000, 12, 29, 23, 59, 0, DateTimeKind.Utc));
       GenerateSchemaAndSerializeFromType(TimeSpan.FromTicks(1000000));
+#if !(NETFX_CORE || PORTABLE)
       GenerateSchemaAndSerializeFromType(DBNull.Value);
+#endif
       GenerateSchemaAndSerializeFromType(new JsonPropertyWithHandlingValues());
+    }
+
+    [Test]
+    public void UndefinedPropertyOnNoPropertySchema()
+    {
+      JsonSchema schema = JsonSchema.Parse(@"{
+  ""description"": ""test"",
+  ""type"": ""object"",
+  ""additionalProperties"": false,
+  ""properties"": {
+  }
+}");
+
+      JObject o = JObject.Parse("{'g':1}");
+
+      List<string> errors = new List<string>();
+      o.Validate(schema, (sender, args) => errors.Add(args.Message));
+
+      Assert.AreEqual(1, errors.Count);
+      Assert.AreEqual("Property 'g' has not been defined and the schema does not allow additional properties. Line 1, position 5.", errors[0]);
+    }
+
+    [Test]
+    public void ExclusiveMaximum_Int()
+    {
+      ExceptionAssert.Throws<JsonSchemaException>("Integer 10 equals maximum value of 10 and exclusive maximum is true.",
+      () =>
+      {
+        JsonSchema schema = new JsonSchema();
+        schema.Maximum = 10;
+        schema.ExclusiveMaximum = true;
+
+        JValue v = new JValue(10);
+        v.Validate(schema);
+      });
+    }
+
+    [Test]
+    public void ExclusiveMaximum_Float()
+    {
+      ExceptionAssert.Throws<JsonSchemaException>("Float 10.1 equals maximum value of 10.1 and exclusive maximum is true.",
+      () =>
+      {
+        JsonSchema schema = new JsonSchema();
+        schema.Maximum = 10.1;
+        schema.ExclusiveMaximum = true;
+
+        JValue v = new JValue(10.1);
+        v.Validate(schema);
+      });
+    }
+
+    [Test]
+    public void ExclusiveMinimum_Int()
+    {
+      ExceptionAssert.Throws<JsonSchemaException>("Integer 10 equals minimum value of 10 and exclusive minimum is true.",
+      () =>
+      {
+        JsonSchema schema = new JsonSchema();
+        schema.Minimum = 10;
+        schema.ExclusiveMinimum = true;
+
+        JValue v = new JValue(10);
+        v.Validate(schema);
+      });
+    }
+
+    [Test]
+    public void ExclusiveMinimum_Float()
+    {
+      ExceptionAssert.Throws<JsonSchemaException>("Float 10.1 equals minimum value of 10.1 and exclusive minimum is true.",
+      () =>
+      {
+        JsonSchema schema = new JsonSchema();
+        schema.Minimum = 10.1;
+        schema.ExclusiveMinimum = true;
+
+        JValue v = new JValue(10.1);
+        v.Validate(schema);
+      });
+    }
+
+    [Test]
+    public void DivisibleBy_Int()
+    {
+      ExceptionAssert.Throws<JsonSchemaException>("Integer 10 is not evenly divisible by 3.",
+      () =>
+      {
+        JsonSchema schema = new JsonSchema();
+        schema.DivisibleBy = 3;
+
+        JValue v = new JValue(10);
+        v.Validate(schema);
+      });
     }
   }
 }

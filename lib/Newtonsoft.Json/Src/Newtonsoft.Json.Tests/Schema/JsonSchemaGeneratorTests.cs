@@ -31,16 +31,27 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Tests.TestObjects;
 using Newtonsoft.Json.Utilities;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Schema;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using Extensions=Newtonsoft.Json.Schema.Extensions;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Tests.Schema
 {
+  [TestFixture]
   public class JsonSchemaGeneratorTests : TestFixtureBase
   {
     [Test]
@@ -79,7 +90,7 @@ namespace Newtonsoft.Json.Tests.Schema
       Assert.IsTrue(o.IsValid(schema));
     }
 
-#if !PocketPC
+#if !(NETFX_CORE || PORTABLE)
     [Test]
     public void Generate_DefaultValueAttributeTestClass()
     {
@@ -94,10 +105,12 @@ namespace Newtonsoft.Json.Tests.Schema
   ""additionalProperties"": false,
   ""properties"": {
     ""TestField1"": {
+      ""required"": true,
       ""type"": ""integer"",
       ""default"": 21
     },
     ""TestProperty1"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
@@ -124,15 +137,18 @@ namespace Newtonsoft.Json.Tests.Schema
   ""type"": ""object"",
   ""properties"": {
     ""Name"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""BirthDate"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""LastModified"": {
+      ""required"": true,
       ""type"": ""string""
     }
   }
@@ -151,36 +167,43 @@ namespace Newtonsoft.Json.Tests.Schema
   ""type"": ""object"",
   ""properties"": {
     ""Id"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""FName"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""LName"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""RoleId"": {
+      ""required"": true,
       ""type"": ""integer""
     },
     ""NullableRoleId"": {
+      ""required"": true,
       ""type"": [
         ""integer"",
         ""null""
       ]
     },
     ""NullRoleId"": {
+      ""required"": true,
       ""type"": [
         ""integer"",
         ""null""
       ]
     },
     ""Active"": {
+      ""required"": true,
       ""type"": [
         ""boolean"",
         ""null""
@@ -234,32 +257,14 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 
     [Test]
-    public void Generate_NumberFormatInfo()
-    {
-      JsonSchemaGenerator generator = new JsonSchemaGenerator();
-      JsonSchema schema = generator.Generate(typeof(NumberFormatInfo));
-
-      string json = schema.ToString();
-
-      Console.WriteLine(json);
-
-      //      Assert.AreEqual(@"{
-      //  ""type"": ""object"",
-      //  ""additionalProperties"": {
-      //    ""type"": ""array"",
-      //    ""items"": {
-      //      ""type"": ""string""
-      //    }
-      //  }
-      //}", json);
-    }
-
-    [Test]
-    [ExpectedException(typeof(Exception), ExpectedMessage = @"Unresolved circular reference for type 'Newtonsoft.Json.Tests.TestObjects.CircularReferenceClass'. Explicitly define an Id for the type using a JsonObject/JsonArray attribute or automatically generate a type Id using the UndefinedSchemaIdHandling property.")]
     public void CircularReferenceError()
     {
-      JsonSchemaGenerator generator = new JsonSchemaGenerator();
-      generator.Generate(typeof(CircularReferenceClass));
+      ExceptionAssert.Throws<Exception>(@"Unresolved circular reference for type 'Newtonsoft.Json.Tests.TestObjects.CircularReferenceClass'. Explicitly define an Id for the type using a JsonObject/JsonArray attribute or automatically generate a type Id using the UndefinedSchemaIdHandling property.",
+      () =>
+      {
+        JsonSchemaGenerator generator = new JsonSchemaGenerator();
+        generator.Generate(typeof(CircularReferenceClass));
+      });
     }
 
     [Test]
@@ -305,7 +310,7 @@ namespace Newtonsoft.Json.Tests.Schema
       Assert.IsTrue(v.IsValid(schema));
     }
 
-#if !SILVERLIGHT && !PocketPC
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
     [Test]
     public void GenerateSchemaForISerializable()
     {
@@ -320,6 +325,7 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 #endif
 
+#if !(NETFX_CORE || PORTABLE)
     [Test]
     public void GenerateSchemaForDBNull()
     {
@@ -346,11 +352,11 @@ namespace Newtonsoft.Json.Tests.Schema
         return base.CreateContract(objectType);
       }
 
-      protected override IList<JsonProperty> CreateProperties(JsonObjectContract contract)
+      protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
       {
-        IList<JsonProperty> properties = base.CreateProperties(contract);
+        IList<JsonProperty> properties = base.CreateProperties(type, memberSerialization);
 
-        JsonPropertyCollection c = new JsonPropertyCollection(contract);
+        JsonPropertyCollection c = new JsonPropertyCollection(type);
         CollectionUtils.AddRange(c, (IEnumerable)properties.Where(m => m.PropertyName != "Root"));
 
         return c;
@@ -362,7 +368,12 @@ namespace Newtonsoft.Json.Tests.Schema
     {
       JsonSchemaGenerator generator = new JsonSchemaGenerator();
       generator.UndefinedSchemaIdHandling = UndefinedSchemaIdHandling.UseTypeName;
-      generator.ContractResolver = new CustomDirectoryInfoMapper();
+      generator.ContractResolver = new CustomDirectoryInfoMapper
+        {
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
+          IgnoreSerializableAttribute = true
+#endif
+        };
 
       JsonSchema schema = generator.Generate(typeof(DirectoryInfo), true);
 
@@ -370,6 +381,7 @@ namespace Newtonsoft.Json.Tests.Schema
       
       Assert.AreEqual(@"{
   ""id"": ""System.IO.DirectoryInfo"",
+  ""required"": true,
   ""type"": [
     ""object"",
     ""null""
@@ -377,6 +389,7 @@ namespace Newtonsoft.Json.Tests.Schema
   ""additionalProperties"": false,
   ""properties"": {
     ""Name"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
@@ -386,39 +399,49 @@ namespace Newtonsoft.Json.Tests.Schema
       ""$ref"": ""System.IO.DirectoryInfo""
     },
     ""Exists"": {
+      ""required"": true,
       ""type"": ""boolean""
     },
     ""FullName"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""Extension"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""CreationTime"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""CreationTimeUtc"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""LastAccessTime"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""LastAccessTimeUtc"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""LastWriteTime"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""LastWriteTimeUtc"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""Attributes"": {
+      ""required"": true,
       ""type"": ""integer""
     }
   }
@@ -429,7 +452,12 @@ namespace Newtonsoft.Json.Tests.Schema
       JTokenWriter jsonWriter = new JTokenWriter();
       JsonSerializer serializer = new JsonSerializer();
       serializer.Converters.Add(new IsoDateTimeConverter());
-      serializer.ContractResolver = new CustomDirectoryInfoMapper();
+      serializer.ContractResolver = new CustomDirectoryInfoMapper
+        {
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
+          IgnoreSerializableInterface = true
+#endif
+        };
       serializer.Serialize(jsonWriter, temp);
 
       List<string> errors = new List<string>();
@@ -437,13 +465,70 @@ namespace Newtonsoft.Json.Tests.Schema
 
       Assert.AreEqual(0, errors.Count);
     }
+#endif
 
     [Test]
     public void GenerateSchemaCamelCase()
     {
       JsonSchemaGenerator generator = new JsonSchemaGenerator();
       generator.UndefinedSchemaIdHandling = UndefinedSchemaIdHandling.UseTypeName;
-      generator.ContractResolver = new CamelCasePropertyNamesContractResolver();
+      generator.ContractResolver = new CamelCasePropertyNamesContractResolver()
+        {
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
+          IgnoreSerializableAttribute = true
+#endif
+        };
+
+      JsonSchema schema = generator.Generate(typeof(Version), true);
+
+      string json = schema.ToString();
+
+      Assert.AreEqual(@"{
+  ""id"": ""System.Version"",
+  ""type"": [
+    ""object"",
+    ""null""
+  ],
+  ""additionalProperties"": false,
+  ""properties"": {
+    ""major"": {
+      ""required"": true,
+      ""type"": ""integer""
+    },
+    ""minor"": {
+      ""required"": true,
+      ""type"": ""integer""
+    },
+    ""build"": {
+      ""required"": true,
+      ""type"": ""integer""
+    },
+    ""revision"": {
+      ""required"": true,
+      ""type"": ""integer""
+    },
+    ""majorRevision"": {
+      ""required"": true,
+      ""type"": ""integer""
+    },
+    ""minorRevision"": {
+      ""required"": true,
+      ""type"": ""integer""
+    }
+  }
+}", json);
+    }
+
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
+    [Test]
+    public void GenerateSchemaSerializable()
+    {
+      JsonSchemaGenerator generator = new JsonSchemaGenerator();
+      generator.ContractResolver = new DefaultContractResolver
+        {
+          IgnoreSerializableAttribute = false
+        };
+      generator.UndefinedSchemaIdHandling = UndefinedSchemaIdHandling.UseTypeName;
 
       JsonSchema schema = generator.Generate(typeof (Version), true);
 
@@ -457,27 +542,52 @@ namespace Newtonsoft.Json.Tests.Schema
   ],
   ""additionalProperties"": false,
   ""properties"": {
-    ""major"": {
+    ""_Major"": {
+      ""required"": true,
       ""type"": ""integer""
     },
-    ""minor"": {
+    ""_Minor"": {
+      ""required"": true,
       ""type"": ""integer""
     },
-    ""build"": {
+    ""_Build"": {
+      ""required"": true,
       ""type"": ""integer""
     },
-    ""revision"": {
-      ""type"": ""integer""
-    },
-    ""majorRevision"": {
-      ""type"": ""integer""
-    },
-    ""minorRevision"": {
+    ""_Revision"": {
+      ""required"": true,
       ""type"": ""integer""
     }
   }
 }", json);
+
+      JTokenWriter jsonWriter = new JTokenWriter();
+      JsonSerializer serializer = new JsonSerializer();
+      serializer.ContractResolver  = new DefaultContractResolver
+        {
+          IgnoreSerializableAttribute = false
+        };
+      serializer.Serialize(jsonWriter, new Version(1, 2, 3, 4));
+
+      List<string> errors = new List<string>();
+      jsonWriter.Token.Validate(schema, (sender, args) => errors.Add(args.Message));
+
+      Assert.AreEqual(0, errors.Count);
+
+      Assert.AreEqual(@"{
+  ""_Major"": 1,
+  ""_Minor"": 2,
+  ""_Build"": 3,
+  ""_Revision"": 4
+}", jsonWriter.Token.ToString());
+
+      Version version = jsonWriter.Token.ToObject<Version>(serializer);
+      Assert.AreEqual(1, version.Major);
+      Assert.AreEqual(2, version.Minor);
+      Assert.AreEqual(3, version.Build);
+      Assert.AreEqual(4, version.Revision);
     }
+#endif
 
     public enum SortTypeFlag
     {
@@ -503,6 +613,7 @@ namespace Newtonsoft.Json.Tests.Schema
   ""type"": ""object"",
   ""properties"": {
     ""x"": {
+      ""required"": true,
       ""type"": ""integer"",
       ""enum"": [
         0,
@@ -512,15 +623,15 @@ namespace Newtonsoft.Json.Tests.Schema
       ""options"": [
         {
           ""value"": 0,
-          ""value"": ""No""
+          ""label"": ""No""
         },
         {
           ""value"": 1,
-          ""value"": ""Asc""
+          ""label"": ""Asc""
         },
         {
           ""value"": -1,
-          ""value"": ""Desc""
+          ""label"": ""Desc""
         }
       ]
     }
@@ -552,13 +663,13 @@ namespace Newtonsoft.Json.Tests.Schema
 
       Assert.AreEqual(@"{
   ""id"": ""Newtonsoft.Json.Tests.TestObjects.CircularReferenceClass"",
-  ""optional"": true,
   ""type"": [
     ""object"",
     ""null""
   ],
   ""properties"": {
     ""Name"": {
+      ""required"": true,
       ""type"": ""string""
     },
     ""Child"": {
@@ -579,13 +690,13 @@ namespace Newtonsoft.Json.Tests.Schema
 
       Assert.AreEqual(@"{
   ""id"": ""Newtonsoft.Json.Tests.TestObjects.JsonPropertyWithHandlingValues"",
+  ""required"": true,
   ""type"": [
     ""object"",
     ""null""
   ],
   ""properties"": {
     ""DefaultValueHandlingIgnoreProperty"": {
-      ""optional"": true,
       ""type"": [
         ""string"",
         ""null""
@@ -593,6 +704,22 @@ namespace Newtonsoft.Json.Tests.Schema
       ""default"": ""Default!""
     },
     ""DefaultValueHandlingIncludeProperty"": {
+      ""required"": true,
+      ""type"": [
+        ""string"",
+        ""null""
+      ],
+      ""default"": ""Default!""
+    },
+    ""DefaultValueHandlingPopulateProperty"": {
+      ""required"": true,
+      ""type"": [
+        ""string"",
+        ""null""
+      ],
+      ""default"": ""Default!""
+    },
+    ""DefaultValueHandlingIgnoreAndPopulateProperty"": {
       ""type"": [
         ""string"",
         ""null""
@@ -600,13 +727,13 @@ namespace Newtonsoft.Json.Tests.Schema
       ""default"": ""Default!""
     },
     ""NullValueHandlingIgnoreProperty"": {
-      ""optional"": true,
       ""type"": [
         ""string"",
         ""null""
       ]
     },
     ""NullValueHandlingIncludeProperty"": {
+      ""required"": true,
       ""type"": [
         ""string"",
         ""null""
@@ -624,6 +751,33 @@ namespace Newtonsoft.Json.Tests.Schema
   }
 }", json);
     }
+
+    [Test]
+    public void GenerateForNullableInt32()
+    {
+      JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator();
+
+      JsonSchema jsonSchema = jsonSchemaGenerator.Generate(typeof(NullableInt32TestClass));
+      string json = jsonSchema.ToString();
+
+      Assert.AreEqual(@"{
+  ""type"": ""object"",
+  ""properties"": {
+    ""Value"": {
+      ""required"": true,
+      ""type"": [
+        ""integer"",
+        ""null""
+      ]
+    }
+  }
+}", json);
+    }
+  }
+
+  public class NullableInt32TestClass
+  {
+    public int? Value { get; set; }
   }
 
   public class DMDSLBase

@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 // Copyright (c) 2007 James Newton-King
 //
 // Permission is hereby granted, free of charge, to any person
@@ -23,10 +23,18 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if !SILVERLIGHT
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json.Tests.Serialization;
+using Newtonsoft.Json.Tests.TestObjects;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json;
 using System.IO;
 using System.Xml;
@@ -39,6 +47,7 @@ using System.Xml.Linq;
 
 namespace Newtonsoft.Json.Tests.Converters
 {
+  [TestFixture]
   public class XmlNodeConverterTest : TestFixtureBase
   {
     private string SerializeXmlNode(XmlNode node)
@@ -104,6 +113,35 @@ namespace Newtonsoft.Json.Tests.Converters
 
       return node;
     }
+
+#if !NET20
+    [Test]
+    public void SerializeEmptyDocument()
+    {
+      XmlDocument doc = new XmlDocument();
+      doc.LoadXml("<root />");
+
+      string json = JsonConvert.SerializeXmlNode(doc, Formatting.Indented, true);
+      Assert.AreEqual("null", json);
+
+      doc = new XmlDocument();
+      doc.LoadXml("<root></root>");
+
+      json = JsonConvert.SerializeXmlNode(doc, Formatting.Indented, true);
+      Assert.AreEqual("null", json);
+
+
+      XDocument doc1 = XDocument.Parse("<root />");
+
+      json = JsonConvert.SerializeXNode(doc1, Formatting.Indented, true);
+      Assert.AreEqual("null", json);
+
+      doc1 = XDocument.Parse("<root></root>");
+
+      json = JsonConvert.SerializeXNode(doc1, Formatting.Indented, true);
+      Assert.AreEqual("null", json);
+    }
+#endif
 
     [Test]
     public void DocumentSerializeIndented()
@@ -374,12 +412,12 @@ namespace Newtonsoft.Json.Tests.Converters
     ""@class"": ""vevent"",
     ""a"": {
       ""@class"": ""url"",
-      ""@href"": ""http://www.web2con.com/"",
       ""span"": {
         ""@class"": ""summary"",
         ""#text"": ""Web 2.0 Conference"",
         ""#cdata-section"": ""my escaped text""
-      }
+      },
+      ""@href"": ""http://www.web2con.com/""
     }
   }
 }";
@@ -423,12 +461,12 @@ namespace Newtonsoft.Json.Tests.Converters
       string xml = @"<?xml version=""1.0"" standalone=""no""?>
 			<root>
 			  <person id=""1"">
-				<name>Alan</name>
-				<url>http://www.google.com</url>
+	  			<name>Alan</name>
+		  		<url>http://www.google.com</url>
 			  </person>
 			  <person id=""2"">
-				<name>Louis</name>
-				<url>http://www.yahoo.com</url>
+			  	<name>Louis</name>
+				  <url>http://www.yahoo.com</url>
 			  </person>
 			</root>";
 
@@ -472,7 +510,7 @@ namespace Newtonsoft.Json.Tests.Converters
     [Test]
     public void OtherElementDataTypes()
     {
-      string jsonText = @"{""?xml"":{""@version"":""1.0"",""@standalone"":""no""},""root"":{""person"":[{""@id"":""1"",""Float"":2.5,""Integer"":99},{""@id"":""2"",""Boolean"":true,""date"":""\/Date(954374400000)\/""}]}}";
+      string jsonText = @"{""?xml"":{""@version"":""1.0"",""@standalone"":""no""},""root"":{""person"":[{""@id"":""1"",""Float"":2.5,""Integer"":99},{""Boolean"":true,""@id"":""2"",""date"":""\/Date(954374400000)\/""}]}}";
 
       XmlDocument newDoc = (XmlDocument)DeserializeXmlNode(jsonText);
 
@@ -482,17 +520,25 @@ namespace Newtonsoft.Json.Tests.Converters
     }
 
     [Test]
-    [ExpectedException(typeof(JsonSerializationException), ExpectedMessage = "XmlNodeConverter can only convert JSON that begins with an object.")]
     public void NoRootObject()
     {
-      XmlDocument newDoc = (XmlDocument)JsonConvert.DeserializeXmlNode(@"[1]");
+      ExceptionAssert.Throws<JsonSerializationException>(
+        "XmlNodeConverter can only convert JSON that begins with an object.",
+        () =>
+          {
+            XmlDocument newDoc = (XmlDocument)JsonConvert.DeserializeXmlNode(@"[1]");
+          });
     }
 
     [Test]
-    [ExpectedException(typeof(JsonSerializationException), ExpectedMessage = "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.")]
     public void RootObjectMultipleProperties()
     {
-      XmlDocument newDoc = (XmlDocument)JsonConvert.DeserializeXmlNode(@"{Prop1:1,Prop2:2}");
+      ExceptionAssert.Throws<JsonSerializationException>(
+        "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.",
+        () =>
+        {
+          XmlDocument newDoc = (XmlDocument)JsonConvert.DeserializeXmlNode(@"{Prop1:1,Prop2:2}");
+        });
     }
 
     [Test]
@@ -604,22 +650,30 @@ namespace Newtonsoft.Json.Tests.Converters
     }
 
     [Test]
-    [ExpectedException(typeof(JsonSerializationException), ExpectedMessage = "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.")]
     public void MultipleRootPropertiesXmlDocument()
     {
       string json = @"{""count"": 773840,""photos"": null}";
 
-      JsonConvert.DeserializeXmlNode(json);
+      ExceptionAssert.Throws<JsonSerializationException>(
+        "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.",
+        () =>
+        {
+          JsonConvert.DeserializeXmlNode(json);
+        });
     }
 
 #if !NET20
     [Test]
-    [ExpectedException(typeof(JsonSerializationException), ExpectedMessage = "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.")]
     public void MultipleRootPropertiesXDocument()
     {
       string json = @"{""count"": 773840,""photos"": null}";
 
-      JsonConvert.DeserializeXNode(json);
+      ExceptionAssert.Throws<JsonSerializationException>(
+        "JSON root object has multiple properties. The root object must have a single property in order to create a valid XML document. Consider specifing a DeserializeRootElementName.",
+        () =>
+        {
+          JsonConvert.DeserializeXNode(json);
+        });
     }
 #endif
 
@@ -651,19 +705,110 @@ namespace Newtonsoft.Json.Tests.Converters
     [
       ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg"",
       ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg""
+    ],
+    [
+      ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg""
     ]
   ]
 }";
 
       XmlDocument newDoc = JsonConvert.DeserializeXmlNode(json, "myRoot");
 
-      Assert.AreEqual(@"<myRoot><available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes></available_sizes><available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes></available_sizes></myRoot>", newDoc.InnerXml);
+      string xml = IndentXml(newDoc.InnerXml);
+
+      Assert.AreEqual(@"<myRoot>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+</myRoot>", IndentXml(newDoc.InnerXml));
 
 #if !NET20
       XDocument newXDoc = JsonConvert.DeserializeXNode(json, "myRoot");
 
-      Assert.AreEqual(@"<myRoot><available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes></available_sizes><available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes><available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes></available_sizes></myRoot>", newXDoc.ToString(SaveOptions.DisableFormatting));
+      Assert.AreEqual(@"<myRoot>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+</myRoot>", IndentXml(newXDoc.ToString(SaveOptions.DisableFormatting)));
 #endif
+
+      string newJson = JsonConvert.SerializeXmlNode(newDoc, Formatting.Indented);
+      Console.WriteLine(newJson);
+    }
+
+    [Test]
+    public void RoundTripNestedArrays()
+    {
+      string json = @"{
+  ""available_sizes"": [
+    [
+      ""assets/images/resized/0001/1070/11070v1-max-150x150.jpg"",
+      ""assets/images/resized/0001/1070/11070v1-max-150x150.jpg""
+    ],
+    [
+      ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg"",
+      ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg""
+    ],
+    [
+      ""assets/images/resized/0001/1070/11070v1-max-250x250.jpg""
+    ]
+  ]
+}";
+
+      XmlDocument newDoc = JsonConvert.DeserializeXmlNode(json, "myRoot", true);
+
+      Assert.AreEqual(@"<myRoot>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes json:Array=""true"">assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+</myRoot>", IndentXml(newDoc.InnerXml));
+
+#if !NET20
+      XDocument newXDoc = JsonConvert.DeserializeXNode(json, "myRoot", true);
+
+      Console.WriteLine(IndentXml(newXDoc.ToString(SaveOptions.DisableFormatting)));
+
+      Assert.AreEqual(@"<myRoot>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-150x150.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+    <available_sizes>assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+  <available_sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <available_sizes json:Array=""true"">assets/images/resized/0001/1070/11070v1-max-250x250.jpg</available_sizes>
+  </available_sizes>
+</myRoot>", IndentXml(newXDoc.ToString(SaveOptions.DisableFormatting)));
+#endif
+
+      string newJson = JsonConvert.SerializeXmlNode(newDoc, Formatting.Indented, true);
+      Assert.AreEqual(json, newJson);
     }
 
     [Test]
@@ -905,6 +1050,831 @@ namespace Newtonsoft.Json.Tests.Converters
 }";
 
       Assert.AreEqual(expectedXmlJson, xmlJson);
+    }
+
+    [Test]
+    public void EmptyPropertyName()
+    {
+      string json = @"{
+  ""8452309520V2"": {
+    """": {
+      ""CLIENT"": {
+        ""ID_EXPIRATION_1"": {
+          ""VALUE"": ""12/12/2000"",
+          ""DATATYPE"": ""D"",
+          ""MSG"": ""Missing Identification Exp. Date 1""
+        },
+        ""ID_ISSUEDATE_1"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""D"",
+          ""MSG"": ""Missing Identification Issue Date 1""
+        }
+      }
+    },
+    ""457463534534"": {
+      ""ACCOUNT"": {
+        ""FUNDING_SOURCE"": {
+          ""VALUE"": ""FS0"",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Source of Funds""
+        }
+      }
+    }
+  }
+}{
+  ""34534634535345"": {
+    """": {
+      ""CLIENT"": {
+        ""ID_NUMBER_1"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""S"",
+          ""MSG"": ""Missing Picture ID""
+        },
+        ""ID_EXPIRATION_1"": {
+          ""VALUE"": ""12/12/2000"",
+          ""DATATYPE"": ""D"",
+          ""MSG"": ""Missing Picture ID""
+        },
+        ""WALK_IN"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Walk in""
+        },
+        ""PERSONAL_MEETING"": {
+          ""VALUE"": ""PM1"",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Met Client in Person""
+        },
+        ""ID_ISSUEDATE_1"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""D"",
+          ""MSG"": ""Missing Picture ID""
+        },
+        ""PHOTO_ID"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Picture ID""
+        },
+        ""ID_TYPE_1"": {
+          ""VALUE"": """",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Picture ID""
+        }
+      }
+    },
+    ""45635624523"": {
+      ""ACCOUNT"": {
+        ""FUNDING_SOURCE"": {
+          ""VALUE"": ""FS1"",
+          ""DATATYPE"": ""L"",
+          ""MSG"": ""Missing Source of Funds""
+        }
+      }
+    }
+  }
+}";
+
+      ExceptionAssert.Throws<JsonSerializationException>(
+        "XmlNodeConverter cannot convert JSON with an empty property name to XML.",
+        () =>
+        {
+          DeserializeXmlNode(json);
+        });
+    }
+
+    [Test]
+    public void SingleItemArrayPropertySerialization()
+    {
+      Product product = new Product();
+
+      product.Name = "Apple";
+      product.ExpiryDate = new DateTime(2008, 12, 28, 0, 0, 0, DateTimeKind.Utc);
+      product.Price = 3.99M;
+      product.Sizes = new string[] { "Small" };
+
+      string output = JsonConvert.SerializeObject(product, new IsoDateTimeConverter());
+
+      XmlDocument xmlProduct = JsonConvert.DeserializeXmlNode(output, "product", true);
+
+      Assert.AreEqual(@"<product>
+  <Name>Apple</Name>
+  <ExpiryDate>2008-12-28T00:00:00Z</ExpiryDate>
+  <Price>3.99</Price>
+  <Sizes json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">Small</Sizes>
+</product>", IndentXml(xmlProduct.InnerXml));
+
+      string output2 = JsonConvert.SerializeXmlNode(xmlProduct.DocumentElement, Formatting.Indented);
+
+      Assert.AreEqual(@"{
+  ""product"": {
+    ""Name"": ""Apple"",
+    ""ExpiryDate"": ""2008-12-28T00:00:00Z"",
+    ""Price"": ""3.99"",
+    ""Sizes"": [
+      ""Small""
+    ]
+  }
+}", output2);
+    }
+
+    public class TestComplexArrayClass
+    {
+      public string Name { get; set; }
+      public IList<Product> Products { get; set; }
+    }
+
+    [Test]
+    public void ComplexSingleItemArrayPropertySerialization()
+    {
+      TestComplexArrayClass o = new TestComplexArrayClass
+        {
+          Name = "Hi",
+          Products = new List<Product>
+            {
+              new Product { Name = "First" }
+            }
+        };
+
+      string output = JsonConvert.SerializeObject(o, new IsoDateTimeConverter());
+
+      XmlDocument xmlProduct = JsonConvert.DeserializeXmlNode(output, "test", true);
+
+      Assert.AreEqual(@"<test>
+  <Name>Hi</Name>
+  <Products json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <Name>First</Name>
+    <ExpiryDate>2000-01-01T00:00:00Z</ExpiryDate>
+    <Price>0</Price>
+    <Sizes />
+  </Products>
+</test>", IndentXml(xmlProduct.InnerXml));
+
+      string output2 = JsonConvert.SerializeXmlNode(xmlProduct.DocumentElement, Formatting.Indented, true);
+
+      Assert.AreEqual(@"{
+  ""Name"": ""Hi"",
+  ""Products"": [
+    {
+      ""Name"": ""First"",
+      ""ExpiryDate"": ""2000-01-01T00:00:00Z"",
+      ""Price"": ""0"",
+      ""Sizes"": null
+    }
+  ]
+}", output2);
+    }
+
+    private string IndentXml(string xml)
+    {
+      XmlReader reader = XmlReader.Create(new StringReader(xml));
+
+      StringWriter sw = new StringWriter();
+      XmlWriter writer = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, OmitXmlDeclaration = true });
+
+      while (reader.Read())
+      {
+        writer.WriteNode(reader, false);
+      }
+
+      writer.Flush();
+
+      return sw.ToString();
+    }
+
+    [Test]
+    public void OmitRootObject()
+    {
+      string xml = @"<test>
+  <Name>Hi</Name>
+  <Name>Hi</Name>
+  <Products json:Array=""true"" xmlns:json=""http://james.newtonking.com/projects/json"">
+    <Name>First</Name>
+    <ExpiryDate>2000-01-01T00:00:00Z</ExpiryDate>
+    <Price>0</Price>
+    <Sizes />
+  </Products>
+</test>";
+
+      XmlDocument d = new XmlDocument();
+      d.LoadXml(xml);
+
+      string output = JsonConvert.SerializeXmlNode(d, Formatting.Indented, true);
+
+      Assert.AreEqual(@"{
+  ""Name"": [
+    ""Hi"",
+    ""Hi""
+  ],
+  ""Products"": [
+    {
+      ""Name"": ""First"",
+      ""ExpiryDate"": ""2000-01-01T00:00:00Z"",
+      ""Price"": ""0"",
+      ""Sizes"": null
+    }
+  ]
+}", output);
+    }
+
+    [Test]
+    public void EmtpyElementWithArrayAttributeShouldWriteAttributes()
+    {
+      string xml = @"<?xml version=""1.0"" encoding=""utf-8"" ?>
+<root xmlns:json=""http://james.newtonking.com/projects/json"">
+<A>
+<B name=""sample"" json:Array=""true""/>
+<C></C>
+<C></C>
+</A>
+</root>";
+
+      XmlDocument d = new XmlDocument();
+      d.LoadXml(xml);
+
+      string json = JsonConvert.SerializeXmlNode(d, Formatting.Indented);
+
+      Assert.AreEqual(@"{
+  ""?xml"": {
+    ""@version"": ""1.0"",
+    ""@encoding"": ""utf-8""
+  },
+  ""root"": {
+    ""A"": {
+      ""B"": [
+        {
+          ""@name"": ""sample""
+        }
+      ],
+      ""C"": [
+        null,
+        null
+      ]
+    }
+  }
+}", json);
+    }
+
+    [Test]
+    public void EmtpyElementWithArrayAttributeShouldWriteElement()
+    {
+      string xml = @"<root>
+<Reports d1p1:Array=""true"" xmlns:d1p1=""http://james.newtonking.com/projects/json"" />
+</root>";
+
+      XmlDocument d = new XmlDocument();
+      d.LoadXml(xml);
+
+      string json = JsonConvert.SerializeXmlNode(d, Formatting.Indented);
+
+      Assert.AreEqual(@"{
+  ""root"": {
+    ""Reports"": [
+      {}
+    ]
+  }
+}", json);
+    }
+
+    [Test]
+    public void DeserializeNonInt64IntegerValues()
+    {
+      var dict = new Dictionary<string, object> { { "Int16", (short)1 }, { "Float", 2f }, { "Int32", 3 } };
+      var obj = JObject.FromObject(dict);
+      var serializer = JsonSerializer.Create(new JsonSerializerSettings { Converters = { new XmlNodeConverter() { DeserializeRootElementName = "root" } } });
+      using (var reader = obj.CreateReader())
+      {
+        var value = (XmlDocument)serializer.Deserialize(reader, typeof(XmlDocument));
+
+        Assert.AreEqual(@"<root><Int16>1</Int16><Float>2</Float><Int32>3</Int32></root>", value.InnerXml);
+      }
+    }
+
+    [Test]
+    public void DeserializingBooleanValues()
+    {
+      MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(@"{root:{""@booleanType"":true}}"));
+      MemoryStream xml = new MemoryStream();
+
+      JsonBodyToSoapXml(ms, xml);
+
+      string xmlString = System.Text.Encoding.UTF8.GetString(xml.ToArray());
+
+      Assert.AreEqual(@"﻿<?xml version=""1.0"" encoding=""utf-8""?><root booleanType=""true"" />", xmlString);
+    }
+
+    private static void JsonBodyToSoapXml(Stream json, Stream xml)
+    {
+      Newtonsoft.Json.JsonSerializerSettings settings = new Newtonsoft.Json.JsonSerializerSettings();
+      settings.Converters.Add(new Newtonsoft.Json.Converters.XmlNodeConverter());
+      Newtonsoft.Json.JsonSerializer serializer = Newtonsoft.Json.JsonSerializer.Create(settings);
+      using (Newtonsoft.Json.JsonTextReader reader = new Newtonsoft.Json.JsonTextReader(new System.IO.StreamReader(json)))
+      {
+        XmlDocument doc = (XmlDocument)serializer.Deserialize(reader, typeof(XmlDocument));
+        if (reader.Read() && reader.TokenType != JsonToken.Comment)
+          throw new JsonSerializationException("Additional text found in JSON string after finishing deserializing object.");
+        using (XmlWriter writer = XmlWriter.Create(xml))
+        {
+          doc.Save(writer);
+        }
+      }
+    }
+
+#if !NET20
+    [Test]
+    public void DeserializeXNodeDefaultNamespace()
+    {
+      string xaml = @"<Grid xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:toolkit=""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"" Style=""{StaticResource trimFormGrid}"" x:Name=""TrimObjectForm"">
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width=""63*"" />
+    <ColumnDefinition Width=""320*"" />
+  </Grid.ColumnDefinitions>
+  <Grid.RowDefinitions xmlns="""">
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+  </Grid.RowDefinitions>
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordTypedTitle"" Grid.Column=""1"" Grid.Row=""0"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordExternalReference"" Grid.Column=""1"" Grid.Row=""1"" xmlns="""" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateCreated"" Grid.Column=""1"" Grid.Row=""2"" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateDue"" Grid.Column=""1"" Grid.Row=""3"" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Author, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAuthor"" Grid.Column=""1"" Grid.Row=""4"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Container, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordContainer"" Grid.Column=""1"" Grid.Row=""5"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordIsEnclosed"" Grid.Column=""1"" Grid.Row=""6"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAssignee"" Grid.Column=""1"" Grid.Row=""7"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Title (Free Text Part)"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""0"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""External ID"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""1"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Created"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""2"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Due"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""3"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Author"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""4"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Container"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""5"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Enclosed?"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""6"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Assignee"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""7"" xmlns="""" />
+</Grid>";
+
+      string json = JsonConvert.SerializeXNode(XDocument.Parse(xaml), Formatting.Indented);
+
+      string expectedJson = @"{
+  ""Grid"": {
+    ""@xmlns"": ""http://schemas.microsoft.com/winfx/2006/xaml/presentation"",
+    ""@xmlns:x"": ""http://schemas.microsoft.com/winfx/2006/xaml"",
+    ""@xmlns:toolkit"": ""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"",
+    ""@Style"": ""{StaticResource trimFormGrid}"",
+    ""@x:Name"": ""TrimObjectForm"",
+    ""Grid.ColumnDefinitions"": {
+      ""ColumnDefinition"": [
+        {
+          ""@Width"": ""63*""
+        },
+        {
+          ""@Width"": ""320*""
+        }
+      ]
+    },
+    ""Grid.RowDefinitions"": {
+      ""@xmlns"": """",
+      ""RowDefinition"": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    ""TextBox"": [
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordTypedTitle"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""0"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordExternalReference"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""1"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Author, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordAuthor"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""4"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Container, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordContainer"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""5"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordIsEnclosed"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""6"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordAssignee"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""7"",
+        ""@xmlns"": """"
+      }
+    ],
+    ""toolkit:DatePicker"": [
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_DP}"",
+        ""@Value"": ""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordDateCreated"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""2""
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_DP}"",
+        ""@Value"": ""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordDateDue"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""3""
+      }
+    ],
+    ""TextBlock"": [
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Title (Free Text Part)"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""0"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""External ID"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""1"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Date Created"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""2"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Date Due"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""3"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Author"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""4"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Container"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""5"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Enclosed?"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""6"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Assignee"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""7"",
+        ""@xmlns"": """"
+      }
+    ]
+  }
+}";
+
+      Assert.AreEqual(expectedJson, json);
+
+      XNode node = JsonConvert.DeserializeXNode(json);
+
+      string xaml2 = node.ToString();
+
+      string expectedXaml = @"<Grid xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:toolkit=""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"" Style=""{StaticResource trimFormGrid}"" x:Name=""TrimObjectForm"">
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width=""63*"" />
+    <ColumnDefinition Width=""320*"" />
+  </Grid.ColumnDefinitions>
+  <Grid.RowDefinitions xmlns="""">
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+  </Grid.RowDefinitions>
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordTypedTitle"" Grid.Column=""1"" Grid.Row=""0"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordExternalReference"" Grid.Column=""1"" Grid.Row=""1"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Author, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAuthor"" Grid.Column=""1"" Grid.Row=""4"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Container, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordContainer"" Grid.Column=""1"" Grid.Row=""5"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordIsEnclosed"" Grid.Column=""1"" Grid.Row=""6"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAssignee"" Grid.Column=""1"" Grid.Row=""7"" xmlns="""" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateCreated"" Grid.Column=""1"" Grid.Row=""2"" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateDue"" Grid.Column=""1"" Grid.Row=""3"" />
+  <TextBlock Grid.Column=""0"" Text=""Title (Free Text Part)"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""0"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""External ID"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""1"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Created"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""2"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Due"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""3"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Author"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""4"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Container"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""5"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Enclosed?"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""6"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Assignee"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""7"" xmlns="""" />
+</Grid>";
+
+      Assert.AreEqual(expectedXaml, xaml2);
+    }
+#endif
+
+    [Test]
+    public void DeserializeXmlNodeDefaultNamespace()
+    {
+      string xaml = @"<Grid xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:toolkit=""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"" Style=""{StaticResource trimFormGrid}"" x:Name=""TrimObjectForm"">
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width=""63*"" />
+    <ColumnDefinition Width=""320*"" />
+  </Grid.ColumnDefinitions>
+  <Grid.RowDefinitions xmlns="""">
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+  </Grid.RowDefinitions>
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordTypedTitle"" Grid.Column=""1"" Grid.Row=""0"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordExternalReference"" Grid.Column=""1"" Grid.Row=""1"" xmlns="""" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateCreated"" Grid.Column=""1"" Grid.Row=""2"" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateDue"" Grid.Column=""1"" Grid.Row=""3"" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Author, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAuthor"" Grid.Column=""1"" Grid.Row=""4"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Container, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordContainer"" Grid.Column=""1"" Grid.Row=""5"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordIsEnclosed"" Grid.Column=""1"" Grid.Row=""6"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAssignee"" Grid.Column=""1"" Grid.Row=""7"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Title (Free Text Part)"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""0"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""External ID"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""1"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Created"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""2"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Due"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""3"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Author"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""4"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Container"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""5"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Enclosed?"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""6"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Assignee"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""7"" xmlns="""" />
+</Grid>";
+
+      XmlDocument document = new XmlDocument();
+      document.LoadXml(xaml);
+
+      string json = JsonConvert.SerializeXmlNode(document, Formatting.Indented);
+
+      string expectedJson = @"{
+  ""Grid"": {
+    ""@xmlns"": ""http://schemas.microsoft.com/winfx/2006/xaml/presentation"",
+    ""@xmlns:x"": ""http://schemas.microsoft.com/winfx/2006/xaml"",
+    ""@xmlns:toolkit"": ""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"",
+    ""@Style"": ""{StaticResource trimFormGrid}"",
+    ""@x:Name"": ""TrimObjectForm"",
+    ""Grid.ColumnDefinitions"": {
+      ""ColumnDefinition"": [
+        {
+          ""@Width"": ""63*""
+        },
+        {
+          ""@Width"": ""320*""
+        }
+      ]
+    },
+    ""Grid.RowDefinitions"": {
+      ""@xmlns"": """",
+      ""RowDefinition"": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    ""TextBox"": [
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordTypedTitle"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""0"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordExternalReference"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""1"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Author, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordAuthor"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""4"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Container, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordContainer"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""5"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordIsEnclosed"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""6"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_TB}"",
+        ""@Text"": ""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordAssignee"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""7"",
+        ""@xmlns"": """"
+      }
+    ],
+    ""toolkit:DatePicker"": [
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_DP}"",
+        ""@Value"": ""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordDateCreated"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""2""
+      },
+      {
+        ""@Style"": ""{StaticResource trimFormGrid_DP}"",
+        ""@Value"": ""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"",
+        ""@Name"": ""RecordDateDue"",
+        ""@Grid.Column"": ""1"",
+        ""@Grid.Row"": ""3""
+      }
+    ],
+    ""TextBlock"": [
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Title (Free Text Part)"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""0"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""External ID"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""1"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Date Created"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""2"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Date Due"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""3"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Author"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""4"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Container"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""5"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Enclosed?"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""6"",
+        ""@xmlns"": """"
+      },
+      {
+        ""@Grid.Column"": ""0"",
+        ""@Text"": ""Assignee"",
+        ""@Style"": ""{StaticResource trimFormGrid_LBL}"",
+        ""@Grid.Row"": ""7"",
+        ""@xmlns"": """"
+      }
+    ]
+  }
+}";
+
+      Assert.AreEqual(expectedJson, json);
+
+      XmlNode node = JsonConvert.DeserializeXmlNode(json);
+
+      StringWriter sw = new StringWriter();
+      XmlWriter writer = XmlWriter.Create(sw, new XmlWriterSettings
+        {
+          Indent = true,
+          OmitXmlDeclaration = true
+        });
+      node.WriteTo(writer);
+      writer.Flush();
+
+      string xaml2 = sw.ToString();
+
+      string expectedXaml = @"<Grid xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:toolkit=""clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"" Style=""{StaticResource trimFormGrid}"" x:Name=""TrimObjectForm"">
+  <Grid.ColumnDefinitions>
+    <ColumnDefinition Width=""63*"" />
+    <ColumnDefinition Width=""320*"" />
+  </Grid.ColumnDefinitions>
+  <Grid.RowDefinitions xmlns="""">
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+    <RowDefinition />
+  </Grid.RowDefinitions>
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding TypedTitle, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordTypedTitle"" Grid.Column=""1"" Grid.Row=""0"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding ExternalReference, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordExternalReference"" Grid.Column=""1"" Grid.Row=""1"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Author, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAuthor"" Grid.Column=""1"" Grid.Row=""4"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Container, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordContainer"" Grid.Column=""1"" Grid.Row=""5"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding IsEnclosed, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordIsEnclosed"" Grid.Column=""1"" Grid.Row=""6"" xmlns="""" />
+  <TextBox Style=""{StaticResource trimFormGrid_TB}"" Text=""{Binding Assignee, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordAssignee"" Grid.Column=""1"" Grid.Row=""7"" xmlns="""" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateCreated, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateCreated"" Grid.Column=""1"" Grid.Row=""2"" />
+  <toolkit:DatePicker Style=""{StaticResource trimFormGrid_DP}"" Value=""{Binding DateDue, Converter={StaticResource trimPropertyConverter}}"" Name=""RecordDateDue"" Grid.Column=""1"" Grid.Row=""3"" />
+  <TextBlock Grid.Column=""0"" Text=""Title (Free Text Part)"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""0"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""External ID"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""1"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Created"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""2"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Date Due"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""3"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Author"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""4"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Container"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""5"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Enclosed?"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""6"" xmlns="""" />
+  <TextBlock Grid.Column=""0"" Text=""Assignee"" Style=""{StaticResource trimFormGrid_LBL}"" Grid.Row=""7"" xmlns="""" />
+</Grid>";
+
+      Assert.AreEqual(expectedXaml, xaml2);
+    }
+
+    [Test]
+    public void DeserializeAttributePropertyNotAtStart()
+    {
+      string json = @"{""item"": {""@action"": ""update"", ""@itemid"": ""1"", ""elements"": [{""@action"": ""none"", ""@id"": ""2""},{""@action"": ""none"", ""@id"": ""3""}],""@description"": ""temp""}}";
+
+      XmlDocument xmldoc = JsonConvert.DeserializeXmlNode(json);
+
+      Assert.AreEqual(@"<item action=""update"" itemid=""1"" description=""temp""><elements action=""none"" id=""2"" /><elements action=""none"" id=""3"" /></item>", xmldoc.InnerXml);
     }
   }
 }

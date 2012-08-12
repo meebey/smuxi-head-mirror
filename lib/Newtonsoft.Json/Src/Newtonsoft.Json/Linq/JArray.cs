@@ -25,9 +25,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json.Utilities;
 using System.IO;
 using System.Globalization;
@@ -37,8 +34,22 @@ namespace Newtonsoft.Json.Linq
   /// <summary>
   /// Represents a JSON array.
   /// </summary>
+  /// <example>
+  ///   <code lang="cs" source="..\Src\Newtonsoft.Json.Tests\Documentation\LinqToJsonTests.cs" region="LinqToJsonCreateParseArray" title="Parsing a JSON Array from Text" />
+  /// </example>
   public class JArray : JContainer, IList<JToken>
   {
+    private readonly IList<JToken> _values = new List<JToken>();
+
+    /// <summary>
+    /// Gets the container's children tokens.
+    /// </summary>
+    /// <value>The container's children tokens.</value>
+    protected override IList<JToken> ChildrenTokens
+    {
+      get { return _values; }
+    }
+
     /// <summary>
     /// Gets the node type for this <see cref="JToken"/>.
     /// </summary>
@@ -98,23 +109,26 @@ namespace Newtonsoft.Json.Linq
     /// </summary>
     /// <param name="reader">A <see cref="JsonReader"/> that will be read for the content of the <see cref="JArray"/>.</param>
     /// <returns>A <see cref="JArray"/> that contains the JSON that was read from the specified <see cref="JsonReader"/>.</returns>
-    public static JArray Load(JsonReader reader)
+    public static new JArray Load(JsonReader reader)
     {
       if (reader.TokenType == JsonToken.None)
       {
         if (!reader.Read())
-          throw new Exception("Error reading JArray from JsonReader.");
+          throw JsonReaderException.Create(reader, "Error reading JArray from JsonReader.");
       }
+
+      while (reader.TokenType == JsonToken.Comment)
+      {
+        reader.Read();
+      }
+
       if (reader.TokenType != JsonToken.StartArray)
-        throw new Exception("Error reading JArray from JsonReader. Current JsonReader item is not an array: {0}".FormatWith(CultureInfo.InvariantCulture, reader.TokenType));
+        throw JsonReaderException.Create(reader, "Error reading JArray from JsonReader. Current JsonReader item is not an array: {0}".FormatWith(CultureInfo.InvariantCulture, reader.TokenType));
 
       JArray a = new JArray();
       a.SetLineInfo(reader as IJsonLineInfo);
 
-      if (!reader.Read())
-        throw new Exception("Error reading JArray from JsonReader.");
-
-      a.ReadContentFrom(reader);
+      a.ReadTokenFrom(reader);
 
       return a;
     }
@@ -124,11 +138,19 @@ namespace Newtonsoft.Json.Linq
     /// </summary>
     /// <param name="json">A <see cref="String"/> that contains JSON.</param>
     /// <returns>A <see cref="JArray"/> populated from the string that contains JSON.</returns>
-    public static JArray Parse(string json)
+    /// <example>
+    ///   <code lang="cs" source="..\Src\Newtonsoft.Json.Tests\Documentation\LinqToJsonTests.cs" region="LinqToJsonCreateParseArray" title="Parsing a JSON Array from Text" />
+    /// </example>
+    public static new JArray Parse(string json)
     {
-      JsonReader jsonReader = new JsonTextReader(new StringReader(json));
+      JsonReader reader = new JsonTextReader(new StringReader(json));
 
-      return Load(jsonReader);
+      JArray a = Load(reader);
+
+      if (reader.Read() && reader.TokenType != JsonToken.Comment)
+        throw JsonReaderException.Create(reader, "Additional text found in JSON string after parsing content.");
+
+      return a;
     }
 
     /// <summary>
@@ -166,7 +188,7 @@ namespace Newtonsoft.Json.Linq
     {
       writer.WriteStartArray();
 
-      foreach (JToken token in Children())
+      foreach (JToken token in ChildrenTokens)
       {
         token.WriteTo(writer, converters);
       }
@@ -234,7 +256,7 @@ namespace Newtonsoft.Json.Linq
     /// <exception cref="T:System.NotSupportedException">The <see cref="T:System.Collections.Generic.IList`1"/> is read-only.</exception>
     public void Insert(int index, JToken item)
     {
-      InsertItem(index, item);
+      InsertItem(index, item, false);
     }
 
     /// <summary>
@@ -287,16 +309,6 @@ namespace Newtonsoft.Json.Linq
     void ICollection<JToken>.CopyTo(JToken[] array, int arrayIndex)
     {
       CopyItemsTo(array, arrayIndex);
-    }
-
-    /// <summary>
-    /// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.
-    /// </summary>
-    /// <value></value>
-    /// <returns>The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1"/>.</returns>
-    public int Count
-    {
-      get { return CountItems(); }
     }
 
     bool ICollection<JToken>.IsReadOnly

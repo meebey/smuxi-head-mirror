@@ -23,16 +23,18 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json.Schema;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 
 namespace Newtonsoft.Json.Tests.Schema
 {
+  [TestFixture]
   public class JsonSchemaModelBuilderTests : TestFixtureBase
   {
     [Test]
@@ -139,7 +141,7 @@ namespace Newtonsoft.Json.Tests.Schema
     }
 
     [Test]
-    public void Optional()
+    public void Required()
     {
       string schemaJson = @"{
   ""description"":""A person"",
@@ -147,8 +149,8 @@ namespace Newtonsoft.Json.Tests.Schema
   ""properties"":
   {
     ""name"":{""type"":""string""},
-    ""hobbies"":{""type"":""string"",optional:true},
-    ""age"":{""type"":""integer"",optional:true}
+    ""hobbies"":{""type"":""string"",required:true},
+    ""age"":{""type"":""integer"",required:true}
   }
 }";
 
@@ -158,9 +160,9 @@ namespace Newtonsoft.Json.Tests.Schema
 
       Assert.AreEqual(JsonSchemaType.Object, model.Type);
       Assert.AreEqual(3, model.Properties.Count);
-      Assert.AreEqual(false, model.Properties["name"].Optional);
-      Assert.AreEqual(true, model.Properties["hobbies"].Optional);
-      Assert.AreEqual(true, model.Properties["age"].Optional);
+      Assert.AreEqual(false, model.Properties["name"].Required);
+      Assert.AreEqual(true, model.Properties["hobbies"].Required);
+      Assert.AreEqual(true, model.Properties["age"].Required);
     }
   }
 }

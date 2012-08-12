@@ -25,15 +25,26 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Converters;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Linq;
 using System.IO;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Tests.Linq
 {
+  [TestFixture]
   public class JTokenTests : TestFixtureBase
   {
     [Test]
@@ -60,7 +71,7 @@ namespace Newtonsoft.Json.Tests.Linq
       Assert.IsTrue(JToken.DeepEquals(new JValue(1), c.Values().ElementAt(0)));
 
       JValue v;
-      
+
       v = (JValue)JToken.ReadFrom(new JsonTextReader(new StringReader(@"""stringvalue""")));
       Assert.AreEqual("stringvalue", (string)v);
 
@@ -69,6 +80,29 @@ namespace Newtonsoft.Json.Tests.Linq
 
       v = (JValue)JToken.ReadFrom(new JsonTextReader(new StringReader(@"1.1")));
       Assert.AreEqual(1.1, (double)v);
+
+#if !NET20
+      v = (JValue)JToken.ReadFrom(new JsonTextReader(new StringReader(@"""1970-01-01T00:00:00+12:31"""))
+        {
+          DateParseHandling = DateParseHandling.DateTimeOffset
+        });
+      Assert.AreEqual(typeof(DateTimeOffset), v.Value.GetType());
+      Assert.AreEqual(new DateTimeOffset(JsonConvert.InitialJavaScriptDateTicks, new TimeSpan(12, 31, 0)), v.Value);
+#endif
+    }
+
+    [Test]
+    public void Load()
+    {
+      JObject o = (JObject)JToken.Load(new JsonTextReader(new StringReader("{'pie':true}")));
+      Assert.AreEqual(true, (bool)o["pie"]);
+    }
+
+    [Test]
+    public void Parse()
+    {
+      JObject o = (JObject)JToken.Parse("{'pie':true}");
+      Assert.AreEqual(true, (bool)o["pie"]);
     }
 
     [Test]
@@ -195,6 +229,9 @@ namespace Newtonsoft.Json.Tests.Linq
     [Test]
     public void Casting()
     {
+      Assert.AreEqual(1L, (long)(new JValue(1)));
+      Assert.AreEqual(2L, (long) new JArray(1, 2, 3)[1]);
+
       Assert.AreEqual(new DateTime(2000, 12, 20), (DateTime)new JValue(new DateTime(2000, 12, 20)));
 #if !PocketPC && !NET20
       Assert.AreEqual(new DateTimeOffset(2000, 12, 20, 23, 50, 10, TimeSpan.Zero), (DateTimeOffset)new JValue(new DateTimeOffset(2000, 12, 20, 23, 50, 10, TimeSpan.Zero)));
@@ -517,19 +554,26 @@ namespace Newtonsoft.Json.Tests.Linq
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = "Can not add Newtonsoft.Json.Linq.JProperty to Newtonsoft.Json.Linq.JArray.")]
     public void AddPropertyToArray()
     {
-      JArray a = new JArray();
-      a.Add(new JProperty("PropertyName"));
+      ExceptionAssert.Throws<ArgumentException>("Can not add Newtonsoft.Json.Linq.JProperty to Newtonsoft.Json.Linq.JArray.",
+      () =>
+      {
+        JArray a = new JArray();
+        a.Add(new JProperty("PropertyName"));
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = "Can not add Newtonsoft.Json.Linq.JValue to Newtonsoft.Json.Linq.JObject.")]
     public void AddValueToObject()
     {
-      JObject o = new JObject();
-      o.Add(5);
+      ExceptionAssert.Throws<ArgumentException>(
+        "Can not add Newtonsoft.Json.Linq.JValue to Newtonsoft.Json.Linq.JObject.",
+        () =>
+        {
+          JObject o = new JObject();
+          o.Add(5);
+        });
     }
 
     [Test]
@@ -645,6 +689,98 @@ namespace Newtonsoft.Json.Tests.Linq
 
       Assert.AreEqual("secondlastpie", (string)a[5]);
       Assert.AreEqual(7, a.Count());
+    }
+
+    [Test]
+    public void DeepClone()
+    {
+      JArray a =
+        new JArray(
+          5,
+          new JArray(1),
+          new JArray(1, 2),
+          new JArray(1, 2, 3),
+          new JObject(
+            new JProperty("First", new JValue(Encoding.UTF8.GetBytes("Hi"))),
+            new JProperty("Second", 1),
+            new JProperty("Third", null),
+            new JProperty("Fourth", new JConstructor("Date", 12345)),
+            new JProperty("Fifth", double.PositiveInfinity),
+            new JProperty("Sixth", double.NaN)
+            )
+        );
+
+      JArray a2 = (JArray)a.DeepClone();
+
+      Console.WriteLine(a2.ToString(Formatting.Indented));
+
+      Assert.IsTrue(a.DeepEquals(a2));
+    }
+
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
+    [Test]
+    public void Clone()
+    {
+      JArray a =
+        new JArray(
+          5,
+          new JArray(1),
+          new JArray(1, 2),
+          new JArray(1, 2, 3),
+          new JObject(
+            new JProperty("First", new JValue(Encoding.UTF8.GetBytes("Hi"))),
+            new JProperty("Second", 1),
+            new JProperty("Third", null),
+            new JProperty("Fourth", new JConstructor("Date", 12345)),
+            new JProperty("Fifth", double.PositiveInfinity),
+            new JProperty("Sixth", double.NaN)
+            )
+        );
+
+      ICloneable c = a;
+
+      JArray a2 = (JArray) c.Clone();
+
+      Assert.IsTrue(a.DeepEquals(a2));
+    }
+#endif
+
+    [Test]
+    public void DoubleDeepEquals()
+    {
+      JArray a =
+        new JArray(
+          double.NaN,
+          double.PositiveInfinity,
+          double.NegativeInfinity
+        );
+
+      JArray a2 = (JArray)a.DeepClone();
+
+      Assert.IsTrue(a.DeepEquals(a2));
+
+      double d = 1 + 0.1 + 0.1 + 0.1;
+
+      JValue v1 = new JValue(d);
+      JValue v2 = new JValue(1.3);
+
+      Assert.IsTrue(v1.DeepEquals(v2));
+    }
+
+    [Test]
+    public void ParseAdditionalContent()
+    {
+      ExceptionAssert.Throws<JsonReaderException>("Additional text encountered after finished reading JSON content: ,. Path '', line 5, position 2.",
+        () =>
+        {
+          string json = @"[
+""Small"",
+""Medium"",
+""Large""
+],";
+
+          JToken.Parse(json);
+        });
     }
   }
 }

@@ -24,6 +24,7 @@
 #endregion
 
 using System;
+using System.Globalization;
 using System.Runtime.Serialization.Formatters;
 using Newtonsoft.Json.Utilities;
 using System.Runtime.Serialization;
@@ -125,6 +126,56 @@ namespace Newtonsoft.Json.Serialization
       set { _serializer.Context = value; }
     }
 
+    public override Formatting Formatting
+    {
+      get { return _serializer.Formatting; }
+      set { _serializer.Formatting = value; }
+    }
+
+    public override DateFormatHandling DateFormatHandling
+    {
+      get { return _serializer.DateFormatHandling; }
+      set { _serializer.DateFormatHandling = value; }
+    }
+
+    public override DateTimeZoneHandling DateTimeZoneHandling
+    {
+      get { return _serializer.DateTimeZoneHandling; }
+      set { _serializer.DateTimeZoneHandling = value; }
+    }
+
+    public override DateParseHandling DateParseHandling
+    {
+      get { return _serializer.DateParseHandling; }
+      set { _serializer.DateParseHandling = value; }
+    }
+
+    public override CultureInfo Culture
+    {
+      get { return _serializer.Culture; }
+      set { _serializer.Culture = value; }
+    }
+
+    public override int? MaxDepth
+    {
+      get { return _serializer.MaxDepth; }
+      set { _serializer.MaxDepth = value; }
+    }
+
+    public override bool CheckAdditionalContent
+    {
+      get { return _serializer.CheckAdditionalContent; }
+      set { _serializer.CheckAdditionalContent = value; }
+    }
+
+    internal JsonSerializerInternalBase GetInternalSerializer()
+    {
+      if (_serializerReader != null)
+        return _serializerReader;
+      else
+        return _serializerWriter;
+    }
+
     public JsonSerializerProxy(JsonSerializerInternalReader serializerReader)
     {
       ValidationUtils.ArgumentNotNull(serializerReader, "serializerReader");
@@ -144,7 +195,7 @@ namespace Newtonsoft.Json.Serialization
     internal override object DeserializeInternal(JsonReader reader, Type objectType)
     {
       if (_serializerReader != null)
-        return _serializerReader.Deserialize(reader, objectType);
+        return _serializerReader.Deserialize(reader, objectType, false);
       else
         return _serializer.Deserialize(reader, objectType);
     }

@@ -1,4 +1,5 @@
-﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -19,32 +20,52 @@
     </SccProvider>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
-    <OldToolsVersion>2.0</OldToolsVersion>
+    <OldToolsVersion>3.5</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>
     </AssemblyOriginatorKeyFile>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\DotNet\</OutputPath>
+    <OutputPath>bin\Debug\Net40\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\DotNet\</OutputPath>
+    <OutputPath>bin\Release\Net40\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="nunit.framework, Version=2.4.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\NUnit\DotNet\nunit.framework.dll</HintPath>
@@ -87,12 +108,18 @@
     <Compile Include="Bson\BsonWriterTests.cs" />
     <Compile Include="Bson\BsonReaderTests.cs" />
     <Compile Include="Converters\BinaryConverterTests.cs" />
+    <Compile Include="Converters\ExpandoObjectConverterTests.cs" />
     <Compile Include="Converters\RegexConverterTests.cs" />
     <Compile Include="Converters\DataTableConverterTests.cs" />
     <Compile Include="Converters\DataSetConverterTests.cs" />
     <Compile Include="Converters\CustomCreationConverterTests.cs" />
     <Compile Include="Converters\ObjectIdConverterTests.cs" />
     <Compile Include="Converters\StringEnumConverterTests.cs" />
+    <Compile Include="Converters\VersionConverterTests.cs" />
+    <Compile Include="Documentation\ConvertingJsonAndXmlTests.cs" />
+    <Compile Include="Documentation\ReadingAndWritingJsonTests.cs" />
+    <Compile Include="Documentation\LinqToJsonTests.cs" />
+    <Compile Include="Documentation\SerializationTests.cs" />
     <Compile Include="FileSystemEntityModel.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -114,13 +141,16 @@
     <Compile Include="LinqToSql\Person.cs" />
     <Compile Include="Linq\ComponentModel\BindingTests.cs" />
     <Compile Include="Linq\ComponentModel\JPropertyDescriptorTests.cs" />
-    <Compile Include="Linq\ComponentModel\JTypeDescriptionProviderTests.cs" />
-    <Compile Include="Linq\ComponentModel\JTypeDescriptorTests.cs" />
+    <Compile Include="Linq\DynamicTests.cs" />
     <Compile Include="Linq\JPathTests.cs" />
     <Compile Include="Linq\JRawTests.cs" />
     <Compile Include="Serialization\ConstructorHandlingTests.cs" />
     <Compile Include="Serialization\ContractResolverTests.cs" />
     <Compile Include="Serialization\DefaultValueHandlingTests.cs" />
+    <Compile Include="Serialization\DynamicTests.cs" />
+    <Compile Include="Serialization\ReferenceLoopHandlingTests.cs" />
+    <Compile Include="Serialization\WebApiIntegrationTests.cs" />
+    <Compile Include="Serialization\JsonPropertyCollectionTests.cs" />
     <Compile Include="Serialization\NullValueHandlingTests.cs" />
     <Compile Include="TestObjects\Bar.cs" />
     <Compile Include="TestObjects\Car.cs" />
@@ -131,6 +161,9 @@
     <Compile Include="TestObjects\ContentSubClass.cs" />
     <Compile Include="TestObjects\Foo.cs" />
     <Compile Include="TestObjects\HolderClass.cs" />
+    <Compile Include="TestObjects\IPrivateImplementationA.cs" />
+    <Compile Include="TestObjects\IPrivateImplementationB.cs" />
+    <Compile Include="TestObjects\IPrivateOverriddenImplementation.cs" />
     <Compile Include="TestObjects\ListOfIds.cs" />
     <Compile Include="TestObjects\Movie.cs" />
     <Compile Include="TestObjects\PersonError.cs" />
@@ -161,6 +194,12 @@
     <Compile Include="TestObjects\LogEntry.cs" />
     <Compile Include="TestObjects\NonRequest.cs" />
     <Compile Include="TestObjects\ObjectArrayPropertyTest.cs" />
+    <Compile Include="TestObjects\PrivateImplementationAClass.cs" />
+    <Compile Include="TestObjects\PrivateImplementationBClass.cs" />
+    <Compile Include="TestObjects\PublicParametizedConstructorRequiringConverterTestClass.cs" />
+    <Compile Include="TestObjects\PublicParametizedConstructorTestClass.cs" />
+    <Compile Include="TestObjects\PublicParametizedConstructorWithNonPropertyParameterTestClass.cs" />
+    <Compile Include="TestObjects\PublicParametizedConstructorWithPropertyNameConflict.cs" />
     <Compile Include="TestObjects\SearchResult.cs" />
     <Compile Include="TestObjects\StructTest.cs" />
     <Compile Include="TestObjects\WagePerson.cs" />
@@ -280,6 +319,26 @@
     <Content Include="bunny_pancake.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="PoisonText.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,14 +1,41 @@
-﻿#if !SILVERLIGHT && !PocketPC
+﻿#region License
+// Copyright (c) 2007 James Newton-King
+//
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+//
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+#endregion
+
+#if !(SILVERLIGHT || NETFX_CORE || PORTABLE)
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Resources;
-using System.Text;
-using System.Threading;
 using System.Globalization;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
 
 namespace Newtonsoft.Json.Utilities
 {
@@ -53,10 +80,12 @@ namespace Newtonsoft.Json.Utilities
 
     private static byte[] GetStrongKey()
     {
-      using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Newtonsoft.Json.Dynamic.snk"))
+      const string name = "Newtonsoft.Json.Dynamic.snk";
+
+      using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name))
       {
         if (stream == null)
-          throw new MissingManifestResourceException("Should have a Newtonsoft.Json.Dynamic.snk as an embedded resource.");
+          throw new MissingManifestResourceException("Should have " + name + " as an embedded resource.");
 
         int length = (int)stream.Length;
         byte[] buffer = new byte[length];
@@ -72,8 +101,16 @@ namespace Newtonsoft.Json.Utilities
 
       if (wrapperType == null)
       {
-        wrapperType = GenerateWrapperType(interfaceType, realObjectType);
-        _wrapperDictionary.SetType(interfaceType, realObjectType, wrapperType);
+        lock (_lock)
+        {
+          wrapperType = _wrapperDictionary.GetType(interfaceType, realObjectType);
+
+          if (wrapperType == null)
+          {
+            wrapperType = GenerateWrapperType(interfaceType, realObjectType);
+            _wrapperDictionary.SetType(interfaceType, realObjectType, wrapperType);
+          }
+        }
       }
 
       return wrapperType;
@@ -98,7 +135,7 @@ namespace Newtonsoft.Json.Utilities
 
       WrapperMethodBuilder wrapperMethod = new WrapperMethodBuilder(underlyingType, wrapperBuilder);
 
-      foreach (MethodInfo method in interfaceType.AllMethods())
+      foreach (MethodInfo method in interfaceType.GetAllMethods())
       {
         wrapperMethod.Generate(method);
       }
@@ -221,58 +258,6 @@ namespace Newtonsoft.Json.Utilities
         _wrapperTypes[key] = wrapperType;
       else
         _wrapperTypes.Add(key, wrapperType);
-    }
-  }
-
-  internal static class TypeExtensions
-  {
-    public static MethodInfo GetGenericMethod(this Type type, string name, params Type[] parameterTypes)
-    {
-      var methods = type.GetMethods().Where(method => method.Name == name);
-
-      foreach (var method in methods)
-      {
-        if (method.HasParameters(parameterTypes))
-          return method;
-      }
-
-      return null;
-    }
-
-    public static bool HasParameters(this MethodInfo method, params Type[] parameterTypes)
-    {
-      var methodParameters = method.GetParameters().Select(parameter => parameter.ParameterType).ToArray();
-
-      if (methodParameters.Length != parameterTypes.Length)
-        return false;
-
-      for (int i = 0; i < methodParameters.Length; i++)
-        if (methodParameters[i].ToString() != parameterTypes[i].ToString())
-          return false;
-
-      return true;
-    }
-
-    public static IEnumerable<Type> AllInterfaces(this Type target)
-    {
-      foreach (var IF in target.GetInterfaces())
-      {
-        yield return IF;
-        foreach (var childIF in IF.AllInterfaces())
-        {
-          yield return childIF;
-        }
-      }
-    }
-
-    public static IEnumerable<MethodInfo> AllMethods(this Type target)
-    {
-      var allTypes = target.AllInterfaces().ToList();
-      allTypes.Add(target);
-
-      return from type in allTypes
-             from method in type.GetMethods()
-             select method;
     }
   }
 }

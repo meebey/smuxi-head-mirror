@@ -23,73 +23,90 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-#if !PocketPC && !SILVERLIGHT
+#if !(SILVERLIGHT || PORTABLE || NETFX_CORE)
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
+#if !NETFX_CORE
 using NUnit.Framework;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
+using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Utilities;
 using Newtonsoft.Json.Tests.TestObjects;
 using Newtonsoft.Json.Tests.Serialization;
 
 namespace Newtonsoft.Json.Tests.Utilities
 {
+  [TestFixture]
   public class DynamicReflectionDelegateFactoryTests : TestFixtureBase
   {
     [Test]
-    [ExpectedException(typeof(InvalidCastException), ExpectedMessage = "Unable to cast object of type 'Newtonsoft.Json.Tests.TestObjects.Person' to type 'Newtonsoft.Json.Tests.TestObjects.Movie'.")]
     public void CreateGetWithBadObjectTarget()
     {
-      Person p = new Person();
-      p.Name = "Hi";
+      ExceptionAssert.Throws<InvalidCastException>("Unable to cast object of type 'Newtonsoft.Json.Tests.TestObjects.Person' to type 'Newtonsoft.Json.Tests.TestObjects.Movie'.",
+      () =>
+      {
+        Person p = new Person();
+        p.Name = "Hi";
 
-      Func<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateGet<object>(typeof(Movie).GetProperty("Name"));
+        Func<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateGet<object>(typeof(Movie).GetProperty("Name"));
 
-      setter(p);
+        setter(p);
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(InvalidCastException), ExpectedMessage = "Unable to cast object of type 'Newtonsoft.Json.Tests.TestObjects.Person' to type 'Newtonsoft.Json.Tests.TestObjects.Movie'.")]
     public void CreateSetWithBadObjectTarget()
     {
-      Person p = new Person();
-      Movie m = new Movie();
+      ExceptionAssert.Throws<InvalidCastException>("Unable to cast object of type 'Newtonsoft.Json.Tests.TestObjects.Person' to type 'Newtonsoft.Json.Tests.TestObjects.Movie'.",
+      () =>
+      {
+        Person p = new Person();
+        Movie m = new Movie();
 
-      Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(Movie).GetProperty("Name"));
+        Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(Movie).GetProperty("Name"));
 
-      setter(m, "Hi");
+        setter(m, "Hi");
 
-      Assert.AreEqual(m.Name, "Hi");
+        Assert.AreEqual(m.Name, "Hi");
 
-      setter(p, "Hi");
+        setter(p, "Hi");
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(InvalidCastException), ExpectedMessage = "Specified cast is not valid.")]
     public void CreateSetWithBadTarget()
     {
-      object structTest = new StructTest();
+      ExceptionAssert.Throws<InvalidCastException>("Specified cast is not valid.",
+      () =>
+      {
+        object structTest = new StructTest();
 
-      Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(StructTest).GetProperty("StringProperty"));
+        Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(StructTest).GetProperty("StringProperty"));
 
-      setter(structTest, "Hi");
+        setter(structTest, "Hi");
 
-      Assert.AreEqual("Hi", ((StructTest)structTest).StringProperty);
+        Assert.AreEqual("Hi", ((StructTest)structTest).StringProperty);
 
-      setter(new TimeSpan(), "Hi");
+        setter(new TimeSpan(), "Hi");
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(InvalidCastException), ExpectedMessage = "Unable to cast object of type 'System.Version' to type 'System.String'.")]
     public void CreateSetWithBadObjectValue()
     {
-      Movie m = new Movie();
+      ExceptionAssert.Throws<InvalidCastException>("Unable to cast object of type 'System.Version' to type 'System.String'.",
+      () =>
+      {
+        Movie m = new Movie();
 
-      Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(Movie).GetProperty("Name"));
+        Action<object, object> setter = DynamicReflectionDelegateFactory.Instance.CreateSet<object>(typeof(Movie).GetProperty("Name"));
 
-      setter(m, new Version());
+        setter(m, new Version("1.1.1.1"));
+      });
     }
 
     [Test]
@@ -107,6 +124,42 @@ namespace Newtonsoft.Json.Tests.Utilities
       JsonSerializerTest.DictionaryKey key = (JsonSerializerTest.DictionaryKey) result;
       Assert.AreEqual("First!", key.Value);
     }
+
+    //[Test]
+    //public void sdfsdf()
+    //{
+    //  string name = "MyAssembly";
+    //  string filename = name + ".dll";
+
+    //  AssemblyName s = new AssemblyName(name);
+
+    //  AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(s, AssemblyBuilderAccess.RunAndSave);
+    //  ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(filename, filename);
+    //  TypeBuilder typeBuilder = moduleBuilder.DefineType("MyType", TypeAttributes.Class, typeof(object));
+    //  MethodBuilder methodBuilder = typeBuilder.DefineMethod("TestSet", MethodAttributes.Public | MethodAttributes.Static, typeof(void), new[] { typeof(object), typeof(object) });
+
+    //  DynamicReflectionDelegateFactory.GenerateCreateSetFieldIL(typeof(ClassWithGuid).GetField("GuidField"), methodBuilder.GetILGenerator());
+    //  typeBuilder.CreateType();
+    //  assemblyBuilder.Save(filename);
+    //}
+
+    //[Test]
+    //public void sdfsdf1()
+    //{
+    //  string name = "MyAssembly1";
+    //  string filename = name + ".dll";
+
+    //  AssemblyName s = new AssemblyName(name);
+
+    //  AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(s, AssemblyBuilderAccess.RunAndSave);
+    //  ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(filename, filename);
+    //  TypeBuilder typeBuilder = moduleBuilder.DefineType("MyType", TypeAttributes.Class, typeof(object));
+    //  MethodBuilder methodBuilder = typeBuilder.DefineMethod("TestSet", MethodAttributes.Public | MethodAttributes.Static, typeof(void), new[] { typeof(object), typeof(object) });
+
+    //  DynamicReflectionDelegateFactory.GenerateCreateSetPropertyIL(typeof(Car).GetProperty("Model"), methodBuilder.GetILGenerator());
+    //  typeBuilder.CreateType();
+    //  assemblyBuilder.Save(filename);
+    //}
   }
 }
 #endif

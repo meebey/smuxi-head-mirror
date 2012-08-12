@@ -25,17 +25,28 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Globalization;
+#if !NETFX_CORE
 using NUnit.Framework;
-using Newtonsoft.Json.Linq;
-using System.Xml;
-using System.IO;
+#else
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using TestFixture = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestClassAttribute;
+using Test = Microsoft.VisualStudio.TestPlatform.UnitTestFramework.TestMethodAttribute;
+#endif
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Tests.Serialization;
 using Newtonsoft.Json.Tests.TestObjects;
+#if NET20
+using Newtonsoft.Json.Utilities.LinqBridge;
+#else
+using System.Linq;
+#endif
+using System.IO;
 
 namespace Newtonsoft.Json.Tests.Linq
 {
+  [TestFixture]
   public class LinqToJsonTest : TestFixtureBase
   {
     [Test]
@@ -285,9 +296,9 @@ keyword such as type of business.""
   1264118400000
 )", o.Property("Establised").Value.ToString());
       Assert.AreEqual(@"""Width"": 1.1", o.Property("Width").ToString());
-      Assert.AreEqual(@"1.1", o.Property("Width").Value.ToString());
+      Assert.AreEqual(@"1.1", ((JValue)o.Property("Width").Value).ToString(CultureInfo.InvariantCulture));
       Assert.AreEqual(@"""Open"": false", o.Property("Open").ToString());
-      Assert.AreEqual(@"false", o.Property("Open").Value.ToString());
+      Assert.AreEqual(@"False", o.Property("Open").Value.ToString());
 
       json = @"[null,undefined]";
 
@@ -296,8 +307,8 @@ keyword such as type of business.""
   null,
   undefined
 ]", a.ToString());
-      Assert.AreEqual(@"null", a.Children().ElementAt(0).ToString());
-      Assert.AreEqual(@"undefined", a.Children().ElementAt(1).ToString());
+      Assert.AreEqual(@"", a.Children().ElementAt(0).ToString());
+      Assert.AreEqual(@"", a.Children().ElementAt(1).ToString());
     }
 
     [Test]
@@ -347,13 +358,13 @@ keyword such as type of business.""
     ""Test3"": ""Test3Value"",
     ""Test4"": null
   },
-  ""\/Date(971136000000)\/"",
+  ""2000-10-10T00:00:00Z"",
   55,
   [
     ""1"",
     2,
     3.0,
-    ""\/Date(-62030076711000)\/""
+    ""0004-05-06T07:08:09Z""
   ],
   new ConstructorName(
     ""param1"",
@@ -511,7 +522,7 @@ keyword such as type of business.""
       Assert.AreEqual(null, o["purple"]);
       Assert.AreEqual(null, o.Value<string>("purple"));
 
-      Assert.IsInstanceOfType(typeof(JArray), o["channel"]["item"]);
+      CustomAssert.IsInstanceOfType(typeof(JArray), o["channel"]["item"]);
 
       Assert.AreEqual(2, o["channel"]["item"].Children()["title"].Count());
       Assert.AreEqual(0, o["channel"]["item"].Children()["monkey"].Count());
@@ -522,27 +533,36 @@ keyword such as type of business.""
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = "Accessed JObject values with invalid key value: 0. Object property name expected.")]
     public void JObjectIntIndex()
     {
-      JObject o = new JObject();
-      Assert.AreEqual(null, o[0]);
+      ExceptionAssert.Throws<ArgumentException>("Accessed JObject values with invalid key value: 0. Object property name expected.",
+      () =>
+      {
+        JObject o = new JObject();
+        Assert.AreEqual(null, o[0]);
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = @"Accessed JArray values with invalid key value: ""purple"". Array position index expected.")]
     public void JArrayStringIndex()
     {
-      JArray a = new JArray();
-      Assert.AreEqual(null, a["purple"]);
+      ExceptionAssert.Throws<ArgumentException>(@"Accessed JArray values with invalid key value: ""purple"". Array position index expected.",
+      () =>
+      {
+        JArray a = new JArray();
+        Assert.AreEqual(null, a["purple"]);
+      });
     }
 
     [Test]
-    [ExpectedException(typeof(ArgumentException), ExpectedMessage = @"Accessed JConstructor values with invalid key value: ""purple"". Argument position index expected.")]
     public void JConstructorStringIndex()
     {
-      JConstructor c = new JConstructor("ConstructorValue");
-      Assert.AreEqual(null, c["purple"]);
+      ExceptionAssert.Throws<ArgumentException>(@"Accessed JConstructor values with invalid key value: ""purple"". Argument position index expected.",
+      () =>
+      {
+        JConstructor c = new JConstructor("ConstructorValue");
+        Assert.AreEqual(null, c["purple"]);
+      });
     }
 
 #if !PocketPC && !NET20
@@ -626,13 +646,13 @@ keyword such as type of business.""
       });
 
       Console.WriteLine(o.ToString());
-      Assert.IsInstanceOfType(typeof(JObject), o);
-      Assert.IsInstanceOfType(typeof(JObject), o["channel"]);
+      CustomAssert.IsInstanceOfType(typeof(JObject), o);
+      CustomAssert.IsInstanceOfType(typeof(JObject), o["channel"]);
       Assert.AreEqual("James Newton-King", (string)o["channel"]["title"]);
       Assert.AreEqual(2, o["channel"]["item"].Children().Count());
 
       JArray a = JArray.FromObject(new List<int>() { 0, 1, 2, 3, 4 });
-      Assert.IsInstanceOfType(typeof(JArray), a);
+      CustomAssert.IsInstanceOfType(typeof(JArray), a);
       Assert.AreEqual(5, a.Count());
     }
 
@@ -663,13 +683,13 @@ keyword such as type of business.""
       });
 
       Console.WriteLine(o.ToString());
-      Assert.IsInstanceOfType(typeof(JObject), o);
-      Assert.IsInstanceOfType(typeof(JObject), o["channel"]);
+      CustomAssert.IsInstanceOfType(typeof(JObject), o);
+      CustomAssert.IsInstanceOfType(typeof(JObject), o["channel"]);
       Assert.AreEqual("James Newton-King", (string)o["channel"]["title"]);
       Assert.AreEqual(2, o["channel"]["item"].Children().Count());
 
       JArray a = JArray.FromObject(new List<int>() { 0, 1, 2, 3, 4 });
-      Assert.IsInstanceOfType(typeof(JArray), a);
+      CustomAssert.IsInstanceOfType(typeof(JArray), a);
       Assert.AreEqual(5, a.Count());
     }
 
@@ -697,6 +717,21 @@ keyword such as type of business.""
 
       Assert.AreEqual(new DateTime(2000, 10, 15, 5, 5, 5, DateTimeKind.Utc), d);
     }
+
+#if !(NET20 || NET35 || SILVERLIGHT || PORTABLE)
+    [Test]
+    public void CovariantIJEnumerable()
+    {
+      IEnumerable<JObject> o = new[]
+        {
+          JObject.FromObject(new {First = 1, Second = 2}),
+          JObject.FromObject(new {First = 1, Second = 2})
+        };
+
+      IJEnumerable<JToken> values = o.Properties();
+      Assert.AreEqual(4, values.Count());
+    }
+#endif
 
     [Test]
     public void ChildrenExtension()
@@ -765,6 +800,69 @@ keyword such as type of business.""
           "LINQ to JSON beta"
         },
         o.Children()["item"].Children()["title"].Values<string>().ToArray());
+    }
+
+    [Test]
+    public void UriGuidTimeSpanTestClassEmptyTest()
+    {
+      UriGuidTimeSpanTestClass c1 = new UriGuidTimeSpanTestClass();
+      JObject o = JObject.FromObject(c1);
+
+      Assert.AreEqual(@"{
+  ""Guid"": ""00000000-0000-0000-0000-000000000000"",
+  ""NullableGuid"": null,
+  ""TimeSpan"": ""00:00:00"",
+  ""NullableTimeSpan"": null,
+  ""Uri"": null
+}", o.ToString());
+
+      UriGuidTimeSpanTestClass c2 = o.ToObject<UriGuidTimeSpanTestClass>();
+      Assert.AreEqual(c1.Guid, c2.Guid);
+      Assert.AreEqual(c1.NullableGuid, c2.NullableGuid);
+      Assert.AreEqual(c1.TimeSpan, c2.TimeSpan);
+      Assert.AreEqual(c1.NullableTimeSpan, c2.NullableTimeSpan);
+      Assert.AreEqual(c1.Uri, c2.Uri);
+    }
+
+    [Test]
+    public void UriGuidTimeSpanTestClassValuesTest()
+    {
+      UriGuidTimeSpanTestClass c1 = new UriGuidTimeSpanTestClass
+      {
+        Guid = new Guid("1924129C-F7E0-40F3-9607-9939C531395A"),
+        NullableGuid = new Guid("9E9F3ADF-E017-4F72-91E0-617EBE85967D"),
+        TimeSpan = TimeSpan.FromDays(1),
+        NullableTimeSpan = TimeSpan.FromHours(1),
+        Uri = new Uri("http://testuri.com")
+      };
+      JObject o = JObject.FromObject(c1);
+
+      Assert.AreEqual(@"{
+  ""Guid"": ""1924129c-f7e0-40f3-9607-9939c531395a"",
+  ""NullableGuid"": ""9e9f3adf-e017-4f72-91e0-617ebe85967d"",
+  ""TimeSpan"": ""1.00:00:00"",
+  ""NullableTimeSpan"": ""01:00:00"",
+  ""Uri"": ""http://testuri.com/""
+}", o.ToString());
+
+      UriGuidTimeSpanTestClass c2 = o.ToObject<UriGuidTimeSpanTestClass>();
+      Assert.AreEqual(c1.Guid, c2.Guid);
+      Assert.AreEqual(c1.NullableGuid, c2.NullableGuid);
+      Assert.AreEqual(c1.TimeSpan, c2.TimeSpan);
+      Assert.AreEqual(c1.NullableTimeSpan, c2.NullableTimeSpan);
+      Assert.AreEqual(c1.Uri, c2.Uri);
+    }
+
+    [Test]
+    public void ParseWithPrecendingComments()
+    {
+      string json = @"/* blah */ {'hi':'hi!'}";
+      JObject o = JObject.Parse(json);
+      Assert.AreEqual("hi!", (string)o["hi"]);
+
+      json = @"/* blah */ ['hi!']";
+      JArray a = JArray.Parse(json);
+      Assert.AreEqual("hi!", (string)a[0]);
     }
   }
 }
