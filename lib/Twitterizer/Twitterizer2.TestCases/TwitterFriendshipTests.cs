@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Twitterizer;
+﻿using Twitterizer;
 using NUnit.Framework;
 
 namespace Twitterizer2.TestCases
@@ -22,7 +18,7 @@ namespace Twitterizer2.TestCases
             TwitterRelationship friendship = TwitterFriendship.Show(tokens, "rickydev").ResponseObject;
 
             // If it exists, delete it.
-            if (friendship.Target.IsFollowing != null && friendship.Target.IsFollowing.Value)
+            if (friendship.Target.Following)
             {
                 DeleteFriendship(tokens, friendship);
             }
@@ -52,7 +48,7 @@ namespace Twitterizer2.TestCases
         [Test]
         public static void ReradusTest()
         {
-            OAuthTokens tokens = Configuration.GetTokens();
+            //OAuthTokens tokens = Configuration.GetTokens();
 
             FollowersOptions options = new FollowersOptions();
             //options.ScreenName = _Screenname;

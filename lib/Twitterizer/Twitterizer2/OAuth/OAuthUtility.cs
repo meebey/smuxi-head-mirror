@@ -75,8 +75,7 @@ namespace Twitterizer
             WebRequestBuilder builder = new WebRequestBuilder(
                 new Uri("https://api.twitter.com/oauth/request_token"),
                 HTTPVerb.POST,
-                new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret },
-				"");
+                new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret });
 
             if (!string.IsNullOrEmpty(callbackAddress))
             {
@@ -154,8 +153,7 @@ namespace Twitterizer
             WebRequestBuilder builder = new WebRequestBuilder(
                 new Uri("https://api.twitter.com/oauth/request_token"),
                 HTTPVerb.POST,
-                new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret },
-				"") { Proxy = proxy };
+                new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret }) { Proxy = proxy };
 
             if (!string.IsNullOrEmpty(callbackAddress))
             {
@@ -217,8 +215,7 @@ namespace Twitterizer
             WebRequestBuilder builder = new WebRequestBuilder(
                 new Uri("https://api.twitter.com/oauth/access_token"),
                 HTTPVerb.GET,
-				new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret },
-				"");
+				new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret });
 
             if (!string.IsNullOrEmpty(verifier))
             {
@@ -280,8 +277,7 @@ namespace Twitterizer
             WebRequestBuilder builder = new WebRequestBuilder(
                 new Uri("https://api.twitter.com/oauth/access_token"),
                 HTTPVerb.GET,
-				new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret },
-				"");
+				new OAuthTokens { ConsumerKey = consumerKey, ConsumerSecret = consumerSecret });
 
             builder.Proxy = proxy;
 
@@ -349,39 +345,7 @@ namespace Twitterizer
             return new Uri(parameters.ToString());
         }
 
-        #if !LITE && !SILVERLIGHT
-        /// <summary>
-        /// Gets the access token during callback.
-        /// </summary>
-        /// <param name="consumerKey">The consumer key.</param>
-        /// <param name="consumerSecret">The consumer secret.</param>
-        /// <returns>
-        /// Access tokens returned by the Twitter API
-        /// </returns>
-        public static OAuthTokenResponse GetAccessTokenDuringCallback(string consumerKey, string consumerSecret)
-        {
-            HttpContext context = HttpContext.Current;
-            if (context == null || context.Request == null)
-            {
-                throw new ApplicationException("Could not located the HTTP context. GetAccessTokenDuringCallback can only be used in ASP.NET applications.");
-            }
-
-            string requestToken = context.Request.QueryString["oauth_token"];
-            string verifier = context.Request.QueryString["oauth_verifier"];
-
-            if (string.IsNullOrEmpty(requestToken))
-            {
-                throw new ApplicationException("Could not locate the request token.");
-            }
-
-            if (string.IsNullOrEmpty(verifier))
-            {
-                throw new ApplicationException("Could not locate the verifier value.");
-            }
-
-            return GetAccessToken(consumerKey, consumerSecret, requestToken, verifier);
-        }
-
+#if !LITE && !SILVERLIGHT
         /// <summary>
         /// Adds the OAuth Echo header to the supplied web request.
         /// </summary>
@@ -392,8 +356,7 @@ namespace Twitterizer
             WebRequestBuilder builder = new WebRequestBuilder(
                 new Uri("https://api.twitter.com/1/account/verify_credentials.json"), 
                 HTTPVerb.POST,
-				tokens,
-				"");
+				tokens);
 
             builder.PrepareRequest();
 

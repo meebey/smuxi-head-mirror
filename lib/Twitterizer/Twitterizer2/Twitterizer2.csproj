@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -11,6 +11,7 @@
     <RootNamespace>Twitterizer</RootNamespace>
     <AssemblyName>Twitterizer2</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>Twitterizer2.snk</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -31,26 +32,28 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\twitterizer\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\Debug\Twitterizer2\Full\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Twitterizer2.XML</DocumentationFile>
+    <DocumentationFile>..\Debug\Twitterizer2\Full\Twitterizer2.XML</DocumentationFile>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Release\Twitterizer2\</OutputPath>
+    <OutputPath>..\Release\net40\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\Release\Twitterizer2.XML</DocumentationFile>
+    <DocumentationFile>..\Release\net40\Twitterizer2.XML</DocumentationFile>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Mono-Debug|AnyCPU' ">
@@ -62,8 +65,6 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <WarningLevel>4</WarningLevel>
-    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Mono-Release|AnyCPU' ">
     <OutputPath>bin\Mono-Release\</OutputPath>
@@ -75,7 +76,6 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'CCNET|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -86,8 +86,6 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <WarningLevel>4</WarningLevel>
-    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -96,7 +94,6 @@
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Configuration" />
   </ItemGroup>
@@ -106,6 +103,7 @@
     </Compile>
     <Compile Include="Attributes\RateLimitedAttribute.cs" />
     <Compile Include="Attributes\AuthorizedCommandAttribute.cs" />
+    <Compile Include="Core\TwitterDictionary.cs" />
     <Compile Include="Core\RequestResult.cs" />
     <Compile Include="Core\TwitterCursorPagedIdCollection.cs" />
     <Compile Include="Core\ITwitterObject.cs">
@@ -146,6 +144,10 @@
     <Compile Include="Methods\Favorites\ListFavoritesCommand.cs" />
     <Compile Include="Methods\Favorites\ListFavoritesOptions.cs" />
     <Compile Include="Methods\Favorites\TwitterFavorite.cs" />
+    <Compile Include="Methods\Friendship\UpdateFriendshipOptions.cs" />
+    <Compile Include="Methods\Friendship\UpdateFriendshipCommand.cs" />
+    <Compile Include="Methods\Friendship\NoRetweetIDsCommand.cs" />
+    <Compile Include="Methods\Friendship\TwitterRelationship.cs" />
     <Compile Include="Methods\Friendship\OutgoingFriendshipsCommand.cs" />
     <Compile Include="Methods\Friendship\OutgoingFriendshipsOptions.cs" />
     <Compile Include="Methods\Friendship\FriendsIdsCommand.cs" />
@@ -193,10 +195,17 @@
     <Compile Include="Methods\Spam\TwitterSpam.cs" />
     <Compile Include="Methods\Timeline\PagedTimelineCommand.cs" />
     <Compile Include="Methods\Timeline\UserTimelineOptions.cs" />
+    <Compile Include="Methods\Trends\AvailableTrendsCommand.cs" />
+    <Compile Include="Methods\Trends\AvailableTrendsOptions.cs" />
+    <Compile Include="Methods\Trends\WeeklyTrendsCommand.cs" />
+    <Compile Include="Methods\Trends\DailyTrendsCommand.cs" />
+    <Compile Include="Methods\Trends\TrendsOptions.cs" />
+    <Compile Include="Methods\Trends\TwitterTrendDictionary.cs" />
+    <Compile Include="Methods\Trends\TwitterTrendLocationPlaceType.cs" />
     <Compile Include="Methods\Trends\TwitterTrendLocation.cs" />
     <Compile Include="Methods\Trends\TwitterTrendLocationCollection.cs" />
     <Compile Include="Methods\Trends\TrendsCommand.cs" />
-    <Compile Include="Methods\Trends\TrendsOptions.cs" />
+    <Compile Include="Methods\Trends\LocalTrendsOptions.cs" />
     <Compile Include="Methods\Search\SearchCommand.cs" />
     <Compile Include="Methods\Timeline\TimelineOptions.cs" />
     <Compile Include="Methods\Timeline\TwitterTimeline.cs" />
@@ -271,7 +280,7 @@
     <Compile Include="Methods\List\TwitterList.cs" />
     <Compile Include="Methods\List\TwitterListCollection.cs" />
     <Compile Include="Methods\Account\TwitterRateLimitStatus.cs" />
-    <Compile Include="Methods\Friendship\TwitterRelationship.cs" />
+    <Compile Include="Methods\Friendship\TwitterRelationshipUser.cs" />
     <Compile Include="Methods\TwitterResultTypeEnum.cs" />
     <Compile Include="Methods\Search\TwitterSearch.cs" />
     <Compile Include="Methods\Search\TwitterSearchResult.cs" />
@@ -325,10 +334,6 @@
   <ItemGroup>
     <Content Include="..\GettingStarted.txt">
       <Link>GettingStarted.txt</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Json.NET.license.txt">
-      <Link>Json.NET.license.txt</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="..\Twitterizer2.license.txt">

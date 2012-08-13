@@ -5,14 +5,13 @@ using System.Text;
 using Newtonsoft.Json;
 using System.Runtime.Serialization;
 
-namespace Twitterizer2.Streaming
+namespace Twitterizer.Streaming
 {
     /// <summary>
     /// Describes the type of event that has occured on twitter
     /// </summary>
     public enum TwitterSteamEvent
     {
-        
         Unknown,
         
         /// <summary>
@@ -96,7 +95,13 @@ namespace Twitterizer2.Streaming
         /// <summary>
         /// The source users profile was updated.
         /// </summary>
-        [EnumMemberAttribute(Value = "user_updated")]
-        UserUpdated
+        [EnumMemberAttribute(Value = "user_update")]
+        UserUpdated,
+
+        /// <summary>
+        /// The source users profile was updated.
+        /// </summary>
+        [EnumMemberAttribute(Value = "access_revoked")]
+        AccessRevoked
     }
 }

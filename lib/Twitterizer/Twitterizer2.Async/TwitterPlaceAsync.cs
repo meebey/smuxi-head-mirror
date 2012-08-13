@@ -35,6 +35,9 @@ namespace Twitterizer
 {
     using System;
 
+    /// <summary>
+    /// An asynchronous wrapper around the <see cref="TwitterPlace"/> class.
+    /// </summary>
     public static class TwitterPlaceAsync
     {
         /// <summary>
@@ -59,18 +62,7 @@ namespace Twitterizer
                 latitude,
                 longitude,
                 options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterPlaceCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
+                result => AsyncUtility.ThreeParamsNoTokenCallback(result, timeout, methodToCall, function),
                 null);
         }
     }

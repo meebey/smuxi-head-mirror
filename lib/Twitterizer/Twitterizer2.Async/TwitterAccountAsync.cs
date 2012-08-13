@@ -1,9 +1,10 @@
 ﻿namespace Twitterizer
 {
     using System;
-#if SILVERLIGHT
-    using System.Threading;
-#endif
+
+    /// <summary>
+    /// An asynchronous wrapper around the <see cref="TwitterAccount"/> class.
+    /// </summary>
     public static class TwitterAccountAsync
     {
         /// <summary>
@@ -18,24 +19,7 @@
         /// </returns>
         public static IAsyncResult GetStatus(OAuthTokens tokens, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRateLimitStatus>> function)
         {
-            Func<OAuthTokens, OptionalProperties, TwitterResponse<TwitterRateLimitStatus>> methodToCall = TwitterRateLimitStatus.GetStatus;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result => 
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (TwitterizerException ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterRateLimitStatus>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterRateLimitStatus.GetStatus, function);
         }
 
 
@@ -50,31 +34,7 @@
         /// </returns>       
         public static IAsyncResult VerifyCredentials(OAuthTokens tokens, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-#if !SILVERLIGHT
-            Func<OAuthTokens, TwitterResponse<TwitterUser>> methodToCall = TwitterAccount.VerifyCredentials;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                result => 
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
-#else            
-            ThreadPool.QueueUserWorkItem((x) =>
-                {
-                    function(TwitterAccount.VerifyCredentials(tokens).ToAsyncResponse<TwitterUser>());  
-                });
-            return null;
-#endif
+            return AsyncUtility.ExecuteAsyncMethod(tokens, timeout, TwitterAccount.VerifyCredentials, function);
         }
 
         /// <summary>
@@ -89,32 +49,7 @@
         /// </returns>       
         public static IAsyncResult VerifyCredentials(OAuthTokens tokens, VerifyCredentialsOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-#if !SILVERLIGHT
-            Func<OAuthTokens, VerifyCredentialsOptions, TwitterResponse<TwitterUser>> methodToCall = TwitterAccount.VerifyCredentials;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
-#else            
-            ThreadPool.QueueUserWorkItem((x) =>
-                {
-                    function(TwitterAccount.VerifyCredentials(tokens, options).ToAsyncResponse<TwitterUser>());  
-                });
-            return null;
-#endif
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterAccount.VerifyCredentials, function);
         }
 
         /// <summary>
@@ -144,27 +79,8 @@
         /// <remarks></remarks>
         public static IAsyncResult UpdateProfileImage(OAuthTokens tokens, byte[] imageData, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function, OptionalProperties options = null)
         {
-            Func<OAuthTokens, byte[], OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterAccount.UpdateProfileImage;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                imageData,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, imageData, options, timeout, TwitterAccount.UpdateProfileImage, function);
         }
-
 
         /// <summary>
         /// Updates the authenticating user's profile background image. This method can also be used to enable or disable the profile background image.
@@ -191,25 +107,7 @@
         /// <returns></returns>
         public static IAsyncResult UpdateProfileBackgroundImage(OAuthTokens tokens, byte[] imageData, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function, UpdateProfileBackgroundImageOptions options = null)
         {
-            Func<OAuthTokens, byte[], UpdateProfileBackgroundImageOptions, TwitterResponse<TwitterUser>> methodToCall = TwitterAccount.UpdateProfileBackgroundImage;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                imageData,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, imageData, options, timeout, TwitterAccount.UpdateProfileBackgroundImage, function);
         }
     }
 }

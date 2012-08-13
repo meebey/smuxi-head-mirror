@@ -28,6 +28,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\twitterizer\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,11 +44,12 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\Release\Twitterizer2lite\</OutputPath>
+    <OutputPath>..\Release\Twitterizer2\ClientProfile\</OutputPath>
     <DefineConstants>TRACE;LITE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <DocumentationFile>..\Release\Twitterizer2\ClientProfile\Twitterizer2lite.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -55,8 +58,9 @@
     <AssemblyOriginatorKeyFile>..\Twitterizer2\Twitterizer2.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.4.0.2\lib\net40\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=4.0.5.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.4.0.5\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -115,6 +119,9 @@
     </Compile>
     <Compile Include="..\Twitterizer2\Core\TwitterCursorPagedIdCollection.cs">
       <Link>TwitterCursorPagedIdCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Core\TwitterDictionary.cs">
+      <Link>TwitterDictionary.cs</Link>
     </Compile>
     <Compile Include="..\Twitterizer2\Core\TwitterIdCollection.cs">
       <Link>TwitterIdCollection.cs</Link>
@@ -257,6 +264,9 @@
     <Compile Include="..\Twitterizer2\Methods\Friendship\IncomingFriendshipsOptions.cs">
       <Link>IncomingFriendshipsOptions.cs</Link>
     </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Friendship\NoRetweetIDsCommand.cs">
+      <Link>NoRetweetIDsCommand.cs</Link>
+    </Compile>
     <Compile Include="..\Twitterizer2\Methods\Friendship\OutgoingFriendshipsCommand.cs">
       <Link>OutgoingFriendshipsCommand.cs</Link>
     </Compile>
@@ -271,6 +281,15 @@
     </Compile>
     <Compile Include="..\Twitterizer2\Methods\Friendship\TwitterRelationship.cs">
       <Link>TwitterRelationship.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Friendship\TwitterRelationshipUser.cs">
+      <Link>TwitterRelationshipUser.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Friendship\UpdateFriendshipCommand.cs">
+      <Link>UpdateFriendshipCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Friendship\UpdateFriendshipOptions.cs">
+      <Link>UpdateFriendshipOptions.cs</Link>
     </Compile>
     <Compile Include="..\Twitterizer2\Methods\Friendship\UserIdCollection.cs">
       <Link>UserIdCollection.cs</Link>
@@ -413,6 +432,18 @@
     <Compile Include="..\Twitterizer2\Methods\Timeline\UserTimelineOptions.cs">
       <Link>UserTimelineOptions.cs</Link>
     </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\AvailableTrendsCommand.cs">
+      <Link>AvailableTrendsCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\AvailableTrendsOptions.cs">
+      <Link>AvailableTrendsOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\DailyTrendsCommand.cs">
+      <Link>DailyTrendsCommand.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\LocalTrendsOptions.cs">
+      <Link>LocalTrendsOptions.cs</Link>
+    </Compile>
     <Compile Include="..\Twitterizer2\Methods\Trends\TrendsCommand.cs">
       <Link>TrendsCommand.cs</Link>
     </Compile>
@@ -425,11 +456,20 @@
     <Compile Include="..\Twitterizer2\Methods\Trends\TwitterTrendCollection.cs">
       <Link>TwitterTrendCollection.cs</Link>
     </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\TwitterTrendDictionary.cs">
+      <Link>TwitterTrendDictionary.cs</Link>
+    </Compile>
     <Compile Include="..\Twitterizer2\Methods\Trends\TwitterTrendLocation.cs">
       <Link>TwitterTrendLocation.cs</Link>
     </Compile>
     <Compile Include="..\Twitterizer2\Methods\Trends\TwitterTrendLocationCollection.cs">
       <Link>TwitterTrendLocationCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\TwitterTrendLocationPlaceType.cs">
+      <Link>TwitterTrendLocationPlaceType.cs</Link>
+    </Compile>
+    <Compile Include="..\Twitterizer2\Methods\Trends\WeeklyTrendsCommand.cs">
+      <Link>WeeklyTrendsCommand.cs</Link>
     </Compile>
     <Compile Include="..\Twitterizer2\Methods\Tweets\DeleteStatusCommand.cs">
       <Link>DeleteStatusCommand.cs</Link>
@@ -591,12 +631,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="..\Twitterizer2\Twitterizer2.snk">
       <Link>Twitterizer2.snk</Link>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

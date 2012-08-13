@@ -42,9 +42,6 @@ namespace Twitterizer.Core
 #if !SILVERLIGHT
     using System.Web;
 #endif
-#if !LITE && !SILVERLIGHT
-    using System.Web.Caching;
-#endif
     using Twitterizer;
 
     /// <summary>
@@ -66,7 +63,7 @@ namespace Twitterizer.Core
         /// <param name="optionalProperties">The optional properties.</param>
         protected TwitterCommand(HTTPVerb method, string endPoint, OAuthTokens tokens, OptionalProperties optionalProperties)
         {
-			this.RequestParameters = new Dictionary<string, object>();
+            this.RequestParameters = new Dictionary<string, object>();
             this.Verb = method;
             this.Tokens = tokens;
             this.OptionalProperties = optionalProperties ?? new OptionalProperties();
@@ -78,19 +75,19 @@ namespace Twitterizer.Core
         /// Gets or sets the optional properties.
         /// </summary>
         /// <value>The optional properties.</value>
-        public OptionalProperties OptionalProperties { get; set; }
+        protected OptionalProperties OptionalProperties { get; set; }
 
         /// <summary>
         /// Gets or sets the API method URI.
         /// </summary>
         /// <value>The URI for the API method.</value>
-        public Uri Uri { get; set; }
+        private Uri Uri { get; set; }
 
         /// <summary>
         /// Gets or sets the method.
         /// </summary>
         /// <value>The method.</value>
-        public HTTPVerb Verb { get; set; }
+        private HTTPVerb Verb { get; set; }
 
         /// <summary>
         /// Gets or sets the request parameters.
@@ -102,7 +99,7 @@ namespace Twitterizer.Core
         /// Gets or sets the serialization delegate.
         /// </summary>
         /// <value>The serialization delegate.</value>
-        public SerializationHelper<T>.DeserializationHandler DeserializationHandler { get; set; }
+        protected SerializationHelper<T>.DeserializationHandler DeserializationHandler { get; set; }
 
         /// <summary>
         /// Gets the request tokens.
@@ -119,7 +116,7 @@ namespace Twitterizer.Core
         /// Gets or sets a value indicating whether this <see cref="TwitterCommand&lt;T&gt;"/> is multipart.
         /// </summary>
         /// <value><c>true</c> if multipart; otherwise, <c>false</c>.</value>
-        public bool Multipart { get; set; }
+        protected bool Multipart { get; set; }
 
         /// <summary>
         /// Executes the command.
@@ -137,7 +134,7 @@ namespace Twitterizer.Core
             // Loop through all of the custom attributes assigned to the command class
             foreach (Attribute attribute in this.GetType().GetCustomAttributes(false))
             {
-                if (attribute.GetType() == typeof(AuthorizedCommandAttribute))
+                if (attribute is AuthorizedCommandAttribute)
                 {
                     if (this.Tokens == null)
                     {
@@ -152,7 +149,7 @@ namespace Twitterizer.Core
                         throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Token values cannot be null when executing the \"{0}\" command.", this.GetType()));
                     }
                 }
-                else if (attribute.GetType() == typeof(RateLimitedAttribute))
+                else if (attribute is RateLimitedAttribute)
                 {
                     // Get the rate limiting status
                     if (TwitterRateLimitStatus.GetStatus(this.Tokens).ResponseObject.RemainingHits == 0)
@@ -163,42 +160,13 @@ namespace Twitterizer.Core
 
             }
 
-#if !LITE && !SILVERLIGHT
-            // Variables and objects needed for caching
-            StringBuilder cacheKeyBuilder = new StringBuilder(this.Uri.AbsoluteUri);
-            if (this.Tokens != null)
-            {
-                cacheKeyBuilder.AppendFormat("|{0}|{1}", this.Tokens.ConsumerKey, this.Tokens.ConsumerKey);
-            }
-
-            Cache cache = HttpRuntime.Cache;
-#endif
-
             // Prepare the query parameters
-			Dictionary<string, object> queryParameters = new Dictionary<string, object>();
-			foreach (KeyValuePair<string, object> item in this.RequestParameters)
+            Dictionary<string, object> queryParameters = new Dictionary<string, object>();
+            foreach (KeyValuePair<string, object> item in this.RequestParameters)
             {
                 queryParameters.Add(item.Key, item.Value);
-#if !LITE && !SILVERLIGHT
-                cacheKeyBuilder.AppendFormat("|{0}={1}", item.Key, item.Value);
-#endif
             }
 
-#if !LITE && !SILVERLIGHT
-            // Lookup the cached item and return it
-            if (this.Verb == HTTPVerb.GET && this.OptionalProperties.CacheOutput && cache[cacheKeyBuilder.ToString()] != null)
-            {
-                if (cache[cacheKeyBuilder.ToString()] is T)
-                {
-                    return new TwitterResponse<T>()
-                               {
-                                   ResponseObject = (T)cache[cacheKeyBuilder.ToString()],
-                                   ResponseCached = true
-                               };
-                }
-            }
-            
-#endif
             // Declare the variable to be returned
             twitterResponse.ResponseObject = default(T);
             twitterResponse.RequestUrl = this.Uri.AbsoluteUri;
@@ -208,7 +176,7 @@ namespace Twitterizer.Core
 
             try
             {
-				WebRequestBuilder requestBuilder = new WebRequestBuilder(this.Uri, this.Verb, this.Tokens, "") { Multipart = this.Multipart };
+				WebRequestBuilder requestBuilder = new WebRequestBuilder(this.Uri, this.Verb, this.Tokens) { Multipart = this.Multipart };
 
 #if !SILVERLIGHT
                 if (this.OptionalProperties != null)
@@ -222,16 +190,28 @@ namespace Twitterizer.Core
 
                 HttpWebResponse response = requestBuilder.ExecuteRequest();
 
+                if (response == null)
+                {
+                    twitterResponse.Result = RequestResult.Unknown;
+                    return twitterResponse;
+                }
+
                 responseData = ConversionUtility.ReadStream(response.GetResponseStream());
                 twitterResponse.Content = Encoding.UTF8.GetString(responseData, 0, responseData.Length);
 
                 twitterResponse.RequestUrl = requestBuilder.RequestUri.AbsoluteUri;
 
+#if !SILVERLIGHT
                 // Parse the rate limiting HTTP Headers
                 rateLimiting = ParseRateLimitHeaders(response.Headers);
 
                 // Parse Access Level
                 accessLevel = ParseAccessLevel(response.Headers);
+#else
+                rateLimiting = null;
+                accessLevel = AccessLevel.Unknown;
+
+#endif
 
                 // Lookup the status code and set the status accordingly
                 SetStatusCode(twitterResponse, response.StatusCode, rateLimiting);
@@ -266,15 +246,21 @@ namespace Twitterizer.Core
                 responseData = ConversionUtility.ReadStream(exceptionResponse.GetResponseStream());
                 twitterResponse.Content = Encoding.UTF8.GetString(responseData, 0, responseData.Length);
 
+#if !SILVERLIGHT
                 rateLimiting = ParseRateLimitHeaders(exceptionResponse.Headers);
 
                 // Parse Access Level
                 accessLevel = ParseAccessLevel(exceptionResponse.Headers);
+#else
+                rateLimiting = null;
+                accessLevel = AccessLevel.Unknown;
+#endif
 
                 // Try to read the error message, if there is one.
                 try
                 {
-                    twitterResponse.ErrorMessage = SerializationHelper<TwitterErrorDetails>.Deserialize(responseData).ErrorMessage;
+                    TwitterErrorDetails errorDetails = SerializationHelper<TwitterErrorDetails>.Deserialize(responseData);
+                    twitterResponse.ErrorMessage = errorDetails.ErrorMessage;
                 }
                 catch (Exception)
                 {
@@ -304,10 +290,12 @@ namespace Twitterizer.Core
                 twitterResponse.Result = RequestResult.Unknown;
                 return twitterResponse;
             }
-
-#if !LITE && !SILVERLIGHT
-            this.AddResultToCache(cacheKeyBuilder, cache, twitterResponse.ResponseObject);
-#endif
+            catch (Newtonsoft.Json.JsonSerializationException)
+            {
+                twitterResponse.ErrorMessage = "Unable to parse JSON";
+                twitterResponse.Result = RequestResult.Unknown;
+                return twitterResponse;
+            }
 
             // Pass the current oauth tokens into the new object, so method calls from there will keep the authentication.
             twitterResponse.Tokens = this.Tokens;
@@ -330,7 +318,11 @@ namespace Twitterizer.Core
                     break;
 
                 case HttpStatusCode.BadRequest:
-                    twitterResponse.Result = rateLimiting.Remaining == 0 ? RequestResult.RateLimited : RequestResult.BadRequest;
+                    twitterResponse.Result = (rateLimiting != null && rateLimiting.Remaining == 0) ? RequestResult.RateLimited : RequestResult.BadRequest;
+                    break;
+
+                case (HttpStatusCode)420: //Rate Limited from Search/Trends API
+                    twitterResponse.Result = RequestResult.RateLimited;
                     break;
 
                 case HttpStatusCode.Unauthorized:
@@ -343,6 +335,14 @@ namespace Twitterizer.Core
 
                 case HttpStatusCode.ProxyAuthenticationRequired:
                     twitterResponse.Result = RequestResult.ProxyAuthenticationRequired;
+                    break;
+
+                case HttpStatusCode.RequestTimeout:
+                    twitterResponse.Result = RequestResult.TwitterIsOverloaded;
+                    break;
+
+                case HttpStatusCode.Forbidden:
+                    twitterResponse.Result = RequestResult.Unauthorized;
                     break;
 
                 default:
@@ -387,6 +387,11 @@ namespace Twitterizer.Core
                 rateLimiting.ResetDate = DateTime.SpecifyKind(new DateTime(1970, 1, 1, 0, 0, 0, 0)
                     .AddSeconds(double.Parse(responseHeaders["X-RateLimit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
             }
+            else if(!string.IsNullOrEmpty(responseHeaders["Retry-After"]))
+            {
+                rateLimiting.ResetDate = DateTime.UtcNow.AddSeconds(Convert.ToInt32(responseHeaders["Retry-After"]));
+            }
+            
             return rateLimiting;
         }
 
@@ -408,38 +413,10 @@ namespace Twitterizer.Core
                     case "read-write-privatemessages":
                     case "read-write-directmessages":
                         return AccessLevel.ReadWriteDirectMessage;
-                    default:
-                        break;
                 }
                 return AccessLevel.Unknown;
             }
-            else
-                return AccessLevel.Unavailable;
+            return AccessLevel.Unavailable;
         }
-
-
-#if !LITE && !SILVERLIGHT
-        /// <summary>
-        /// Adds the result to cache.
-        /// </summary>
-        /// <param name="cacheKeyBuilder">The cache key builder.</param>
-        /// <param name="cache">The cache.</param>
-        /// <param name="resultObject">The result object.</param>
-        private void AddResultToCache(StringBuilder cacheKeyBuilder, Cache cache, T resultObject)
-        {
-            // If caching is enabled, add the result to the cache.
-            if (this.Verb == HTTPVerb.GET && this.OptionalProperties.CacheOutput)
-            {
-                cache.Add(
-                    cacheKeyBuilder.ToString(),
-                    resultObject,
-                    null,
-                    DateTime.Now.Add(this.OptionalProperties.CacheTimespan),
-                    Cache.NoSlidingExpiration,
-                    CacheItemPriority.Normal,
-                    null);
-            }
-        }
-#endif
-        }
+    }
 }

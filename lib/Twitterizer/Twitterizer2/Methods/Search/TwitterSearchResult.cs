@@ -62,7 +62,14 @@ namespace Twitterizer
         public DateTime CreatedDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of from user screen.
+        /// Gets or sets the display name of the from user.
+        /// </summary>
+        /// <value>The name of from user screen.</value>
+        [JsonProperty(PropertyName = "from_user_name")]
+        public string FromUserDisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the screen name of the from user.
         /// </summary>
         /// <value>The name of from user screen.</value>
         [JsonProperty(PropertyName = "from_user")]
@@ -73,10 +80,17 @@ namespace Twitterizer
         /// </summary>
         /// <value>From user id.</value>
         [JsonProperty(PropertyName = "from_user_id")]
-        public long? FromUserId { get; set; }
+        public decimal? FromUserId { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of to user screen.
+        /// Gets or sets the display name of the to user.
+        /// </summary>
+        /// <value>The name of to user screen.</value>
+        [JsonProperty(PropertyName = "to_user_name")]
+        public string ToUserDisplayName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the screen name of to user.
         /// </summary>
         /// <value>The name of to user screen.</value>
         [JsonProperty(PropertyName = "to_user")]
@@ -87,7 +101,7 @@ namespace Twitterizer
         /// </summary>
         /// <value>To user id.</value>
         [JsonProperty(PropertyName = "to_user_id")]
-        public long? ToUserId { get; set; }
+        public decimal? ToUserId { get; set; }
 
         /// <summary>
         /// Gets or sets the status text.
@@ -97,11 +111,21 @@ namespace Twitterizer
         public string Text { get; set; }
 
         /// <summary>
+        /// Returns the status text with HTML links to users, urls, and hashtags.
+        /// </summary>
+        /// <remarks>This will only work if you specify <see cref="SearchOptions.IncludeEntities"/> = <c>true</c> when executing the search.</remarks>
+        /// <returns></returns>
+        public string LinkifiedText()
+        {
+            return TwitterStatus.LinkifiedText(Entities, Text);
+        }
+
+        /// <summary>
         /// Gets or sets the status id.
         /// </summary>
         /// <value>The status id.</value>
         [JsonProperty(PropertyName = "id")]
-        public long Id { get; set; }
+        public decimal Id { get; set; }
 
         /// <summary>
         /// Gets or sets the source.
@@ -130,6 +154,13 @@ namespace Twitterizer
         /// <value>The location.</value>
         [JsonProperty(PropertyName = "location")]
         public string Location { get; set; }
+
+        /// <summary>
+        /// Gets or sets the status id the status is in reply to.
+        /// </summary>
+        /// <value>The status id.</value>
+        [DataMember, JsonProperty(PropertyName = "in_reply_to_status_id")]
+        public decimal? InReplyToStatusId { get; set; }
 
         /// <summary>
         /// Gets or sets the entities.

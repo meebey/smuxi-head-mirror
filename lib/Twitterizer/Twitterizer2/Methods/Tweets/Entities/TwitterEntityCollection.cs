@@ -32,6 +32,8 @@
 // <summary>The twitter entity collection class</summary>
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace Twitterizer.Entities
 {
     using System;
@@ -90,7 +92,10 @@ using System.Linq.Expressions;
                 TwitterEntity entity = null;
                 try
                 {
-                    while (reader.Read() && reader.Depth >= startDepth)
+                    if (reader.TokenType == JsonToken.StartArray)
+                        reader.Read();
+
+                    while (reader.Read() && reader.Depth > startDepth)
                     {
                         if (reader.TokenType == JsonToken.PropertyName && reader.Depth == startDepth + 1)
                         {
@@ -104,28 +109,37 @@ using System.Linq.Expressions;
                                 if (reader.TokenType == JsonToken.StartObject)
                                     entity = new TwitterUrlEntity();
 
-                                ReadFieldValue(reader, "url", entity, () => ((TwitterUrlEntity)entity).Url);
-                                ReadFieldValue(reader, "display_url", entity, () => ((TwitterUrlEntity)entity).DisplayUrl);
-                                ReadFieldValue(reader, "expanded_url", entity, () => ((TwitterUrlEntity)entity).ExpandedUrl);
-
+                                TwitterUrlEntity tue = entity as TwitterUrlEntity;
+                                if (tue != null)
+                                {
+                                    ReadFieldValue(reader, "url", entity, () => tue.Url);
+                                    ReadFieldValue(reader, "display_url", entity, () => tue.DisplayUrl);
+                                    ReadFieldValue(reader, "expanded_url", entity, () => tue.ExpandedUrl);
+                                }
                                 break;
 
                             case "user_mentions":
                                 if (reader.TokenType == JsonToken.StartObject)
                                     entity = new TwitterMentionEntity();
 
-                                ReadFieldValue(reader, "screen_name", entity, () => ((TwitterMentionEntity)entity).ScreenName);
-                                ReadFieldValue(reader, "name", entity, () => ((TwitterMentionEntity)entity).Name);
-                                ReadFieldValue(reader, "id", entity, () => ((TwitterMentionEntity)entity).UserId);
-
+                                TwitterMentionEntity tme = entity as TwitterMentionEntity;
+                                if (tme != null)
+                                {
+                                    ReadFieldValue(reader, "screen_name", entity, () => tme.ScreenName);
+                                    ReadFieldValue(reader, "name", entity, () => tme.Name);
+                                    ReadFieldValue(reader, "id", entity, () => tme.UserId);
+                                }
                                 break;
 
                             case "hashtags":
                                 if (reader.TokenType == JsonToken.StartObject)
                                     entity = new TwitterHashTagEntity();
 
-                                ReadFieldValue(reader, "text", entity, () => ((TwitterHashTagEntity)entity).Text);
-
+                                TwitterHashTagEntity the = entity as TwitterHashTagEntity;
+                                if (the != null)
+                                {
+                                    ReadFieldValue(reader, "text", entity, () => the.Text);
+                                }
                                 break;
 
                             case "media":
@@ -133,9 +147,6 @@ using System.Linq.Expressions;
                                 reader.Read();
                                 entity = parseMediaEntity(reader);
 
-                                break;
-
-                            default:
                                 break;
                         }
 
@@ -283,7 +294,7 @@ using System.Linq.Expressions;
             /// <param name="entities">The entities.</param>
             /// <param name="entityName">Name of the entity.</param>
             /// <param name="detailsAction">The details action.</param>
-            private static void WriteEntity<T>(JsonWriter writer, System.Collections.Generic.IList<T> entities, string entityName, Action<JsonWriter, T> detailsAction)
+            private static void WriteEntity<T>(JsonWriter writer, IEnumerable<T> entities, string entityName, Action<JsonWriter, T> detailsAction)
                 where T : TwitterEntity
             {
                 // Note to people reading this code: Extra brackets exist to group code by json hierarchy. You're welcome.
@@ -352,7 +363,7 @@ using System.Linq.Expressions;
                                 break;
 
                             case "sizes":
-                                entity.Sizes = new System.Collections.Generic.List<TwitterMediaEntity.MediaSize>();
+                                entity.Sizes = new List<TwitterMediaEntity.MediaSize>();
                                 break;
 
                             case "large":
@@ -470,30 +481,31 @@ using System.Linq.Expressions;
                 }
             }
 
-            private bool ReadFieldValue<TSource, TProperty>(JsonReader reader, string fieldName, TSource source, Expression<Func<TProperty>> property)
+            private void ReadFieldValue<TSource, TProperty>(JsonReader reader, string fieldName, TSource source, Expression<Func<TProperty>> property)
+                where TSource : class
             {
                 try
                 {
                     if (reader == null || source == null)
                     {
-                        return false;
+                        return /*false*/;
                     }
 
                     var expr = (MemberExpression)property.Body;
                     var prop = (PropertyInfo)expr.Member;
 
                     TProperty value = (TProperty)prop.GetValue(source, null);
-                    if (ReadFieldValue<TProperty>(reader, fieldName, ref value))
+                    if (ReadFieldValue(reader, fieldName, ref value))
                     {
                         prop.SetValue(source, value, null);
-                        return true;
+                        return /*true*/;
                     }
 
-                    return false;
+                    return /*false*/;
                 }
                 catch
                 {
-                    return false;
+                    return /*false*/;
                 }
             }
         }

@@ -31,11 +31,14 @@
 // <author>David Golden</author>
 // <summary>The TwitterFriendshipAsync class</summary>
 //-----------------------------------------------------------------------
-using System;
-using Twitterizer;
 
 namespace Twitterizer
 {
+    using System;
+
+    /// <summary>
+    /// An asynchronous wrapper around the <see cref="TwitterFriendship"/> class.
+    /// </summary>
     public static class TwitterFriendshipAsync
     {
         /// <summary>
@@ -48,25 +51,7 @@ namespace Twitterizer
         /// <param name="function">The callback function.</param>        
         public static IAsyncResult Create(OAuthTokens tokens, string userName, CreateFriendshipOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, CreateFriendshipOptions, TwitterResponse<TwitterUser>> methodToCall = TwitterFriendship.Create;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userName,
-                options,
-                result => 
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userName, options, timeout, TwitterFriendship.Create, function);
         }
 
         /// <summary>
@@ -79,25 +64,7 @@ namespace Twitterizer
         /// <param name="function">The callback function.</param>
         public static IAsyncResult Delete(OAuthTokens tokens, string userName, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterFriendship.Delete;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userName,
-                options,
-                result => 
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userName, options, timeout, TwitterFriendship.Delete, function);
         }
 
         /// <summary>
@@ -110,25 +77,7 @@ namespace Twitterizer
         /// <param name="function">The callback function.</param>
         public static IAsyncResult Show(OAuthTokens tokens, string targetUserName, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRelationship>> function)
         {
-            Func<OAuthTokens, string, OptionalProperties, TwitterResponse<TwitterRelationship>> methodToCall = TwitterFriendship.Show;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                targetUserName,
-                options,
-                result => 
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterRelationship>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, targetUserName, options, timeout, TwitterFriendship.Show, function);
         }
 
         /// <summary>
@@ -141,24 +90,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult FriendsIds(OAuthTokens tokens, UsersIdsOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
         {
-            Func<OAuthTokens, UsersIdsOptions, TwitterResponse<UserIdCollection>> methodToCall = TwitterFriendship.FriendsIds;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<UserIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterFriendship.FriendsIds, function);
         }
 
         /// <summary>
@@ -170,24 +102,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult FriendsIds(OAuthTokens tokens, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
         {
-            Func<OAuthTokens, UsersIdsOptions, TwitterResponse<UserIdCollection>> methodToCall = TwitterFriendship.FriendsIds;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                null,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<UserIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, timeout, TwitterFriendship.FriendsIds, function);
         }
 
         /// <summary>
@@ -200,24 +115,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult FollowersIds(OAuthTokens tokens, UsersIdsOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
         {
-            Func<OAuthTokens, UsersIdsOptions, TwitterResponse<UserIdCollection>> methodToCall = TwitterFriendship.FollowersIds;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<UserIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterFriendship.FollowersIds, function);
         }
 
         /// <summary>
@@ -229,24 +127,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult FollowersIds(OAuthTokens tokens, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
         {
-            Func<OAuthTokens, UsersIdsOptions, TwitterResponse<UserIdCollection>> methodToCall = TwitterFriendship.FollowersIds;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                null,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<UserIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, timeout, TwitterFriendship.FollowersIds, function);
         }
 
         /// <summary>
@@ -254,28 +135,12 @@ namespace Twitterizer
         /// </summary>
         /// <param name="tokens">The tokens.</param>
         /// <param name="timeout">The timeout.</param>
+        /// <param name="options">The options.</param>
         /// <param name="function">The function.</param>
         /// <returns></returns>
         public static IAsyncResult IncomingRequests(OAuthTokens tokens, IncomingFriendshipsOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterCursorPagedIdCollection>> function)
         {
-            Func<OAuthTokens, IncomingFriendshipsOptions, TwitterResponse<TwitterCursorPagedIdCollection>> methodToCall = TwitterFriendship.IncomingRequests;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterCursorPagedIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterFriendship.IncomingRequests, function);
         }
 
         /// <summary>
@@ -283,28 +148,91 @@ namespace Twitterizer
         /// </summary>
         /// <param name="tokens">The tokens.</param>
         /// <param name="timeout">The timeout.</param>
+        /// <param name="options">The options.</param>
         /// <param name="function">The function.</param>
         /// <returns></returns>
         public static IAsyncResult OutgoingRequests(OAuthTokens tokens, OutgoingFriendshipsOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterCursorPagedIdCollection>> function)
         {
-            Func<OAuthTokens, OutgoingFriendshipsOptions, TwitterResponse<TwitterCursorPagedIdCollection>> methodToCall = TwitterFriendship.OutgoingRequests;
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterFriendship.OutgoingRequests, function);
+        }
 
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterCursorPagedIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+        /// <summary>
+        /// Returns the numeric IDs for every user the specified user is does not want to see retweets from.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult NoRetweetIDs(OAuthTokens tokens, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterFriendship.NoRetweetIDs, function);
+        }
+
+        /// <summary>
+        /// Returns the numeric IDs for every user the specified user is does not want to see retweets from.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>       
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult NoRetweetIDs(OAuthTokens tokens, TimeSpan timeout, Action<TwitterAsyncResponse<UserIdCollection>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, timeout, TwitterFriendship.NoRetweetIDs, function);
+        }
+
+        /// <summary>
+        /// Updates the friendship.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>
+        /// <param name="userid">The userid.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult Update(OAuthTokens tokens, decimal userid, UpdateFriendshipOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRelationship>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userid, options, timeout, TwitterFriendship.Update, function);
+        }
+
+        /// <summary>
+        /// Returns the numeric IDs for every user the specified user is does not want to see retweets from.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>
+        /// <param name="userid">The userid.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult Update(OAuthTokens tokens, decimal userid, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRelationship>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userid, timeout, TwitterFriendship.Update, function);
+        }
+
+        /// <summary>
+        /// Updates the friendship.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>
+        /// <param name="screenname">The screenname.</param>
+        /// <param name="options">The options.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult Update(OAuthTokens tokens, string screenname, UpdateFriendshipOptions options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRelationship>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenname, options, timeout, TwitterFriendship.Update, function);
+        }
+
+        /// <summary>
+        /// Returns the numeric IDs for every user the specified user is does not want to see retweets from.
+        /// </summary>
+        /// <param name="tokens">The tokens.</param>
+        /// <param name="screenname">The screenname.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <param name="function">The function.</param>
+        /// <returns></returns>
+        public static IAsyncResult Update(OAuthTokens tokens, string screenname, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterRelationship>> function)
+        {
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenname, timeout, TwitterFriendship.Update, function);
         }
     }
 }

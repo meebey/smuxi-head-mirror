@@ -50,50 +50,18 @@ namespace Twitterizer
     public class TwitterRelationship : TwitterObject
     {
         /// <summary>
-        /// The relationship source
-        /// </summary>
-        private TwitterUser source;
-
-        /// <summary>
-        /// The relationship target
-        /// </summary>
-        private TwitterUser target;
-
-        /// <summary>
         /// Gets or sets the source.
         /// </summary>
         /// <value>The source.</value>
         [JsonProperty(PropertyName = "source")]
-        public TwitterUser Source
-        {
-            get
-            {
-                return this.source;
-            }
-
-            set
-            {
-                this.source = value;
-            }
-        }
+        public TwitterRelationshipUser Source { get; set; }
 
         /// <summary>
         /// Gets or sets the target.
         /// </summary>
         /// <value>The target.</value>
         [JsonProperty(PropertyName = "target")]
-        public TwitterUser Target
-        {
-            get
-            {
-                return this.target;
-            }
-
-            set
-            {
-                this.target = value;
-            }
-        }
+        public TwitterRelationshipUser Target { get; set; }
 
         /// <summary>
         /// Gets or sets the relationship.

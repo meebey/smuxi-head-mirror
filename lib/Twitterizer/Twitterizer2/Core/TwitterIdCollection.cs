@@ -32,15 +32,20 @@
 // <summary>The twitter id collection class.</summary>
 //-----------------------------------------------------------------------
 
+
 namespace Twitterizer
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using Twitterizer.Core;
+    using Core;
 
     /// <summary>
     /// Holds a collection of ID values
     /// </summary>
+#if !SILVERLIGHT
+    [Serializable]
+#endif
     public class TwitterIdCollection : Collection<decimal>, ITwitterObject
     {
         /// <summary>
@@ -56,7 +61,7 @@ namespace Twitterizer
         /// <remarks></remarks>
         public TwitterIdCollection(List<decimal> items)
         {
-            items.ForEach((a) => { this.Add(a); });
+            items.ForEach(Add);
         }
 
         /// <summary>
@@ -66,7 +71,7 @@ namespace Twitterizer
         public Dictionary<string, string> Annotations { get; set; }
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="System.Collections.Generic.List&lt;System.Decimal&gt;"/> to <see cref="Twitterizer.TwitterIdCollection"/>.
+        /// Performs an explicit conversion from <see cref="List{T}"/> to <see cref="Twitterizer.TwitterIdCollection"/>.
         /// </summary>
         /// <param name="collection">The collection.</param>
         /// <returns>The result of the conversion.</returns>

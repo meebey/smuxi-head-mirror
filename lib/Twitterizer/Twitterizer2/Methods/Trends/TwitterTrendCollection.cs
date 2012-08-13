@@ -47,15 +47,24 @@ namespace Twitterizer
     [Serializable]
 #endif
     public class TwitterTrendCollection : Core.TwitterCollection<TwitterTrend>, ITwitterObject
-    {        
+    {
+        /// <summary>
+        /// Gets or sets the as of date.
+        /// </summary>
         [JsonProperty(PropertyName = "as_of")]
         [JsonConverter(typeof(TwitterizerDateConverter))]
         public DateTime AsOf { get; set; }
 
+        /// <summary>
+        /// Gets or sets the created at date.
+        /// </summary>
         [JsonProperty(PropertyName = "created_at")]
         [JsonConverter(typeof(TwitterizerDateConverter))]
         public DateTime CreatedAt { get; set; }
-        
+
+        /// <summary>
+        /// Gets or sets the location.
+        /// </summary>
         public TwitterTrendLocationCollection Locations { get; set; }
         
         /// <summary>
@@ -96,13 +105,12 @@ namespace Twitterizer
 
                 int initialDepth = reader.Depth;
 
-                while (reader.Read() && reader.Depth >= initialDepth)
+                while (reader.Read() && reader.Depth > initialDepth)
                 {
-                    if (reader.TokenType == JsonToken.PropertyName && reader.Depth == 2)
+                    if (reader.TokenType == JsonToken.PropertyName && reader.Depth == initialDepth + 2)
                     {
                         switch ((string)reader.Value)
                         {
-#if !SILVERLIGHT
                             //TODO these two datetime converters don't seem to convert.
                             case "as_of":
                                 reader.Read();
@@ -115,7 +123,6 @@ namespace Twitterizer
                                 var d = new TwitterizerDateConverter();
                                 result.CreatedAt = (DateTime)d.ReadJson(reader, typeof(DateTime), null, serializer);
                                 continue;
-#endif
                             case "locations":
                                 reader.Read();
                                 var e = new TwitterTrendLocationCollection.Converter();
@@ -123,7 +130,11 @@ namespace Twitterizer
                                 continue;
                         }
                     }
-                    if (reader.TokenType == JsonToken.StartObject && reader.Depth > 2)
+#if !SILVERLIGHT
+                    if (reader.TokenType == JsonToken.StartObject && reader.Depth > initialDepth + 1)
+#else
+                    if (reader.TokenType == JsonToken.StartObject && reader.Depth > initialDepth + 2)
+#endif
                         result.Add(new TwitterTrend());
 
                     if (reader.TokenType == JsonToken.PropertyName)

@@ -35,6 +35,9 @@
 using System;
 namespace Twitterizer
 {
+    /// <summary>
+    /// An asynchronous wrapper around the <see cref="TwitterBlock"/> class.
+    /// </summary>
     public static class TwitterBlockAsync
     {
         /// <summary>
@@ -48,25 +51,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Create(OAuthTokens tokens, decimal userId, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Create;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, options, timeout, TwitterBlock.Create, function);
         }
 
         /// <summary>
@@ -79,24 +64,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Create(OAuthTokens tokens, decimal userId, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Create;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, timeout, TwitterBlock.Create, function);
         }
 
         /// <summary>
@@ -110,25 +78,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Create(OAuthTokens tokens, string screenName, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Create;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, options, timeout, TwitterBlock.Create, function);
         }
 
         /// <summary>
@@ -141,24 +91,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Create(OAuthTokens tokens, string screenName, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Create;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, timeout, TwitterBlock.Create, function);
         }
 
         /// <summary>
@@ -172,25 +105,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Destroy(OAuthTokens tokens, decimal userId, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Destroy;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, options, timeout, TwitterBlock.Destroy, function);
         }
 
         /// <summary>
@@ -203,24 +118,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Destroy(OAuthTokens tokens, decimal userId, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Destroy;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, timeout, TwitterBlock.Destroy, function);
         }
 
         /// <summary>
@@ -234,25 +132,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Destroy(OAuthTokens tokens, string screenName, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Destroy;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, options, timeout, TwitterBlock.Destroy, function);
         }
 
         /// <summary>
@@ -265,24 +145,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Destroy(OAuthTokens tokens, string screenName, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Destroy;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, timeout, TwitterBlock.Destroy, function);
         }
 
         /// <summary>
@@ -296,25 +159,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Exists(OAuthTokens tokens, decimal userId, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Exists;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, options, timeout, TwitterBlock.Exists, function);
         }
 
         /// <summary>
@@ -327,24 +172,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Exists(OAuthTokens tokens, decimal userId, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, decimal, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Exists;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                userId,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, userId, timeout, TwitterBlock.Exists, function);
         }
 
         /// <summary>
@@ -358,25 +186,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Exists(OAuthTokens tokens, string screenName, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, OptionalProperties, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Exists;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, options, timeout, TwitterBlock.Exists, function);
         }
 
         /// <summary>
@@ -389,24 +199,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult Exists(OAuthTokens tokens, string screenName, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterUser>> function)
         {
-            Func<OAuthTokens, string, TwitterResponse<TwitterUser>> methodToCall = TwitterBlock.Exists;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                screenName,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterUser>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, screenName, timeout, TwitterBlock.Exists, function);
         }
 
         /// <summary>
@@ -419,24 +212,7 @@ namespace Twitterizer
         /// <returns></returns>
         public static IAsyncResult BlockingIds(OAuthTokens tokens, OptionalProperties options, TimeSpan timeout, Action<TwitterAsyncResponse<TwitterIdCollection>> function)
         {
-            Func<OAuthTokens, OptionalProperties, TwitterResponse<TwitterIdCollection>> methodToCall = TwitterBlock.BlockingIds;
-
-            return methodToCall.BeginInvoke(
-                tokens,
-                options,
-                result =>
-                {
-                    result.AsyncWaitHandle.WaitOne(timeout);
-                    try
-                    {
-                        function(methodToCall.EndInvoke(result).ToAsyncResponse());
-                    }
-                    catch (Exception ex)
-                    {
-                        function(new TwitterAsyncResponse<TwitterIdCollection>() { Result = RequestResult.Unknown, ExceptionThrown = ex });
-                    }
-                },
-                null);
+            return AsyncUtility.ExecuteAsyncMethod(tokens, options, timeout, TwitterBlock.BlockingIds, function);
         }
     }
 }
