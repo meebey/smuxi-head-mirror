@@ -863,7 +863,7 @@ namespace Meebey.SmartIrc4net
                 while (IsConnected &&
                        !IsConnectionError &&
                        _ReadThread.Queue.Count == 0) {
-                    Thread.Sleep(10);
+                    _ReadThread.QueuedEvent.WaitOne();
                 }
             }
 
@@ -905,6 +905,7 @@ namespace Meebey.SmartIrc4net
                 _WriteLine(data);
             } else {
                 ((Queue)_SendBuffer[priority]).Enqueue(data);
+                _WriteThread.QueuedEvent.Set();
             }
         }
 
@@ -921,8 +922,10 @@ namespace Meebey.SmartIrc4net
         {
             if (IsConnected) {
                 try {
-                    _Writer.Write(data + "\r\n");
-                    _Writer.Flush();
+                    lock (_Writer) {
+                        _Writer.Write(data + "\r\n");
+                        _Writer.Flush();
+                    }
                 } catch (IOException) {
 #if LOG4NET
                     Logger.Socket.Warn("sending data failed, connection lost");
@@ -1036,6 +1039,8 @@ namespace Meebey.SmartIrc4net
             private Thread         _Thread;
             private Queue          _Queue = Queue.Synchronized(new Queue());
 
+            public AutoResetEvent  QueuedEvent;
+
             public Queue Queue {
                 get {
                     return _Queue;
@@ -1049,6 +1054,7 @@ namespace Meebey.SmartIrc4net
             public ReadThread(IrcConnection connection)
             {
                 _Connection = connection;
+                QueuedEvent = new AutoResetEvent(false);
             }
 
             /// <summary>
@@ -1102,6 +1108,7 @@ namespace Meebey.SmartIrc4net
                         while (_Connection.IsConnected &&
                                ((data = _Connection._Reader.ReadLine()) != null)) {
                             _Queue.Enqueue(data);
+                            QueuedEvent.Set();
 #if LOG4NET
                             Logger.Socket.Debug("received: \""+data+"\"");
 #endif
@@ -1153,6 +1160,8 @@ namespace Meebey.SmartIrc4net
             private int            _BelowMediumThresholdCount = 1;
             private int            _BurstCount;
 
+            public AutoResetEvent QueuedEvent;
+
             /// <summary>
             /// 
             /// </summary>
@@ -1160,6 +1169,7 @@ namespace Meebey.SmartIrc4net
             public WriteThread(IrcConnection connection)
             {
                 _Connection = connection;
+                QueuedEvent = new AutoResetEvent(false);
             }
 
             /// <summary>
@@ -1201,8 +1211,12 @@ namespace Meebey.SmartIrc4net
                 try {
                     try {
                         while (_Connection.IsConnected) {
-                            _CheckBuffer();
-                            Thread.Sleep(_Connection._SendDelay);
+                            QueuedEvent.WaitOne();
+                            var isBufferEmpty = false;
+                            do {
+                                isBufferEmpty = _CheckBuffer() == 0;
+                                Thread.Sleep(_Connection._SendDelay);
+                            } while (!isBufferEmpty);
                         }
                     } catch (IOException e) {
 #if LOG4NET
@@ -1232,18 +1246,24 @@ namespace Meebey.SmartIrc4net
 
 #region WARNING: complex scheduler, don't even think about changing it!
             // WARNING: complex scheduler, don't even think about changing it!
-            private void _CheckBuffer()
+            private int _CheckBuffer()
             {
-                // only send data if we are succefully registered on the IRC network
-                if (!_Connection._IsRegistered) {
-                    return;
-                }
-
                 _HighCount        = ((Queue)_Connection._SendBuffer[Priority.High]).Count;
                 _AboveMediumCount = ((Queue)_Connection._SendBuffer[Priority.AboveMedium]).Count;
                 _MediumCount      = ((Queue)_Connection._SendBuffer[Priority.Medium]).Count;
                 _BelowMediumCount = ((Queue)_Connection._SendBuffer[Priority.BelowMedium]).Count;
                 _LowCount         = ((Queue)_Connection._SendBuffer[Priority.Low]).Count;
+
+                var msgCount = _HighCount +
+                               _AboveMediumCount +
+                               _MediumCount +
+                               _BelowMediumCount +
+                               _LowCount;
+
+                // only send data if we are succefully registered on the IRC network
+                if (!_Connection._IsRegistered) {
+                    return msgCount;
+                }
 
                 if (_CheckHighBuffer() &&
                     _CheckAboveMediumBuffer() &&
@@ -1261,6 +1281,8 @@ namespace Meebey.SmartIrc4net
                     _BurstCount++;
                     //_CheckBuffer();
                 }
+
+                return msgCount;
             }
 
             private bool _CheckHighBuffer()
@@ -1272,6 +1294,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Queue.Warn("Sending data was not sucessful, data is requeued!");
 #endif
                         ((Queue)_Connection._SendBuffer[Priority.High]).Enqueue(data);
+                        return false;
                     }
 
                     if (_HighCount > 1) {
@@ -1293,6 +1316,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Queue.Warn("Sending data was not sucessful, data is requeued!");
 #endif
                         ((Queue)_Connection._SendBuffer[Priority.AboveMedium]).Enqueue(data);
+                        return false;
                     }
                     _AboveMediumSentCount++;
 
@@ -1314,6 +1338,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Queue.Warn("Sending data was not sucessful, data is requeued!");
 #endif
                         ((Queue)_Connection._SendBuffer[Priority.Medium]).Enqueue(data);
+                        return false;
                     }
                     _MediumSentCount++;
 
@@ -1335,6 +1360,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Queue.Warn("Sending data was not sucessful, data is requeued!");
 #endif
                         ((Queue)_Connection._SendBuffer[Priority.BelowMedium]).Enqueue(data);
+                        return false;
                     }
                     _BelowMediumSentCount++;
 
@@ -1362,6 +1388,7 @@ namespace Meebey.SmartIrc4net
                         Logger.Queue.Warn("Sending data was not sucessful, data is requeued!");
 #endif
                         ((Queue)_Connection._SendBuffer[Priority.Low]).Enqueue(data);
+                        return false;
                     }
 
                     if (_LowCount > 1) {
@@ -1422,7 +1449,7 @@ namespace Meebey.SmartIrc4net
 #endif
                 try {
                     while (_Connection.IsConnected ) {
-                        Thread.Sleep(_Connection._IdleWorkerInterval);
+                        Thread.Sleep(_Connection._IdleWorkerInterval * 1000);
                         
                         // only send active pings if we are registered
                         if (!_Connection.IsRegistered) {
