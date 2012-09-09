@@ -56,14 +56,18 @@ namespace Smuxi.Frontend.Gnome
                 "Jakub Steiner <jimmac@ximian.com>",
                 "Rodney Dawes <dobey@novell.com>",
                 "Lapo Calamandrei <calamandrei@gmail.com>",
-                "Ahmed Abdellah <a3dman1@gmail.com>"
+                "Ahmed Abdellah <a3dman1@gmail.com>",
+                "Matthieu James <matthieu.james@gmail.com>"
             };
             TranslatorCredits = _("translator-credits");
             Logo = Frontend.LoadIcon(
                 Frontend.IconName, 256, "icon_256x256.png"
             );
-            Website = "http://www.smuxi.org/";
-            WebsiteLabel = _("Smuxi Website");
+            // HACK: shows "not implemented" error on OS X
+            if (!Frontend.IsMacOSX) {
+                Website = "http://www.smuxi.org/";
+                WebsiteLabel = _("Smuxi Website");
+            }
         }
         
         private static string _(string msg)

@@ -94,7 +94,9 @@ LIB_DIR = $(top_builddir)/lib
 BUILD_DIR = $(top_builddir)/bin/$(PROFILE)
 WIN32_LIB_DIR = $(LIB_DIR)/win32
 WIN32_BUILD_DIR = $(top_builddir)/bin-win32
+WIN32_ICON_THEME_DIR = $(top_srcdir)/images/Faenza-Smuxi
 OSX_LIB_DIR = $(LIB_DIR)/osx
+OSX_ICON_THEME_DIR = $(top_srcdir)/images/Faenza-Smuxi
 OSX_BUILD_DIR = $(top_builddir)/bin-osx
 OSX_APP_DIR = $(OSX_BUILD_DIR)/Smuxi.app
 OSX_CONTENTS_DIR = $(OSX_APP_DIR)/Contents
@@ -134,6 +136,7 @@ OSX_FILES = \
 	$(LIB_DIR)/Nini.dll \
 	$(LIB_DIR)/log4net.dll \
 	$(BUILD_DIR)/smuxi-frontend-gnome.exe \
+	$(BUILD_DIR)/smuxi-frontend-gnome.exe.config \
 	$(BUILD_DIR)/smuxi-frontend-gnome-irc.dll \
 	$(BUILD_DIR)/smuxi-server.exe \
 	$(BUILD_DIR)/smuxi-common.dll \
@@ -161,7 +164,11 @@ LINUX_STATIC_FILES = \
 	$(BUILD_DIR)/Newtonsoft.Json.dll
 		
 dist-win32:
-	./autogen.sh --without-indicate --without-notify --without-dbus \
+	if [ -x /usr/bin/dmcs ]; then \
+		COMPILER_OVERRIDE="MCS=/usr/bin/dmcs"; \
+		echo COMPILER_OVERRIDE="$$COMPILER_OVERRIDE"; \
+	fi; \
+	./autogen.sh $$COMPILER_OVERRIDE --without-indicate --without-notify --without-dbus \
 	  --with-db4o=included \
 	  --with-vendor-package-version="dist-win32"
 	$(MAKE)
@@ -172,14 +179,16 @@ dist-win32:
 	for PODIR in $(PODIRS); do \
 		$(MAKE) -C $$PODIR install itlocaledir=$(abs_top_builddir)/$(WIN32_BUILD_DIR)/locale; \
 	done
+	mkdir -p $(WIN32_BUILD_DIR)/icons
+	cp -r $(WIN32_ICON_THEME_DIR) $(WIN32_BUILD_DIR)/icons
 	makensis $(top_srcdir)/src/smuxi-win32.nsis
 
 dist-osx:
 	if [ -x /usr/bin/dmcs ]; then \
-		export MCS=/usr/bin/dmcs; \
-		echo MCS=$$MCS; \
-	fi
-	./autogen.sh --without-indicate --without-notify --without-dbus \
+		COMPILER_OVERRIDE="MCS=/usr/bin/dmcs"; \
+		echo COMPILER_OVERRIDE="$$COMPILER_OVERRIDE"; \
+	fi; \
+	./autogen.sh $$COMPILER_OVERRIDE --without-indicate --without-notify --without-dbus \
 	  --with-db4o=included \
 	  --with-vendor-package-version="dist-osx"
 	$(MAKE)
@@ -190,6 +199,8 @@ dist-osx:
 	for FILE in $(OSX_FILES); do \
 		cp $$FILE $(OSX_BINARIES_DIR); \
 	done
+	mkdir -p $(OSX_BINARIES_DIR)/icons
+	cp -r $(OSX_ICON_THEME_DIR) $(OSX_BINARIES_DIR)/icons
 	-rm smuxi-osx.zip
 	cd $(OSX_BUILD_DIR) && zip -r ../smuxi-osx.zip Smuxi.app
 

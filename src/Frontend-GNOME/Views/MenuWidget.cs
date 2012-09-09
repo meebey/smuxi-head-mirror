@@ -95,7 +95,6 @@ namespace Smuxi.Frontend.Gnome
             f_JoinChatAction.IconName = Gtk.Stock.Open;
             f_FindGroupChatAction.IconName = Gtk.Stock.Find;
             f_OpenLogAction.IconName = Gtk.Stock.Open;
-            f_OpenLogToolAction.IconName = Gtk.Stock.Open;
             f_CloseChatAction.IconName = Gtk.Stock.Close;
 
             // Engine
@@ -103,6 +102,8 @@ namespace Smuxi.Frontend.Gnome
             f_SwitchRemoteEngineAction.IconName = Gtk.Stock.Refresh;
 
             // Toolbar
+            f_ConnectToolAction.IconName = Gtk.Stock.Network;
+            f_OpenLogToolAction.IconName = Gtk.Stock.Open;
             f_FindGroupChatToolAction.IconName = Gtk.Stock.Find;
 
             f_MenuBar.ShowAll();
@@ -506,6 +507,17 @@ namespace Smuxi.Frontend.Gnome
 
             try {
                 MainWindow.IsFullscreen = !MainWindow.IsFullscreen;
+            } catch (Exception ex) {
+                Frontend.ShowException(Parent, ex);
+            }
+        }
+
+        protected void OnWebsiteActionActivated(object sender, EventArgs e)
+        {
+            Trace.Call(sender, e);
+
+            try {
+                Frontend.OpenLink(new Uri("http://www.smuxi.org/"));
             } catch (Exception ex) {
                 Frontend.ShowException(Parent, ex);
             }
