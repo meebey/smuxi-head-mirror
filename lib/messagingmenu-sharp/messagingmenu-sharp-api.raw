@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api>
+  <namespace name="MessagingMenu" library="messaging-menu">
+    <enum name="Status" cname="MessagingMenuStatus" type="enum">
+      <member cname="MESSAGING_MENU_STATUS_AVAILABLE" name="Available"/>
+      <member cname="MESSAGING_MENU_STATUS_AWAY" name="Away"/>
+      <member cname="MESSAGING_MENU_STATUS_BUSY" name="Busy"/>
+      <member cname="MESSAGING_MENU_STATUS_INVISIBLE" name="Invisible"/>
+      <member cname="MESSAGING_MENU_STATUS_OFFLINE" name="Offline"/>
+    </enum>
+    <object name="App" cname="MessagingMenuApp" parent="GObject" abstract="" opaque="true">
+      <method name="GetType" cname="messaging_menu_app_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="messaging_menu_app_new">
+        <parameters>
+          <parameter name="desktop_id" type="const-gchar*"/>
+        </parameters>
+      </constructor>
+      <method name="AppendSource" cname="messaging_menu_app_append_source">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="AppendSourceWithCount" cname="messaging_menu_app_append_source_with_count">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="count" type="guint"/>
+        </parameters>
+      </method>
+      <method name="AppendSourceWithString" cname="messaging_menu_app_append_source_with_string">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="str" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="AppendSourceWithTime" cname="messaging_menu_app_append_source_with_time">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="time" type="gint64"/>
+        </parameters>
+      </method>
+      <method name="DrawAttention" cname="messaging_menu_app_draw_attention">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="HasSource" cname="messaging_menu_app_has_source">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="InsertSource" cname="messaging_menu_app_insert_source">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="position" type="gint"/>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="InsertSourceWithCount" cname="messaging_menu_app_insert_source_with_count">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="position" type="gint"/>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="count" type="guint"/>
+        </parameters>
+      </method>
+      <method name="InsertSourceWithString" cname="messaging_menu_app_insert_source_with_string">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="position" type="gint"/>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="str" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="InsertSourceWithTime" cname="messaging_menu_app_insert_source_with_time">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="position" type="gint"/>
+          <parameter name="id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+          <parameter name="label" type="const-gchar*"/>
+          <parameter name="time" type="gint64"/>
+        </parameters>
+      </method>
+      <method name="Register" cname="messaging_menu_app_register">
+        <return-type type="void"/>
+      </method>
+      <method name="RemoveAttention" cname="messaging_menu_app_remove_attention">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="RemoveSource" cname="messaging_menu_app_remove_source">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="SetSourceCount" cname="messaging_menu_app_set_source_count">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+          <parameter name="count" type="guint"/>
+        </parameters>
+      </method>
+      <method name="SetSourceIcon" cname="messaging_menu_app_set_source_icon">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+          <parameter name="icon" type="GIcon*"/>
+        </parameters>
+      </method>
+      <method name="SetSourceLabel" cname="messaging_menu_app_set_source_label">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+          <parameter name="label" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="SetSourceString" cname="messaging_menu_app_set_source_string">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+          <parameter name="str" type="const-gchar*"/>
+        </parameters>
+      </method>
+      <method name="SetSourceTime" cname="messaging_menu_app_set_source_time">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="source_id" type="const-gchar*"/>
+          <parameter name="time" type="gint64"/>
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="messaging_menu_app_set_status">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="status" type="int"/>
+        </parameters>
+      </method>
+      <method name="Unregister" cname="messaging_menu_app_unregister">
+        <return-type type="void"/>
+      </method>
+      <property name="DesktopId" cname="desktop-id" type="gchar*" readable="true" writable="true"/>
+      <signal name="ActivateSource" cname="activate-source">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="app" type="MessagingMenuApp**"/>
+          <parameter name="source_id" type="const-gchar*"/>
+        </parameters>
+      </signal>
+      <signal name="StatusChanged" cname="status-changed">
+        <return-type type="void"/>
+        <parameters>
+          <parameter name="app" type="MessagingMenuApp**"/>
+          <parameter name="status" type="gint"/>
+        </parameters>
+      </signal>
+    </object>
+    <object name="Global" cname="MessagingMenuGlobal" opaque="true"/>
+  </namespace>
+</api>
