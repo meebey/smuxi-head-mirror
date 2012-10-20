@@ -628,7 +628,7 @@ namespace jabber.connection
         private void m_stream_OnAfterPresenceOut(object sender, Presence pres)
         {
             Presence p = (Presence)pres.CloneNode(true);
-            p.To = m_room;
+            p.To = RoomAndNick;
             m_manager.Write(p);
         }
 
