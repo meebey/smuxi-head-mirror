@@ -42,6 +42,23 @@ namespace Smuxi.Frontend.Gnome
             }
         }
 
+        public string ActiveNetwork {
+            get {
+                return f_NetworkComboBox.ActiveText;
+            }
+            set {
+                var store = (Gtk.ListStore) f_NetworkComboBox.Model;
+                var idx = 0;
+                foreach (object[] row in store) {
+                    if ((string) row[0] == value) {
+                        f_NetworkComboBox.Active = idx;
+                        break;
+                    }
+                    idx++;
+                }
+            }
+        }
+
         [DllImport("libgtk-win32-2.0-0.dll")]
         static extern void gtk_entry_set_icon_from_pixbuf(IntPtr entry, int pos, IntPtr pixbuf);
 
@@ -87,6 +104,8 @@ namespace Smuxi.Frontend.Gnome
             f_ChatEntry.Activated += delegate {
                 OnActivated(EventArgs.Empty);
             };
+            f_ChatEntry.KeyPressEvent += OnChatEntryKeyPressEvent;
+
             f_JoinButton.Clicked += delegate {
                 OnActivated(EventArgs.Empty);
             };
@@ -145,6 +164,27 @@ namespace Smuxi.Frontend.Gnome
         {
             if (Activated != null) {
                 Activated(this, e);
+            }
+        }
+
+        [GLib.ConnectBefore]
+        protected void OnChatEntryKeyPressEvent(object o, Gtk.KeyPressEventArgs e)
+        {
+            var key = e.Event.Key;
+            if ((e.Event.State & Gdk.ModifierType.ControlMask) != 0) {
+                switch (key) {
+                    case Gdk.Key.x:
+                    case Gdk.Key.X:
+                        // ctrl + x is pressed
+                        e.RetVal = true;
+                        if (f_NetworkComboBox.Active ==
+                            f_NetworkComboBox.Model.IterNChildren() - 1) {
+                            f_NetworkComboBox.Active = 0;
+                        } else {
+                            f_NetworkComboBox.Active++;
+                        }
+                        break;
+                }
             }
         }
 
