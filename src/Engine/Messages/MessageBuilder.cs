@@ -1,6 +1,7 @@
 // Smuxi - Smart MUltipleXed Irc
 // 
-// Copyright (c) 2010 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2010-2012 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2013 Oliver Schneider <mail@oli-obk.de>
 // 
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 // 
@@ -21,11 +22,17 @@
 using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.IO;
+using System.Xml;
+using System.Web;
 
 namespace Smuxi.Engine
 {
     public class MessageBuilder
     {
+#if LOG4NET
+        private static readonly log4net.ILog f_Logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+#endif
         MessageModel Message { get; set; }
         public bool NickColors { get; set; }
         public bool StripFormattings { get; set; }
@@ -487,6 +494,122 @@ namespace Smuxi.Engine
                 textMsg.ForegroundColor = null;
             }
             return;
+        }
+        
+        void ParseHtml(XmlNode node, TextMessagePartModel model)
+        {
+            TextMessagePartModel submodel;
+            string nodetype = node.Name.ToLower();
+            if (model is UrlMessagePartModel) {
+                submodel = new UrlMessagePartModel(model);
+            } else if (nodetype == "a") {
+                submodel = new UrlMessagePartModel(model);
+                (submodel as UrlMessagePartModel).Url = node.Attributes.GetNamedItem("href").Value;
+            } else {
+                submodel = new TextMessagePartModel(model);
+            }
+            switch (nodetype) {
+                case "b":
+                case "strong":
+                    submodel.Bold = true;
+                    break;
+                case "i":
+                case "em":
+                    submodel.Italic = true;
+                    break;
+                case "u":
+                    submodel.Underline = true;
+                    break;
+                default:
+                    break;
+            }
+            XmlNode style;
+            if (node.Attributes != null && (style = node.Attributes.GetNamedItem("style")) != null) {
+                // BUG: needs to cycle through styled delimited by ";"
+                var parts = style.InnerText.Split(':');
+                if (parts.Length == 2) {
+                    string type = parts[0];
+                    string value = parts[1].Trim();
+                    if (value.EndsWith(";")) {
+                        value = value.Substring(0, value.Length-1); // remove trailing semicolon
+                    }
+                    switch (type) {
+                        case "background-color":
+                        case "background":
+                            submodel.BackgroundColor = TextColor.Parse(value);
+                            break;
+                        case "color":
+                            submodel.ForegroundColor = TextColor.Parse(value);
+                            break;
+                        case "font-style":
+                            if (value == "normal") {
+                                submodel.Italic = false;
+                            } else if (value == "inherit") {
+                            } else {
+                                submodel.Italic = true;
+                            }
+                            break;
+                        case "font-weight":
+                            if (value == "normal") {
+                                submodel.Bold = false;
+                            } else if (value == "inherit") {
+                            } else {
+                                submodel.Bold = true;
+                            }
+                            break;
+                        case "text-decoration":
+                        {
+                            foreach (string val in value.Split(' ')) {
+                                if (val == "underline") {
+                                    submodel.Underline = true;
+                                }
+                            }
+                        }
+                            break;
+                        case "font-family":
+                        case "font-size":
+                        case "text-align":
+                        case "margin-left":
+                        case "margin-right":
+                        default:
+                            // ignore formatting
+                            break;
+                    }
+                }
+            }
+            if (node.HasChildNodes) {
+                foreach (XmlNode child in node.ChildNodes) {
+                    ParseHtml(child, submodel);
+                }
+            } else {
+                // final node
+                if (nodetype == "br") {
+                    AppendText("\n");
+                } else if (nodetype == "img") {
+                    AppendUrl(node.Attributes.GetNamedItem("src").Value, "[image placeholder - UNIMPLEMENTED]");
+                } else {
+                    model.Text = node.Value.Replace("\r", "").Replace("\n", "");
+                    model.Text = HttpUtility.HtmlDecode(model.Text);
+                    AppendText(model);
+                }
+            }
+        }
+
+        public virtual MessageBuilder AppendHtmlMessage(string html)
+        {
+            XmlDocument doc = new XmlDocument();
+            try {
+                // wrap in div to prevent messages beginning with text from failing "to be xml"
+                doc.Load(new StringReader("<html>"+html+"</html>"));
+            } catch (XmlException ex) {
+#if LOG4NET
+                f_Logger.Error("AppendHtmlMessage(): error parsing html: " + html, ex);
+#endif
+                AppendText(html);
+                return this;
+            }
+            ParseHtml(doc, new TextMessagePartModel());
+            return this;
         }
     }
 }
