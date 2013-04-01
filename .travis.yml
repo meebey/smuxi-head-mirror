@@ -3,8 +3,21 @@ language: c
 install:
     - sudo apt-get update > /dev/null
     - sudo apt-get build-dep smuxi > /dev/null
-    - sudo apt-get install mono-devel > /dev/null
+    - sudo apt-get install mono-devel nunit-console > /dev/null
 
 script:
     - ./autogen.sh MCS=/usr/bin/dmcs
     - xbuild src/smuxi.sln
+    - nunit-console bin/release/smuxi-common-tests.dll
+    - nunit-console bin/release/smuxi-engine-tests.dll
+    - nunit-console bin/release/smuxi-frontend-gnome-tests.dll
+    - nunit-console bin/release/smuxi-frontend-stfl-tests.dll
+    - make clean; make distcheck MCS=/usr/bin/dmcs
+
+notifications:
+    irc:
+        channels: "irc.oftc.net#smuxi-devel"
+        skip_join: true
+        template:
+            - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+            - "Build details : %{build_url}"
