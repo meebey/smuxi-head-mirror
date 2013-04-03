@@ -12,7 +12,7 @@ endif
 OUTPUT_DIR = $(top_builddir)/bin/$(PROFILE)
 OBJECT_DIR = $(OUTPUT_DIR)/obj
 SOURCE_PATTERNS = *.cs */*.cs */*/*.cs */*/*/*.cs */*/*/*/*.cs */*/*/*/*/*.cs
-XBUILD_FLAGS += /p:Configuration=Debug /p:SignAssembly=false /p:WarningLevel=0 /p:OutputPath=$(abspath $(OUTPUT_DIR)) /p:BaseIntermediateOutputPath=$(abspath $(OBJECT_DIR))/ /p:IntermediateOutputPath=$(abspath $(OBJECT_DIR))/ /p:DocumentationFile=
+XBUILD_FLAGS +=  /p:Configuration=Debug /p:SignAssembly=false /p:WarningLevel=0 /p:Warn=0 /p:OutputPath=$(abspath $(OUTPUT_DIR)) /p:BaseIntermediateOutputPath=$(abspath $(OBJECT_DIR))/ /p:IntermediateOutputPath=$(abspath $(OBJECT_DIR))/ /p:DocumentationFile=
 
 SERVICESTACK_TEXT_SUBDIR = ServiceStack.Text
 SERVICESTACK_TEXT_SRCDIR = $(srcdir)/$(SERVICESTACK_TEXT_SUBDIR)/src/ServiceStack.Text
