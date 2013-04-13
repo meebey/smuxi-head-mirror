@@ -3,16 +3,17 @@ language: c
 install:
     - sudo apt-get update > /dev/null
     - sudo apt-get build-dep smuxi > /dev/null
-    - sudo apt-get install mono-devel nunit-console > /dev/null
+    - sudo apt-get install mono-devel nunit-console moreutils > /dev/null
 
 script:
     - ./autogen.sh MCS=/usr/bin/dmcs
+    - find lib/ -name "*.csproj" -exec sed 's!<WarningLevel>[0-9]</WarningLevel>!<WarningLevel>0</WarningLevel>!' -i {} \;
     - xbuild /p:Warn=0 src/smuxi.sln
     - nunit-console bin/release/smuxi-common-tests.dll
     - nunit-console bin/release/smuxi-engine-tests.dll || true
     - nunit-console bin/release/smuxi-frontend-gnome-tests.dll
     - nunit-console bin/release/smuxi-frontend-stfl-tests.dll
-    - make clean > /dev/null; make distcheck MCS=/usr/bin/dmcs > /dev/null
+    - chronic make clean && chronic make distcheck MCS=/usr/bin/dmcs
 
 notifications:
     irc:
