@@ -1,4 +1,8 @@
 # Engines
+if ENABLE_ENGINE_CAMPFIRE
+PO_ENGINE_CAMPFIRE = po-Engine-Campfire
+endif
+
 if ENABLE_ENGINE_IRC
 PO_ENGINE_IRC = po-Engine-IRC
 endif
@@ -32,6 +36,7 @@ EXTRA_DIST =	install-sh \
 
 PODIRS =	po \
 		po-Engine \
+		$(PO_ENGINE_CAMPFIRE) \
 		$(PO_ENGINE_IRC) \
 		$(PO_ENGINE_TWITTER) \
 		po-Server \
@@ -113,8 +118,6 @@ WIN32_FILES = \
 	$(LIB_DIR)/Mono.Posix.dll \
 	$(LIB_DIR)/Nini.dll \
 	$(LIB_DIR)/log4net.dll \
-	$(WIN32_LIB_DIR)/MonoPosixHelper.dll \
-	$(WIN32_LIB_DIR)/zlib1.dll \
 	$(WIN32_LIB_DIR)/plink.exe \
 	$(WIN32_LIB_DIR)/fixedsys500c/Fixedsys500c.ttf \
 	$(BUILD_DIR)/smuxi-common.dll \
