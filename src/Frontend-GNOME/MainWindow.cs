@@ -223,16 +223,16 @@ namespace Smuxi.Frontend.Gnome
                 var layout = Entry.CreatePangoLayout("Qp");
                 int lineWidth, lineHeigth;
                 layout.GetPixelSize(out lineWidth, out lineHeigth);
-                var text = Entry.Text;
-                var newLines = text.Count(f => f == '\n');
-                // cap to 1-3 lines
-                if (text.Length > 0) {
+                var it = Entry.Buffer.StartIter;
+                int newLines = 1;
+                // move to end of next visual line
+                while (Entry.ForwardDisplayLineEnd(ref it)) {
                     newLines++;
-                    newLines = Math.Max(newLines, 1);
-                    newLines = Math.Min(newLines, 3);
-                } else {
-                    newLines = 1;
+                    // calling ForwardDisplayLineEnd repeatedly stays on the same position
+                    // therefor we move one cursor position further
+                    it.ForwardCursorPosition();
                 }
+                newLines = Math.Min(newLines, 3);
                 // use text heigth + a bit extra
                 var bestSize = new Gtk.Requisition() {
                     Height = (lineHeigth * newLines) + 5
@@ -240,18 +240,29 @@ namespace Smuxi.Frontend.Gnome
                 args.Requisition = bestSize;
             };
             entryScrolledWindow.Add(Entry);
-            var entryHBox = new Gtk.HBox();
-            entryHBox.PackStart(entryScrolledWindow, true, true, 2);
 
             ProgressBar = new Gtk.ProgressBar();
             StatusHBox = new Gtk.HBox();
 
             MenuWidget = new MenuWidget(this, ChatViewManager);
 
+            Gtk.VPaned vpane = new Gtk.VPaned();
+            vpane.ButtonPressEvent += (sender, e) => {;
+                // reset entry size on double click
+                if (e.Event.Type == Gdk.EventType.TwoButtonPress &&
+                    e.Event.Button == 1) {
+                    GLib.Timeout.Add(100, delegate {
+                        vpane.Position = -1;
+                        return false;
+                    });
+                }
+            };
+            vpane.Pack1(Notebook, true, false);
+            vpane.Pack2(entryScrolledWindow, false, false);
+
             Gtk.VBox vbox = new Gtk.VBox();
             vbox.PackStart(MenuWidget, false, false, 0);
-            vbox.PackStart(Notebook, true, true, 0);
-            vbox.PackStart(entryHBox, false, false, 0);
+            vbox.PackStart(vpane, true, true, 0);
 
             NetworkStatusbar = new Gtk.Statusbar();
             NetworkStatusbar.WidthRequest = 300;
