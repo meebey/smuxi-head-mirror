@@ -1,13 +1,7 @@
 /*
- * $Id: TestUI.cs 179 2007-04-21 15:01:29Z meebey $
- * $URL: svn+ssh://svn.qnetp.net/svn/smuxi/smuxi/trunk/src/Frontend-Test/TestUI.cs $
- * $Rev: 179 $
- * $Author: meebey $
- * $Date: 2007-04-21 17:01:29 +0200 (Sat, 21 Apr 2007) $
- *
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2006 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2007, 2011, 2013 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -70,12 +64,13 @@ namespace Smuxi.Frontend.Stfl
 
             try {
                 ChatView chatView = _ChatViewManager.GetChat(chat);
-#if LOG4NET
                 if (chatView == null) {
+#if LOG4NET
                     _Logger.Fatal(String.Format("AddMessageToChat(): _ChatViewManager.GetChat(chat) chat.Name: {0} returned null!", chat.Name));
+#endif
                     return;
                 }
-#endif
+
                 chatView.AddMessage(msg);
                 _ChatViewManager.UpdateNavigation();
             } catch (Exception ex) {
@@ -130,12 +125,12 @@ namespace Smuxi.Frontend.Stfl
             
             try {
                 var chatView = _ChatViewManager.GetChat(chat);
-#if LOG4NET
                 if (chatView == null) {
+#if LOG4NET
                     _Logger.Fatal(String.Format("SyncChat(): _ChatViewManager.GetChat(chat) chat.Name: {0} returned null!", chat.Name));
+#endif
                     return;
                 }
-#endif
                 chatView.Sync();
 
                 Frontend.FrontendManager.AddSyncedChat(chat);
@@ -149,11 +144,48 @@ namespace Smuxi.Frontend.Stfl
         public void AddPersonToGroupChat(GroupChatModel groupChat, PersonModel person)
         {
             Trace.Call(groupChat, person);
+
+            try {
+                var chatView = _ChatViewManager.GetChat(groupChat);
+                if (chatView == null) {
+#if LOG4NET
+                    _Logger.Fatal(String.Format("AddPersonToGroupChat(): _ChatViewManager.GetChat(chat) chat.Name: {0} returned null!", groupChat.Name));
+#endif
+                    return;
+                }
+
+                lock (chatView.Participants) {
+                    chatView.Participants.Add(person);
+                }
+            } catch (Exception ex) {
+#if LOG4NET
+                _Logger.Fatal(ex);
+#endif
+            }
         }
         
-        public void UpdatePersonInGroupChat(GroupChatModel groupChat, PersonModel olduser, PersonModel newuser)
+        public void UpdatePersonInGroupChat(GroupChatModel groupChat, PersonModel oldPerson, PersonModel newPerson)
         {
-            Trace.Call(groupChat, olduser, newuser);
+            Trace.Call(groupChat, oldPerson, newPerson);
+
+            try {
+                var chatView = _ChatViewManager.GetChat(groupChat);
+                if (chatView == null) {
+#if LOG4NET
+                    _Logger.Fatal(String.Format("UpdatePersonInGroupChat(): _ChatViewManager.GetChat(groupChat) groupChat.Name: {0} returned null!", groupChat.Name));
+#endif
+                    return;
+                }
+
+                lock (chatView.Participants) {
+                    chatView.Participants.Remove(oldPerson);
+                    chatView.Participants.Add(newPerson);
+                }
+            } catch (Exception ex) {
+#if LOG4NET
+                _Logger.Fatal(ex);
+#endif
+            }
         }
     
         public void UpdateTopicInGroupChat(GroupChatModel groupChat, MessageModel topic)
@@ -166,6 +198,24 @@ namespace Smuxi.Frontend.Stfl
         public void RemovePersonFromGroupChat(GroupChatModel groupChat, PersonModel person)
         {
             Trace.Call(groupChat, person);
+
+            try {
+                var chatView = _ChatViewManager.GetChat(groupChat);
+                if (chatView == null) {
+#if LOG4NET
+                    _Logger.Fatal(String.Format("RemovePersonFromGroupChat(): _ChatViewManager.GetChat(groupChat) groupChat.Name: {0} returned null!", groupChat.Name));
+#endif
+                    return;
+                }
+
+                lock (chatView.Participants) {
+                    chatView.Participants.Remove(person);
+                }
+            } catch (Exception ex) {
+#if LOG4NET
+                _Logger.Fatal(ex);
+#endif
+            }
         }
 
         public void SetNetworkStatus(string status)
