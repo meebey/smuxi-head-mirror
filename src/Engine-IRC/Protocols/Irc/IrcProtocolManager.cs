@@ -2492,6 +2492,13 @@ namespace Smuxi.Engine
                 }
             }
 
+            if (config["Connection/AutoConvertUTF8"] == null) {
+                _IrcClient.EnableUTF8Recode = true;
+            } else {
+                _IrcClient.EnableUTF8Recode =
+                    (bool) config["Connection/AutoConvertUTF8"];
+            }
+
             var proxySettings = new ProxySettings();
             proxySettings.ApplyConfig(config);
             var protocol = server.UseEncryption ? "ircs" : "irc";
@@ -3214,7 +3221,7 @@ namespace Smuxi.Engine
             Trace.Call(e);
 
             var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
-            var mode = String.Join(" ", e.Data.RawMessageArray.Skip(4)).Trim();
+            var mode = String.Join(" ", e.Data.RawMessageArray.Skip(4).ToArray()).Trim();
             var channelName = e.Data.RawMessageArray[3];
 
             var builder = CreateMessageBuilder();
