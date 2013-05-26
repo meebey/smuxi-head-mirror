@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2011 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2013 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -28,6 +28,7 @@ using System.Globalization;
 using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Meebey.SmartIrc4net;
 using Smuxi.Common;
 using IrcProxyType = Meebey.SmartIrc4net.ProxyType;
@@ -159,14 +160,13 @@ namespace Smuxi.Engine
             // are many reconnects like when the network connection goes flaky,
             // see: http://projects.qnetp.net/issues/show/163
             _IrcClient.AutoNickHandling = false;
-            _IrcClient.ActiveChannelSyncing = true;
             _IrcClient.CtcpVersion      = Engine.VersionString;
             _IrcClient.SendDelay        = 250;
+            _IrcClient.SupportNonRfc    = true;
             _IrcClient.OnRawMessage     += new IrcEventHandler(_OnRawMessage);
             _IrcClient.OnChannelMessage += new IrcEventHandler(_OnChannelMessage);
             _IrcClient.OnChannelAction  += new ActionEventHandler(_OnChannelAction);
             _IrcClient.OnChannelNotice  += new IrcEventHandler(_OnChannelNotice);
-            _IrcClient.OnChannelActiveSynced += new IrcEventHandler(_OnChannelActiveSynced);
             _IrcClient.OnQueryMessage   += new IrcEventHandler(_OnQueryMessage);
             _IrcClient.OnQueryAction    += new ActionEventHandler(_OnQueryAction);
             _IrcClient.OnQueryNotice    += new IrcEventHandler(_OnQueryNotice);
@@ -175,8 +175,14 @@ namespace Smuxi.Engine
             _IrcClient.OnPart           += new PartEventHandler(_OnPart);
             _IrcClient.OnKick           += new KickEventHandler(_OnKick);
             _IrcClient.OnNickChange     += new NickChangeEventHandler(_OnNickChange);
+            _IrcClient.OnOwner          += new OwnerEventHandler(OnOwner);
+            _IrcClient.OnDeowner        += new DeownerEventHandler(OnDeowner);
+            _IrcClient.OnChannelAdmin   += new ChannelAdminEventHandler(OnChannelAdmin);
+            _IrcClient.OnDeChannelAdmin += new DeChannelAdminEventHandler(OnDeChannelAdmin);
             _IrcClient.OnOp             += new OpEventHandler(_OnOp);
             _IrcClient.OnDeop           += new DeopEventHandler(_OnDeop);
+            _IrcClient.OnHalfop         += new HalfopEventHandler(OnHalfop);
+            _IrcClient.OnDehalfop       += new DehalfopEventHandler(OnDehalfop);
             _IrcClient.OnVoice          += new VoiceEventHandler(_OnVoice);
             _IrcClient.OnDevoice        += new DevoiceEventHandler(_OnDevoice);
             _IrcClient.OnModeChange     += new IrcEventHandler(_OnModeChange);
@@ -807,6 +813,30 @@ namespace Smuxi.Engine
                             CommandDeop(command);
                             handled = true;
                             break;
+                        case "owner":
+                            CommandOwner(command);
+                            handled = true;
+                            break;
+                        case "deowner":
+                            CommandDeowner(command);
+                            handled = true;
+                            break;
+                        case "chanadmin":
+                            CommandChanAdmin(command);
+                            handled = true;
+                            break;
+                        case "dechanadmin":
+                            CommandDeChanAdmin(command);
+                            handled = true;
+                            break;
+                        case "halfop":
+                            CommandHalfop(command);
+                            handled = true;
+                            break;
+                        case "dehalfop":
+                            CommandDehalfop(command);
+                            handled = true;
+                            break;
                         case "voice":
                             CommandVoice(command);
                             handled = true;
@@ -821,6 +851,22 @@ namespace Smuxi.Engine
                             break;
                         case "unban":
                             CommandUnban(command);
+                            handled = true;
+                            break;
+                        case "banexcept":
+                            CommandBanException(command);
+                            handled = true;
+                            break;
+                        case "unbanexcept":
+                            CommandUnBanException(command);
+                            handled = true;
+                            break;
+                        case "inviteexcept":
+                            CommandInviteException(command);
+                            handled = true;
+                            break;
+                        case "uninviteexcept":
+                            CommandUnInviteException(command);
                             handled = true;
                             break;
                         case "kick":
@@ -969,16 +1015,26 @@ namespace Smuxi.Engine
             "version nick",
             "time nick",
             "finger nick",
-            "mode new-mode",
+            "mode [target] [new-mode]",
             "away [away-message]",
             "kick nick(s) [reason]",
             "kickban/kb nick(s) [reason]",
             "ban [mask]",
             "unban mask",
+            "banexcept [mask]",
+            "unbanexcept mask",
+            "inviteexcept [mask]",
+            "uninviteexcept mask",
             "voice nick",
             "devoice nick",
             "op nick",
             "deop nick",
+            "owner nick",
+            "deowner nick",
+            "chanadmin nick",
+            "dechanadmin nick",
+            "halfop nick",
+            "dehalfop nick",
             "nick newnick",
             "ctcp destination command [data]",
             "raw/quote irc-command",
@@ -1060,16 +1116,18 @@ namespace Smuxi.Engine
             var builder = CreateMessageBuilder();
             builder.AppendSenderPrefix(Me);
             Match m = Regex.Match(message, String.Format(@"^@(?<nick>\S+)|^(?<nick>\S+)(?:\:|,)"));
-            if (m.Success) {
+            if (m.Success && chat is GroupChatModel) {
                 // this is probably a reply with a nickname
                 string nick = m.Groups["nick"].Value;
 #if LOG4NET
                 _Logger.Debug("_Say(): detected reply with possible nick: '" + nick + "' in: '" + m.Value + "'");
 #endif
-                if (_IrcClient.GetChannelUser(chat.ID, nick) != null) {
+                var groupChat = (GroupChatModel) chat;
+                PersonModel person;
+                if (groupChat.Persons.TryGetValue(nick, out person)) {
                     // bingo, it's a nick on this channel
                     message = message.Substring(m.Value.Length);
-                    var coloredNick = builder.CreateIdendityName(GetPerson(chat, nick));
+                    var coloredNick = builder.CreateIdendityName(person);
                     coloredNick.Text = m.Value;
                     builder.AppendText(coloredNick);
                 }
@@ -1125,7 +1183,7 @@ namespace Smuxi.Engine
             int i = 0;
             foreach (string channel in channels) {
                 string key = keys != null && keys.Length > i ? keys[i] : null;
-                if (_IrcClient.IsJoined(channel)) {
+                if (GetChat(channel, ChatType.Group) != null) {
                     builder = CreateMessageBuilder();
                     builder.AppendEventPrefix();
                     builder.AppendText(
@@ -1638,8 +1696,14 @@ namespace Smuxi.Engine
                 string mode;
                 if (info.IsIrcOp) {
                     mode = _("IRC Op");
+                } else if (info.IsOwner) {
+                    mode = _("Owner");
+                } else if (info.IsChannelAdmin) {
+                    mode = _("ChanAdmin");
                 } else if (info.IsOp) {
                     mode = _("Op");
+                } else if (info.IsHalfop) {
+                    mode = _("Halfop");
                 } else if (info.IsVoice) {
                     mode = _("Voice");
                 } else {
@@ -1698,14 +1762,17 @@ namespace Smuxi.Engine
             if (cd.DataArray.Length >= 2) {
                 _IrcClient.RfcTopic(channel, cd.Parameter);
             } else {
-                if (_IrcClient.IsJoined(channel)) {
-                    string topic = _IrcClient.GetChannel(channel).Topic;
+                var groupChat = (GroupChatModel) Session.GetChat(
+                    channel, ChatType.Group, this
+                );
+                if (groupChat != null) {
+                    var topic = groupChat.Topic;
                     builder = CreateMessageBuilder();
                     builder.AppendEventPrefix();
-                    if (topic.Length > 0) {
+                    if (topic != null && !topic.IsEmpty) {
                         // TRANSLATOR: do NOT change the position of {1}!
                         builder.AppendText(_("Topic for {0}: {1}"), channel, String.Empty);
-                        builder.AppendMessage(topic);
+                        builder.Append(topic);
                     } else {
                         builder.AppendText(_("No topic set for {0}"), channel);
                     }
@@ -1770,6 +1837,90 @@ namespace Smuxi.Engine
             }
         }
 
+        public void CommandOwner(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.Owner(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.Owner(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandDeowner(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.Deowner(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.Deowner(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandChanAdmin(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.ChanAdmin(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.ChanAdmin(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandDeChanAdmin(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.DeChanAdmin(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.DeChanAdmin(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandHalfop(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.Halfop(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.Halfop(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandDehalfop(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.Dehalfop(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.Dehalfop(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
         public void CommandBan(CommandModel cd)
         {
             MessageBuilder builder;
@@ -1820,6 +1971,106 @@ namespace Smuxi.Engine
             }
         }
 
+        public void CommandBanException(CommandModel cd)
+        {
+            MessageBuilder builder;
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                // TODO: use a smart mask by default
+                _IrcClient.BanException(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.BanException(channel, candidates);
+            } else {
+                IList<BanInfo> infos = _IrcClient.GetBanExceptionList(channel);
+                int i = 1;
+                foreach (BanInfo info in infos) {
+                    string msg = String.Format(
+                        "{0} - {1}: {2} {3}",
+                        i++,
+                        info.Channel,
+                        _("ban exception"),
+                        info.Mask
+                    );
+                    builder = CreateMessageBuilder();
+                    builder.AppendEventPrefix();
+                    builder.AppendText(msg);
+                    cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                }
+                if (infos.Count == 0) {
+                    builder = CreateMessageBuilder();
+                    builder.AppendEventPrefix();
+                    builder.AppendText(_("No ban exceptions in channel"), channel);
+                    cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                }
+            }
+        }
+
+        public void CommandUnBanException(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.UnBanException(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.UnBanException(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
+        public void CommandInviteException(CommandModel cd)
+        {
+            MessageBuilder builder;
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                // TODO: use a smart mask by default
+                _IrcClient.InviteException(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.InviteException(channel, candidates);
+            } else {
+                IList<BanInfo> infos = _IrcClient.GetInviteExceptionList(channel);
+                int i = 1;
+                foreach (BanInfo info in infos) {
+                    string msg = String.Format(
+                        "{0} - {1}: {2} {3}",
+                        i++,
+                        info.Channel,
+                        _("invite exception"),
+                        info.Mask
+                    );
+                    builder = CreateMessageBuilder();
+                    builder.AppendEventPrefix();
+                    builder.AppendText(msg);
+                    cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                }
+                if (infos.Count == 0) {
+                    builder = CreateMessageBuilder();
+                    builder.AppendEventPrefix();
+                    builder.AppendText(_("No invite exceptions in channel"), channel);
+                    cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                }
+            }
+        }
+
+        public void CommandUnInviteException(CommandModel cd)
+        {
+            ChatModel chat = cd.Chat;
+            string channel = chat.ID;
+            if (cd.DataArray.Length == 2) {
+                _IrcClient.UnInviteException(channel, cd.Parameter);
+            } else if (cd.DataArray.Length > 2) {
+                string[] candidates = cd.Parameter.TrimEnd().Split(new char[] {' '});
+                _IrcClient.UnInviteException(channel, candidates);
+            } else {
+                _NotEnoughParameters(cd);
+            }
+        }
+
         public void CommandKick(CommandModel cd)
         {
             ChatModel chat = cd.Chat;
@@ -1843,59 +2094,84 @@ namespace Smuxi.Engine
 
         public void CommandKickban(CommandModel cd)
         {
-            ChatModel chat = cd.Chat;
-            string channel = chat.ID;
-            IrcUser ircuser;
-            if (cd.DataArray.Length >= 2) {
-                string[] candidates = cd.DataArray[1].Split(new char[] {','});
-                if (cd.DataArray.Length >= 3) {
-                    string reason = String.Join(" ", cd.DataArray, 2, cd.DataArray.Length-2);  
-                    foreach (string nick in candidates) {
-                        ircuser = _IrcClient.GetIrcUser(nick);
-                        if (ircuser != null) {
-                            _IrcClient.Ban(channel, "*!*" + ircuser.Ident + "@" + ircuser.Host);
-                            _IrcClient.RfcKick(channel, nick, reason);
-                        }
-                    }
-                } else {
-                    foreach (string nick in candidates) {
-                        ircuser = _IrcClient.GetIrcUser(nick);
-                        if (ircuser != null) {
-                            _IrcClient.Ban(channel, "*!*" + ircuser.Ident + "@" + ircuser.Host);
-                            _IrcClient.RfcKick(channel, nick);
-                        }
-                    }
-                }
-            } else {
+            if (cd.DataArray.Length < 2) {
                 _NotEnoughParameters(cd);
+                return;
+            }
+            var chat = cd.Chat as GroupChatModel;
+            if (chat == null) {
+                return;
+            }
+
+            string channel = chat.ID;
+            string[] candidates = cd.DataArray[1].Split(new char[] {','});
+            string reason = null;
+            if (cd.DataArray.Length >= 3) {
+                reason = String.Join(" ", cd.DataArray, 2, cd.DataArray.Length-2);
+            }
+            foreach (string nick in candidates) {
+                var victim = (IrcGroupPersonModel) chat.GetPerson(nick);
+                if (victim == null) {
+                    continue;
+                }
+                _IrcClient.Ban(channel, "*!*" + victim.Ident + "@" + victim.Host);
+                if (reason == null) {
+                    _IrcClient.RfcKick(channel, victim.NickName);
+                } else {
+                    _IrcClient.RfcKick(channel, victim.NickName, reason);
+                }
             }
         }
 
         public void CommandMode(CommandModel cd)
         {
-            MessageBuilder builder;
-            ChatModel chat = cd.Chat;
+            string target = null;
+            string mode = null;
             if (cd.DataArray.Length >= 2) {
-                // does cd.Chat cause a remoting call?
-                if (chat.ChatType == ChatType.Group) {
-                    string channel = chat.ID;
-                    _IrcClient.RfcMode(channel, cd.Parameter);
+                // /mode #smuxi
+                // /mode meebey
+                var param1 = cd.DataArray[1];
+                if (param1.StartsWith("+") || param1.StartsWith("-")) {
+                    // no target given, this is the mode already
+                    // /mode +i (on server)
+                    // /mode +b (on channel)
+                    // /mode +b *!*@foo (on channel)
+                    if (cd.Chat.ChatType == ChatType.Group) {
+                        target = cd.Chat.ID;
+                    } else {
+                        target = _IrcClient.Nickname;
+                    }
+                    mode = cd.Parameter;
                 } else {
-                    _IrcClient.RfcMode(_IrcClient.Nickname, cd.Parameter);
+                    target = param1;
+                    if (cd.DataArray.Length >= 3) {
+                        // /mode #smuxi +b *!*@foo
+                        // /mode #smuxi +b
+                        // /mode meebey +i
+                        mode = String.Join(" ", cd.DataArray, 2, cd.DataArray.Length-2);
+                    }
                 }
             } else {
-                if (chat.ChatType == ChatType.Group) {
-                    Channel chan = _IrcClient.GetChannel(cd.Chat.ID);
-                    builder = CreateMessageBuilder();
-                    builder.AppendEventPrefix();
-                    builder.AppendText("mode/{0} [{1}]", chat.Name, chan.Mode);
-                    cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                // /mode (on server)
+                // /mode (on channel)
+                if (cd.Chat.ChatType == ChatType.Group) {
+                    target = cd.Chat.ID;
                 } else {
-                    builder = CreateMessageBuilder();
+                    target = _IrcClient.Nickname;
+                }
+            }
+
+            if (target != null && mode != null) {
+                _IrcClient.RfcMode(target, mode);
+            } else if (target != null) {
+                if (_IrcClient.IsMe(target)) {
+                    var builder = CreateMessageBuilder();
                     builder.AppendEventPrefix();
                     builder.AppendText(_("Your user mode is {0}"),
                                        String.Format("[{0}]", _IrcClient.Usermode));
                     cd.FrontendManager.AddMessageToChat(cd.Chat, builder.ToMessage());
+                } else {
+                    _IrcClient.RfcMode(target);
                 }
             }
         }
@@ -1909,25 +2185,27 @@ namespace Smuxi.Engine
             } else {
                 channel = chat.ID;
             }
-            if (cd.DataArray.Length >= 2) {
-                if (!_IrcClient.IsJoined(channel, cd.DataArray[1])) {
-                    _IrcClient.RfcInvite(cd.DataArray[1], channel);
-                    var msg = CreateMessageBuilder().
-                        AppendEventPrefix().
-                        AppendText(_("Inviting {0} to {1}"),
-                                   cd.DataArray[1], channel).
-                        ToMessage();
-                    cd.FrontendManager.AddMessageToChat(chat, msg);
-                } else {
-                    var msg = CreateMessageBuilder().
-                        AppendEventPrefix().
-                        AppendText(_("{0} is already on {1}"),
-                                   cd.DataArray[1], channel).
-                        ToMessage();
-                    cd.FrontendManager.AddMessageToChat(chat, msg);
-                }
-            } else {
+            if (cd.DataArray.Length < 2) {
                 _NotEnoughParameters(cd);
+                return;
+            }
+            var invitee = cd.DataArray[1];
+            var groupChat = chat as GroupChatModel;
+            if (groupChat != null && groupChat.GetPerson(invitee) != null) {
+                var msg = CreateMessageBuilder().
+                    AppendEventPrefix().
+                    AppendText(_("{0} is already on {1}"),
+                               invitee, channel).
+                    ToMessage();
+                cd.FrontendManager.AddMessageToChat(chat, msg);
+            } else {
+                _IrcClient.RfcInvite(invitee, channel);
+                var msg = CreateMessageBuilder().
+                    AppendEventPrefix().
+                    AppendText(_("Inviting {0} to {1}"),
+                               invitee, channel).
+                    ToMessage();
+                cd.FrontendManager.AddMessageToChat(chat, msg);
             }
         }
         
@@ -1967,9 +2245,18 @@ namespace Smuxi.Engine
             builder.AppendText("[ ");
             foreach (IrcGroupPersonModel ircPerson in ircPersons) {
                 string mode;
-                if (ircPerson.IsOp) {
+                if (ircPerson.IsOwner) {
+                    opCount++;
+                    mode = "~";
+                } else if (ircPerson.IsChannelAdmin) {
+                    opCount++;
+                    mode = "&";
+                } else if (ircPerson.IsOp) {
                     opCount++;
                     mode = "@";
+                } else if (ircPerson.IsHalfop) {
+                    opCount++;
+                    mode = "%";
                 } else if (ircPerson.IsVoice) {
                     voiceCount++;
                     mode = "+";
@@ -2029,10 +2316,8 @@ namespace Smuxi.Engine
                 string message = String.Join(" ", cd.DataArray, 2, cd.DataArray.Length-2);  
                 _IrcClient.SendMessage(SendType.Notice, target, message);
                 
-                ChatModel chat;
-                if (_IrcClient.IsJoined(target)) {
-                    chat = GetChat(target, ChatType.Group);
-                } else {
+                var chat = GetChat(target, ChatType.Group);
+                if (chat == null) {
                     // wasn't a channel but maybe a query
                     chat = GetChat(target, ChatType.Person);
                 }
@@ -2371,16 +2656,10 @@ namespace Smuxi.Engine
                     _OnErrorNicknameInUse(e);
                     break;
                 case ReplyCode.EndOfNames:
-                    chan = e.Data.RawMessageArray[3];
-                    GroupChatModel groupChat = (GroupChatModel)GetChat(
-                       chan, ChatType.Group);
-                    if (groupChat == null) {
-                        break;
-                    }
-                    groupChat.IsSynced = true;
-#if LOG4NET
-                    _Logger.Debug("_OnRawMessage(): " + chan + " synced");
-#endif
+                    OnEndOfNames(e);
+                    break;
+                case ReplyCode.ChannelModeIs:
+                    OnChannelModeIs(e);
                     break;
                 default:
                     if (!handled) {
@@ -2634,6 +2913,7 @@ namespace Smuxi.Engine
         private void _OnChannelMessage(object sender, IrcEventArgs e)
         {
             var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
+            UpdateGroupPerson(chat, e.Data);
 
             var builder = CreateMessageBuilder();
             builder.AppendMessage(GetPerson(chat, e.Data.Nick), e.Data.Message);
@@ -2646,6 +2926,7 @@ namespace Smuxi.Engine
         private void _OnChannelAction(object sender, ActionEventArgs e)
         {
             var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
+            UpdateGroupPerson(chat, e.Data);
 
             var builder = CreateMessageBuilder();
             builder.AppendActionPrefix();
@@ -2661,6 +2942,7 @@ namespace Smuxi.Engine
         private void _OnChannelNotice(object sender, IrcEventArgs e)
         {
             var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
+            UpdateGroupPerson(chat, e.Data);
 
             var builder = CreateMessageBuilder();
             builder.AppendText("-{0}:{1}- ", e.Data.Nick, e.Data.Channel);
@@ -2818,11 +3100,10 @@ namespace Smuxi.Engine
 #endif
                     // ignore
                 } else {
-                    IrcUser siuser = _IrcClient.GetIrcUser(e.Who);
-                    var icuser = CreateGroupPerson(e.Who);
-                    icuser.Ident = siuser.Ident;
-                    icuser.Host = siuser.Host;
-                    Session.AddPersonToGroupChat(groupChat, icuser);
+                    var person = CreateGroupPerson(e.Who);
+                    person.Ident = e.Data.Ident;
+                    person.Host = e.Data.Host;
+                    Session.AddPersonToGroupChat(groupChat, person);
                 }
             }
 
@@ -2851,8 +3132,7 @@ namespace Smuxi.Engine
                 return;
             }
 
-            // would be nice if SmartIrc4net would take care of removing prefixes
-            foreach (string user in e.UserList) {
+            foreach (string user in e.RawUserList) {
                 // skip empty users (some IRC servers send an extra space)
                 if (user.TrimEnd(' ').Length == 0) {
                     continue;
@@ -2867,11 +3147,30 @@ namespace Smuxi.Engine
                     case '&':
                     case '%':
                     case '~':
+                    case '!':
+                    case '.':
                         username = user.Substring(1);
                         break;
                 }
                 
                 var groupPerson = CreateGroupPerson(username);
+                switch (user[0]) {
+                    case '~':
+                        groupPerson.IsOwner = true;
+                        break;
+                    case '&':
+                        groupPerson.IsChannelAdmin = true;
+                        break;
+                    case '@':
+                        groupPerson.IsOp = true;
+                        break;
+                    case '%':
+                        groupPerson.IsHalfop = true;
+                        break;
+                    case '+':
+                        groupPerson.IsVoice = true;
+                        break;
+                }
                 
                 groupChat.UnsafePersons.Add(groupPerson.NickName, groupPerson);
 #if LOG4NET
@@ -2881,49 +3180,49 @@ namespace Smuxi.Engine
             }
         }
         
-        private void _OnChannelActiveSynced(object sender, IrcEventArgs e)
+        void OnEndOfNames(IrcEventArgs e)
         {
-#if LOG4NET
-            _Logger.Debug("_OnChannelActiveSynced() e.Data.Channel: " + e.Data.Channel);
-#endif
+            Trace.Call(e);
+
+            var chan = e.Data.RawMessageArray[3];
 
             lock (_ActiveChannelJoinList) {
-                _ActiveChannelJoinList.Remove(e.Data.Channel.ToLower());
+                _ActiveChannelJoinList.Remove(chan.ToLower());
             }
             // tell the currently waiting join task item from the task queue
             // that one channel is finished
             _ActiveChannelJoinHandle.Set();
 
-            GroupChatModel groupChat = (GroupChatModel) GetChat(e.Data.Channel, ChatType.Group);
+            var groupChat = (GroupChatModel) GetChat(chan, ChatType.Group);
             if (groupChat == null) {
 #if LOG4NET
-                _Logger.Error("_OnChannelActiveSynced(): GetChat(" + e.Data.Channel + ", ChatType.Group) returned null!");
+                _Logger.Error("OnEndOfNames(): GetChat(" + e.Data.Channel + ", ChatType.Group) returned null!");
 #endif
                 return;
             }
-
-            Channel channel = _IrcClient.GetChannel(e.Data.Channel);
-            foreach (ChannelUser channelUser in channel.Users.Values) {
-                IrcGroupPersonModel groupPerson = (IrcGroupPersonModel) groupChat.GetPerson(channelUser.Nick);
-                if (groupPerson == null) {
-                    // we should not get here anymore, _OnNames creates the users already
 #if LOG4NET
-                    _Logger.Error("_OnChannelActiveSynced(): groupChat.GetPerson(" + channelUser.Nick + ") returned null!");
+            _Logger.Debug("OnEndOfNames(): " + chan + " synced");
 #endif
-                    continue;
-                }
-                
-                groupPerson.RealName = channelUser.Realname;
-                groupPerson.Ident    = channelUser.Ident;
-                groupPerson.Host     = channelUser.Host;
-                groupPerson.IsOp     = channelUser.IsOp;
-                groupPerson.IsVoice  = channelUser.IsVoice;
-            }
+            groupChat.IsSynced = true;
 
             // prime-time
             Session.SyncChat(groupChat);
         }
-        
+
+        void OnChannelModeIs(IrcEventArgs e)
+        {
+            Trace.Call(e);
+
+            var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
+            var mode = String.Join(" ", e.Data.RawMessageArray.Skip(4)).Trim();
+            var channelName = e.Data.RawMessageArray[3];
+
+            var builder = CreateMessageBuilder();
+            builder.AppendEventPrefix();
+            builder.AppendText("mode/{0} [{1}]", channelName, mode);
+            Session.AddMessageToChat(chat, builder.ToMessage());
+        }
+
         private void _OnPart(object sender, PartEventArgs e)
         {
 #if LOG4NET
@@ -3019,45 +3318,45 @@ namespace Smuxi.Engine
 
                 Session.AddMessageToChat(_NetworkChat, builder.ToMessage());
             }
-            
-            IrcUser ircuser = e.Data.Irc.GetIrcUser(e.NewNickname);
-            if (ircuser != null) {
-                foreach (string channel in ircuser.JoinedChannels) {
-                    GroupChatModel cchat = (GroupChatModel)GetChat(channel, ChatType.Group);
-                    
-                    // clone the old user to a new user
-                    IrcGroupPersonModel olduser = (IrcGroupPersonModel) cchat.GetPerson(e.OldNickname);
-                    if (olduser == null) {
-#if LOG4NET
-                        _Logger.Error("cchat.GetPerson(e.OldNickname) returned null! cchat.Name: "+cchat.Name+" e.OldNickname: "+e.OldNickname);
-#endif
-                        continue;
-                    }
-                    var newuser = CreateGroupPerson(e.NewNickname);
-                    newuser.RealName = olduser.RealName;
-                    newuser.Ident = olduser.Ident;
-                    newuser.Host = olduser.Host;
-                    newuser.IsOp = olduser.IsOp;
-                    newuser.IsVoice = olduser.IsVoice;
-                    
-                    Session.UpdatePersonInGroupChat(cchat, olduser, newuser);
-                    
-                    var builder = CreateMessageBuilder();
-                    builder.AppendEventPrefix();
-                    if (e.Data.Irc.IsMe(e.NewNickname)) {
-                        // TRANSLATOR: do NOT change the position of {0}!
-                        builder.AppendText(_("You're now known as {0}"),
-                                           String.Empty);
-                    } else {
-                        builder.AppendIdendityName(olduser);
-                        // TRANSLATOR: do NOT change the position of {0} or {1}!
-                        builder.AppendText(_("{0} is now known as {1}"),
-                                           String.Empty,
-                                           String.Empty);
-                    }
-                    builder.AppendIdendityName(newuser);
-                    Session.AddMessageToChat(cchat, builder.ToMessage());
+
+            foreach (var chat in Chats) {
+                if (!(chat is GroupChatModel)) {
+                    continue;
                 }
+                var groupChat = (GroupChatModel) chat;
+                var oldPerson = (IrcGroupPersonModel) groupChat.GetPerson(e.OldNickname);
+                if (oldPerson == null) {
+                    // nobodoy to rename
+                    continue;
+                }
+                // clone the old user to a new user
+                var newPerson = CreateGroupPerson(e.NewNickname);
+                newPerson.RealName = oldPerson.RealName;
+                newPerson.Ident = oldPerson.Ident;
+                newPerson.Host = oldPerson.Host;
+                newPerson.IsOwner = oldPerson.IsOwner;
+                newPerson.IsChannelAdmin = oldPerson.IsChannelAdmin;
+                newPerson.IsOp = oldPerson.IsOp;
+                newPerson.IsHalfop = oldPerson.IsHalfop;
+                newPerson.IsVoice = oldPerson.IsVoice;
+
+                Session.UpdatePersonInGroupChat(groupChat, oldPerson, newPerson);
+
+                var builder = CreateMessageBuilder();
+                builder.AppendEventPrefix();
+                if (e.Data.Irc.IsMe(e.NewNickname)) {
+                    // TRANSLATOR: do NOT change the position of {0}!
+                    builder.AppendText(_("You're now known as {0}"),
+                                       String.Empty);
+                } else {
+                    builder.AppendIdendityName(oldPerson);
+                    // TRANSLATOR: do NOT change the position of {0} or {1}!
+                    builder.AppendText(_("{0} is now known as {1}"),
+                                       String.Empty,
+                                       String.Empty);
+                }
+                builder.AppendIdendityName(newPerson);
+                Session.AddMessageToChat(groupChat, builder.ToMessage());
             }
         }
         
@@ -3092,7 +3391,63 @@ namespace Smuxi.Engine
             builder.AppendMessage(e.NewTopic);
             Session.AddMessageToChat(cchat, builder.ToMessage());
         }
-        
+
+        void OnOwner(object sender, OwnerEventArgs e)
+        {
+            var cchat = (GroupChatModel) GetChat(e.Channel, ChatType.Group);
+            var user = (IrcGroupPersonModel) cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsOwner = true;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnOwner(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
+        void OnDeowner(object sender, DeownerEventArgs e)
+        {
+            var cchat = (GroupChatModel) GetChat(e.Channel, ChatType.Group);
+            var user = (IrcGroupPersonModel) cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsOwner = false;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnDeowner(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
+        void OnChannelAdmin(object sender, ChannelAdminEventArgs e)
+        {
+            var cchat = (GroupChatModel) GetChat(e.Channel, ChatType.Group);
+            var user = (IrcGroupPersonModel) cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsChannelAdmin = true;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnChannelAdmin(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
+        void OnDeChannelAdmin(object sender, DeChannelAdminEventArgs e)
+        {
+            var cchat = (GroupChatModel) GetChat(e.Channel, ChatType.Group);
+            var user = (IrcGroupPersonModel) cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsChannelAdmin = false;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnDeChannelAdmin(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
         private void _OnOp(object sender, OpEventArgs e)
         {
             GroupChatModel cchat = (GroupChatModel)GetChat(e.Channel, ChatType.Group);
@@ -3117,6 +3472,34 @@ namespace Smuxi.Engine
 #if LOG4NET
             } else {
                 _Logger.Error("_OnDeop(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
+        void OnHalfop(object sender, HalfopEventArgs e)
+        {
+            var cchat = (GroupChatModel) GetChat(e.Channel, ChatType.Group);
+            var user = (IrcGroupPersonModel) cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsHalfop = true;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnHalfop(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
+#endif
+            }
+        }
+
+        void OnDehalfop(object sender, DehalfopEventArgs e)
+        {
+            GroupChatModel cchat = (GroupChatModel)GetChat(e.Channel, ChatType.Group);
+            IrcGroupPersonModel user = (IrcGroupPersonModel)cchat.GetPerson(e.Whom);
+            if (user != null) {
+                user.IsHalfop = false;
+                Session.UpdatePersonInGroupChat(cchat, user, user);
+#if LOG4NET
+            } else {
+                _Logger.Error("OnDehalfop(): cchat.GetPerson(e.Whom) returned null! cchat.Name: "+cchat.Name+" e.Whom: "+e.Whom);
 #endif
             }
         }
@@ -3175,6 +3558,7 @@ namespace Smuxi.Engine
                     modechange = String.Join(" ", e.Data.RawMessageArray, 3,
                                              e.Data.RawMessageArray.Length - 3);
                     target = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
+                    UpdateGroupPerson(target, e.Data);
 
                     // TRANSLATOR: do NOT change the position of {2}!
                     builder.AppendText(_("mode/{0} [{1}] by {2}"),
@@ -3468,6 +3852,26 @@ namespace Smuxi.Engine
                 person.IdentityNameColored.Bold = true;
             }
             return person;
+        }
+
+        void UpdateGroupPerson(ChatModel chat, IrcMessageData msg)
+        {
+            if (!(chat is GroupChatModel)) {
+                return;
+            }
+            // server messages have no nick
+            if (msg.Nick == null) {
+                return;
+            }
+
+            // write-back ident/host to person
+            var groupChat = (GroupChatModel) chat;
+            var person = groupChat.GetPerson(msg.Nick) as IrcGroupPersonModel;
+            if (person == null) {
+                return;
+            }
+            person.Ident = person.Ident ?? msg.Ident;
+            person.Host = person.Host ?? msg.Host;
         }
 
         private ChatModel GetChat(IrcMessageData msg)
