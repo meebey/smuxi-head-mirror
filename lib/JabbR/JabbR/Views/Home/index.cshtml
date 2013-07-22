@@ -1,0 +1,491 @@
+﻿@using SquishIt.Framework;
+@model SettingsViewModel
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JabbR</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <meta name="description" content="A real-time chat application." />
+    <meta name="keywords" content="chat,realtime chat,signalr,jabbr" />
+    <link href="@Url.Content("~/Content/images/logo32.png")" rel="icon" type="image/png" sizes="32x32">
+    <link href="@Url.Content("~/Content/images/logo64.png")" rel="icon" type="image/png" sizes="64x64">
+    <link href="@Url.Content("~/favicon.ico")" rel="shortcut icon" type="image/x-icon" sizes="16x16">
+    @{ 
+        WriteLiteral(Bundle.Css().ForceDebugIf(() => Model.DebugMode)
+            .Add("~/Content/bootstrap.min.css")
+            .Add("~/Content/bootstrap-responsive.min.css")
+            .Add("~/Content/font-awesome.min.css")
+            .Add("~/Chat.css")
+            .Add("~/Chat.nuget.css")
+            .Add("~/Chat.bbcnews.css")
+            .Add("~/Chat.githubissues.css")
+            .Add("~/Chat.dictionary.css")
+            .Add("~/Content/KeyTips.css")
+            .Add("~/Content/emoji20.css")
+            .Render("~/Content/JabbR_#.css"));
+   }
+
+    @if (!String.IsNullOrEmpty(Model.GoogleAnalytics))
+    {
+    <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', '@Model.GoogleAnalytics']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    }
+    <script id="new-message-template" type="text/x-jquery-tmpl">
+        <li class="message ${highlight} clearfix{{if isMine}} my-message{{/if}}{{if showUser}} first{{/if}}" id="m-${id}" data-name="${name}" data-timestamp="${date}">
+            <div class="left">
+                {{if showUser}}
+                <img src="https://secure.gravatar.com/avatar/${hash}?s=16&d=mm" class="gravatar" />
+                <div class="name">${name}</div>
+                {{/if}}
+                <span class="state"></span>
+            </div>
+            <div class="middle{{if showUser}} first{{/if}}">
+                {{html message}}
+            </div>
+            <div class="right{{if showUser}} first{{/if}}">
+                <span id="t-${id}" class="time" title="${fulldate}">${when}</span>
+            </div>
+        </li>
+    </script>
+    <script id="new-notification-template" type="text/x-jquery-tmpl">
+        <li class="${type}" data-timestamp="${date}"{{if id}} id="m-${id}"{{/if}}>
+            <div class="content">
+                {{if img}}
+                <img src="${img}" />
+                {{/if}}
+                {{if source}}
+                <strong>${source}:</strong>
+                {{/if}}
+                {{html message}}
+                <a class="info" href="#"></a>
+            </div>
+            <div class="right">
+                <span class="time" title="${fulldate}">${when}</span>
+            </div>
+        </li>
+    </script>
+    <script id="message-separator-template" type="text/x-jquery-tmpl">
+        <li class="message-separator">
+        </li>
+    </script>
+    <script id="multiline-content-template" type="text/x-jquery-tmpl">
+        <div class="collapsible_content">
+            <h3 class="collapsible_title">Paste (click to show/hide)</h3>
+            <div class="collapsible_box">
+                <pre class="multiline">${content}</pre>
+            </div>
+        </div>
+    </script>
+    <script id="new-lobby-room-template" type="text/x-jquery-tmpl">
+        <li class="room {{if Private}}locked{{/if}} {{if Closed}}closed{{/if}}" data-room="${Name}" data-name="${Name}" data-count="${Count}">
+            <div class="row-fluid room-row">
+                <div class="span3">
+                    <span class="name">${Name}</span>
+                    <span class="lock"><i class="icon-lock"></i></span>
+                    <span class="readonly"><i class="icon-ban-circle"></i></span>
+                </div>
+                <div class="span4">
+                    <span class="topic">${Topic}</span>
+                </div>
+                <div class="span2">
+                    <span class="count">{{if Count == 0}}Unoccupied{{else}}${Count} occupant{{if Count > 1}}s{{/if}}{{/if}}</span>
+                </div>
+            </div>
+        </li>
+    </script>
+    <script id="new-user-template" type="text/x-jquery-tmpl">
+        <li class="user" data-name="${name}">
+            <div class="user-status-container">
+                <i class="user-status"></i>
+            </div>
+            <img class="gravatar" src="https://secure.gravatar.com/avatar/${hash}?s=16&d=mm" />
+            <div class="details {{if admin}}admin{{/if}}">
+                <div class="flag-container">
+                    <div class="flag{{if flagClass}} ${flagClass}{{/if}}" {{if flag}}title="${country}"{{/if}}></div>
+                </div>
+                <div class="name-container">
+                    <div class="name" {{if note}}title="${note}"{{else}}title="${name}"{{/if}}>${name}</div>
+                    <div class="idle-since"></div>
+                    {{if admin}}<div class="admin">(admin)</div>{{/if}}
+                </div>
+                <div style="clear:both"></div>
+            </div>
+            <div style="clear:both"></div>
+        </li>
+    </script>
+    <script id="new-userlist-template" type="text/x-jquery-tmpl">
+        <h3 class="userlist-header nav-header">
+            ${listname}
+        </h3>
+        <div>
+            <ul id="${id}" data-empty-message="No users" />
+        </div>
+    </script>
+    <script id="new-tab-template" type="text/x-jquery-tmpl">
+        <li id="tabs-${id}" class="room" data-name="${name}" data-closed="${closed}" data-trimmable="true" role="tab">
+            <span class="lock hide"><i class="icon-lock icon-large"></i></span>
+            <span class="readonly hide"><i class="icon-ban-circle icon-large"></i></span>
+            <button> 
+                <span class="content">${name}</span>
+            </button>
+            <button class="close">&times;</button>
+        </li>
+    </script>
+    <script id="command-help-template" type="text/x-jquery-tmpl">
+        <dt>
+            <span class="command command-name">${Name}</span> 
+            {{if Arguments}}<span class="command command-args">${Arguments}</span>{{/if}}
+        </dt>
+        <dd>${Description}</dd>
+    </script>
+    <!-- TweetContentProvider: Should be extracted out if other content providers need templates -->
+    <script id="tweet-template" type="text/x-jquery-tmpl">
+        <div class="user">
+            <img src="${user.profile_image_url_https}" />
+            <span class="name">${user.screen_name}</span> (${user.name})
+        </div>
+        {{html text}}
+        <time class="js-relative-date" datetime="${created_at}">${created_at}</time> 
+    </script>
+    <!-- /TweetContentProvider -->
+    <!-- /GitHub Issues Content Provider -->
+    <script id="github-issues-template" type="text/x-jquery-tmpl">
+        <div class="new-comments">
+            <div class="avatar-bubble js-comment-container">
+                <span class="avatar">
+                    <img height="48" width="48" src="${user.avatar_url}">
+                    <span class="overlay size-48"></span>
+                </span>
+                <div class="bubble">
+                    <div class="comment starting-comment ">
+                        <div class="body">
+                            <p class="author">
+                                <a href="#" class='github-issue-user-${user.login}' target="_blank">${user.login}</a> opened this issue
+                                <time class="js-relative-date" datetime="${created_at}">${created_at}</time>
+                            </p>
+                            <a href="${html_url}" target="_blank"><h2 class="content-title">${title}</h2></a>
+                            <div class="infobar clearfix">
+                                <p class="milestone js-milestone-infobar-item-wrapper">No milestone</p>
+                                {{if assignee}}
+                                    <p class="assignee">
+                                        <span class="avatar">
+                                            <img height="20" width="20" src="${assignee.avatar_url}">
+                                            <span class="overlay size-20"></span>
+                                        </span>
+                                        <a href="#" class="github-issue-user-${assignee.login}" target="_blank">${assignee.login}</a> is assigned
+                                    </p>
+                                {{/if}}
+                            </div>
+                            <div class="formatted-content">
+                                <div class="content-body wikistyle markdown-format">
+                                    <p>
+                                        {{html body}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+    <!-- /Github Issus Content Provider -->
+    <!-- /GitHub Issues Comment Content Provider -->
+    <script id="github-issues-comment-template" type="text/x-jquery-tmpl">
+        <div class="new-comments">
+            <div class="avatar-bubble js-comment-container">
+                <span class="avatar">
+                    <img height="48" width="48" src="${user.avatar_url}">
+                    <span class="overlay size-48"></span>
+                </span>
+                <div class="bubble">
+                    <div class="comment starting-comment ">
+                        <div class="body">
+                            <p class="author">
+                                <a href="#" class='github-issue-user-${user.login}' target="_blank">${user.login}</a> commented
+                                <time class="js-relative-date" datetime="${created_at}">${created_at}</time>
+                            </p>
+                            <a href="${html_url}" target="_blank"><h2 class="content-title">${title}</h2></a>
+                            <div class="formatted-content">
+                                <div class="content-body wikistyle markdown-format">
+                                    <p>
+                                        {{html body}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+    <!-- /Github Issus Comment Content Provider -->
+    <!--Gravatar Profile Template for Who command-->
+    <script id="gravatar-profile-template" type="text/x-jquery-tmpl">
+        <div class="collapsible_content">
+            <h3 class="collapsible_title">Gravatar Profile: ${profileUrl} (click to show/hide)
+            </h3>
+            <div class="collapsible_box">
+                <div class="gravatar_${hash} gravatarProfile">
+                    <div class="user">
+                        <img src="${thumbnailUrl}">
+                        <span class="name">${preferredUsername}</span> (${name.formatted})
+                        <p><a href="${profileUrl}" target="_blank">${profileUrl}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+    <!--/Gravatar Profile Template-->
+</head>
+<body>
+    <section id="page" role="application">
+        <header id="heading" role="heading">
+            <div class="banner" role="banner">
+                <h1>Jabb</h1>
+                <div class="jabbrLogo" id="logo"></div>
+            </div>
+            <div class="pull-right">
+                <div id="connectionStatus" class="connection-status" data-toggle="popover" data-placement="left">
+                    <i class="icon-connection-status"></i>
+                </div>
+                <div id="connection-info-popover" class="popover"><div class="arrow"></div><div class="popover-inner"><i class="popover-title-icon icon-globe" style="display: none;"></i><h3 class="popover-title" style="display: none;"></h3><div class="popover-content"><p></p></div></div></div>
+                <div id="connection-info-content" style="display: none;"><p id="connection-status"></p><p id="connection-transport"></p></div>
+                <div id="connection-state-changed-popover" class="popover"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title" style="display: none;"></h3><i id="popover-content-icon"></i><div class="popover-content"><p></p></div></div></div>
+                <div id="preferences" class="btn-group account pull-right">
+                    <a class="btn help" aria-haspopup="true" title="display help"><i class="icon-question-sign"></i></a>
+                    <a id="notifications" class="btn" title="notifications" href="@Url.Content("~/notifications")" target="_blank"><i class="icon-comments"></i><span id="notification-unread-count" class="badge badge-info"></span></a>
+                    <a class="btn" title="account settings" href="@Url.Content("~/account")" target="_blank"><i class="icon-user"></i></a>
+                    @if (Model.IsAdmin)
+                    {
+                        <a class="btn" title="jabbr settings" href="@Url.Content("~/administration")" target="_blank"><i class="icon-cog"></i></a>
+                    }
+                    <a class="btn logout" title="sign out"><i class="icon-signout"></i></a>
+                </div>
+            </div>
+            <nav>
+                <ul id="tabs" role="tablist">
+                    <li id="tabs-lobby" class="current lobby" data-name="Lobby" data-trimmable="false" role="tab">
+                        <button accesskey="l">
+                            <span class="content">Lobby</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+        <div id="topic-bar">
+            <form id="room-filter-form" action="#" class="form-inline">
+                <input id="room-filter" class="filter input-xlarge" type="text" placeholder="Start typing to filter room list..." />
+                <label id="room-filter-closed-area" class="checkbox inline">
+                    <input id="room-filter-closed" type="checkbox" />
+                    Show Closed Rooms?
+                </label>
+            </form>
+            <div id="room-actions" class="btn-group pull-right">
+                <a class="btn btn-small dropdown-toggle" data-toggle="dropdown" href="#">Room Settings <span class="caret"></span></a>
+                <ul id="room-preferences" class="dropdown-menu">
+                    <li><a class="sound" title="audible notifications"><i class="icon-sound"></i> Audible Notifications</a></li>
+                    <li><a class="richness" title="toggle rich-content"><i class="icon-richness"></i> Toggle Rich-content</a></li>
+                    <li><a class="toast" title="popup notifications" aria-haspopup="true"><i class="icon-toast"></i>Popup Notifications</a></li>
+                    <li><a class="download" title="download messages" aria-haspopup="true"><i class="icon-download"></i>Download Messages</a></li>
+                </ul>
+            </div>
+        </div>
+        <div id="chat-area" role="tabpanel">
+            <div id="room-loading">
+                <i class="icon-spinner icon-3x"> </i><h3>Loading...</h3>
+            </div>
+            <div id="lobby-wrapper">
+                <div id="lobby-private">
+                    <h2 class="userlist-header nav-header">Your Private Rooms</h2>
+                    <ul id="userlist-lobby-owners" data-empty-message="No matching rooms"></ul>
+                </div>
+                <div id="lobby-other">
+                    <h2 class="userlist-header nav-header">Rooms</h2>
+                    <ul id="userlist-lobby" data-empty-message="No matching rooms">
+                    </ul>
+                    <div id="load-more-rooms-item" class="room" style="display:none;"><div class="row-fluid room-row load-more-rooms"><i class="icon-spinner" style="display:none;"></i><a href="#">Load More...</a></div></div>
+                </div>
+                <ul id="messages-lobby" class="messages current" role="log" style="visibility: hidden;">
+                </ul>
+            </div>
+            <form id="send-message" action="#">
+                <div id="message-box">
+                    <textarea id="new-message" autocomplete="off" aria-autocomplete="none" accesskey="m"></textarea>
+                </div>
+                <input type="submit" id="send" value="Send" class="send btn" />
+            </form>
+            <form id="upload" action="@Url.Content("~/upload")" method="post" enctype="multipart/form-data" target="upload-frame">
+                <input type="hidden" id="file-connection-id" name="connectionId" />
+                <input type="hidden" id="file-message-id" name="messageId" />
+                <input type="hidden" id="file-room" name="room" />
+                <div class="btn upload-button icon-cloud-upload icon-large">
+                    <input type="file" id="hidden-file" name="data">
+                </div>
+            </form>
+            <iframe id="upload-frame" name="upload-frame" style="position:absolute;top:0;left:0;width:0;height:0;visibility:hidden;"></iframe>
+        </div>
+        <audio src="Content/sounds/notification.wav" id="notificationSound" hidden="hidden" aria-hidden="true">
+        </audio>
+        <section aria-hidden="true" aria-haspopup="true">
+            <div id="disconnect-dialog" class="modal hide fade">
+                <div class="modal-header">
+                  <a class="close" data-dismiss="modal">&times;</a>
+                  <div class="jabbrLogo" id="logo"></div><h3>JabbR Error</h3>
+                </div>
+                <div class="modal-body">
+                  <p>
+                    There was an error contacting the server, please refresh in a few minutes.
+                  </p>
+                </div>
+            </div>
+            <div id="download-dialog" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Download Messages</h3>
+                </div>
+                <div class="modal-body">
+                    <p>
+                    Select date range for messages:
+                    </p>
+                    <p>
+                    <select id="download-range">
+                        <option value="last-hour">Last hour</option>
+                        <option value="last-day">Last day</option>
+                        <option value="last-week">Last week</option>
+                        <option value="last-month">Last month</option>
+                        <option value="all">All</option>
+                    </select>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-primary" id="download-dialog-button">Download</a>
+                </div>
+            </div>
+            <div id="jabbr-help" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>JabbR Help</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="help-body">
+                        @if (Model.ShowDetails)
+                        {
+                            <div id="releaseArea">
+                                <p id="releaseTag">
+                                    Deployed from <a target="_blank" href="https://github.com/JabbR/JabbR/commit/@Model.Sha" title="View the commit.">@Model.Sha.Substring(0, 10)</a>
+                                    on <a target="_blank" href="https://github.com/JabbR/JabbR/branches/@Model.Branch" title="View the branch.">@Model.Branch</a> 
+                                    at @Model.Time.
+                                </p>
+                            </div>
+                        }
+                        <div class="command-list">
+                            <h3>FAQ</h3>
+                            <p>Click on a user to send message.</p>
+                            <p>Type #roomname to create a link to a room</p>
+                            <p>Use #test for testing.</p>
+                        </div>
+                        <h3>Site wide shortcuts</h3>
+                        <dl id="shortcut" class="command-list"></dl>
+                        <h3>Site wide commands</h3>
+                        <dl id="global" class="command-list"></dl>
+                        <h3>Room commands</h3>
+                        <dl id="room" class="command-list"></dl>
+                        <h3>User commands</h3>
+                        <dl id="user" class="command-list"></dl>
+                    </div>
+                </div>
+            </div>
+            <div id="jabbr-update" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <div class="jabbrLogo" id="logo"></div><h3>JabbR Update</h3>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Refresh your browser to get the latest. Auto update will take place in 15 seconds.
+                    </p>
+                </div>
+            </div>
+            <div id="reloadMessageNotification" class="reload-message alert alert-info">
+                <button type="button" class="close" data-dismiss="alert">&times;</button><a href="#">Load missing messages</a>
+            </div>
+            <div id="loadingRoomHistory" class="loading-room-history alert alert-info">
+                <i class="icon-spinner icon-spin"></i> Loading previous messages...
+            </div>
+            <div id="jabbr-clipboard-upload" class="modal hide fade">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <h3>Uploading from clipboard</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="help-body">
+                        <img id="clipboard-upload-preview" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="clipboard-upload" class="btn btn-primary" href="#">Upload</a>
+                </div>
+            </div>
+        </section>
+    </section>
+    <div id="paste" contenteditable="true" style="height: 1px; width: 1px;"></div>
+    @{
+        WriteLiteral(Bundle.JavaScript().ForceDebugIf(() => Model.DebugMode)
+            .Add("~/Scripts/jquery-1.9.0.min.js")
+            .Add("~/Scripts/jquery-migrate-1.0.0.min.js")
+            .Add("~/Scripts/json2.min.js")
+            .Add("~/Scripts/bootstrap.js")
+            .Add("~/Scripts/jquery.KeyTips.js")
+            .Add("~/Scripts/jquery-ui-1.10.0.min.js")
+            .Add("~/Scripts/jquery.signalR-2.0.0-beta2-130602-b51.min.js")
+            .Render("~/Scripts/JabbR1_#.js"));
+    }
+    <script type="text/javascript" src="@Url.Content("~/signalr/hubs")"></script>
+    <script type="text/javascript">
+        window.jabbrVersion = '@Model.Version';
+    </script>
+    @{
+        WriteLiteral(Bundle.JavaScript().ForceDebugIf(() => Model.DebugMode)
+            .Add("~/Scripts/jQuery.tmpl.min.js")
+            .Add("~/Scripts/jquery.cookie.js")
+            .Add("~/Scripts/jquery.autotabcomplete.js")
+            .Add("~/Scripts/jquery.timeago.0.10.js")
+            .Add("~/Scripts/jquery.captureDocumentWrite.min.js")
+            .Add("~/Scripts/jquery.sortElements.js")
+            .Add("~/Scripts/ba-linkify.min.js")
+            .Add("~/Scripts/quicksilver.js")
+            .Add("~/Scripts/Markdown.Converter.js")
+            .Add("~/Scripts/jquery.history.js")
+            .Add("~/Scripts/moment.min.js")
+            .Add("~/Scripts/livestamp.min.js")
+            .Add("~/Chat.emoji.js")
+            .Add("~/Chat.ui.filePaste.js")
+            .Add("~/Chat.utility.js")
+            .Add("~/Chat.toast.js")
+            .Add("~/Chat.ui.room.js")
+            .Add("~/Chat.ui.js")
+            .Add("~/Chat.documentOnWrite.js")
+            .Add("~/Chat.twitter.js")
+            .Add("~/Chat.pinnedWindows.js")
+            .Add("~/Chat.githubissues.js")
+            .Add("~/Chat.js")
+            .Render("~/Scripts/JabbR2_#.js"));
+    }
+    @if (Model.DebugMode)
+    {
+    <script type="text/javascript" src="@Url.Content("~/Scripts/jquery.network.mock.js")"></script>
+    }
+</body>
+</html>

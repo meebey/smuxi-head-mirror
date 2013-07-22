@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ServiceDefinition name="Azure" xmlns="http://schemas.microsoft.com/ServiceHosting/2008/10/ServiceDefinition" schemaVersion="2012-10.1.8">
+  <WebRole name="Website" vmsize="ExtraSmall">
+    <Sites>
+      <Site name="Web">
+        <Bindings>
+          <Binding name="NonSSLBinding" endpointName="Non-SSL" />
+          <Binding name="SSLBinding" endpointName="SSL" />
+        </Bindings>
+      </Site>
+    </Sites>
+    <Endpoints>
+      <InputEndpoint name="Non-SSL" protocol="http" port="80" />
+      <InputEndpoint name="SSL" protocol="https" port="443" certificate="jabbr" />
+    </Endpoints>
+    <Imports>
+      <Import moduleName="Diagnostics" />
+      <Import moduleName="RemoteAccess" />
+      <Import moduleName="RemoteForwarder" />
+    </Imports>
+    <Startup>
+        <Task commandLine="signalr.exe ipc" executionContext="elevated"></Task>
+    </Startup>
+  </WebRole>
+</ServiceDefinition>
