@@ -57,6 +57,12 @@ namespace Smuxi.Engine
     [ProtocolManagerInfo(Name = "XMPP", Description = "Extensible Messaging and Presence Protocol", Alias = "jabber")]
     public class JabberProtocolManager : XmppProtocolManager
     {
+        public override string Protocol {
+            get {
+                return "Jabber";
+            }
+        }
+
         public JabberProtocolManager(Session session) : base(session)
         {
         }
@@ -117,16 +123,16 @@ namespace Smuxi.Engine
             JabberClient.AutoRoster = true;
             JabberClient.AutoPresence = true;
             JabberClient.OnMessage += OnMessage;
-            JabberClient.OnClose += OnDisconnect;
-            JabberClient.OnLogin += OnAuthenticate;
+            JabberClient.OnClose += OnClose;
+            JabberClient.OnLogin += OnLogin;
             JabberClient.OnError += OnError;
             JabberClient.OnStreamError += OnStreamError;
             JabberClient.OnPresence += OnPresence;
             JabberClient.OnRosterItem += OnRosterItem;
-            JabberClient.OnReadXml += OnProtocol;
-            JabberClient.OnWriteXml += OnWriteText;
+            JabberClient.OnReadXml += OnReadXml;
+            JabberClient.OnWriteXml += OnWriteXml;
             JabberClient.OnAuthError += OnAuthError;
-            JabberClient.OnIq += OnIQ;
+            JabberClient.OnIq += OnIq;
             JabberClient.AutoAgents = false; // outdated feature
             JabberClient.EnableCapabilities = true;
             JabberClient.Capabilities.Node = "https://smuxi.im";
@@ -234,7 +240,7 @@ namespace Smuxi.Engine
 
             // TODO: use config for single network chat or once per network manager
             NetworkChat = Session.CreateChat<ProtocolChatModel>(
-                NetworkID, "Jabber " + Host, this
+                NetworkID, String.Format("{0} {1}", Protocol, Host), this
             );
             Session.AddChat(NetworkChat);
             Session.SyncChat(NetworkChat);
@@ -703,11 +709,10 @@ namespace Smuxi.Engine
             var builder = CreateMessageBuilder();
             // TRANSLATOR: this line is used as a label / category for a
             // list of commands below
-            builder.AppendHeader(_("XMPP Commands"));
+            builder.AppendHeader(_("{0} Commands"), Protocol);
             cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
 
             string[] help = {
-            "help",
             "connect xmpp/jabber server port username password [resource]",
             "msg/query jid/nick message",
             "say message",
@@ -725,7 +730,12 @@ namespace Smuxi.Engine
                 cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
             }
             
-            builder.AppendHeader(_("Advanced XMPP Commands"));
+            // TRANSLATOR: this line is used as a label / category for a
+            // list of commands below
+            builder = CreateMessageBuilder();
+            builder.AppendHeader(_("Advanced {0} Commands"), Protocol);
+            cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
+
             string[] help2 = {
             "contact addonly/subscribe/unsubscribe/approve/deny",
             "whois jid",
@@ -1104,7 +1114,7 @@ namespace Smuxi.Engine
             }
         }
 
-        void OnProtocol(object sender, string text)
+        void OnReadXml(object sender, string text)
         {
             if (!DebugProtocol) {
                 return;
@@ -1131,7 +1141,7 @@ namespace Smuxi.Engine
             }
         }
 
-        void OnWriteText(object sender, string text)
+        void OnWriteXml(object sender, string text)
         {
             if (!DebugProtocol) {
                 return;
@@ -1338,8 +1348,10 @@ namespace Smuxi.Engine
                                            person
                         );
                     } else {
+                        builder.AppendFormat(_("{0}{1} wishes to subscribe to you"),
+                                             person, idstring);
                         // you have to respond
-                        builder.AppendFormat(_("{0}{1} wishes to subscribe to you"), person, idstring);
+                        builder.MarkAsHighlight();
                     }
                     break;
                 case PresenceType.subscribed:
@@ -1350,8 +1362,11 @@ namespace Smuxi.Engine
                     if ((person as XmppPersonModel).Subscription == SubscriptionType.from) {
                         builder = CreateMessageBuilder();
                         builder.AppendActionPrefix();
-                        builder.AppendFormat(_("Automatically removed {0}'s subscription to your presences after loosing the subscription to theirs"),
-                                           person
+                        builder.AppendFormat(
+                            _("Automatically removed {0}'s subscription to " +
+                              "your presences after losing the subscription " +
+                              "to theirs"),
+                            person
                         );
                     } else {
                         // you cannot (anymore?) see their presences
@@ -1906,7 +1921,7 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(NetworkChat, builder.ToMessage());
         }
 
-        void OnIQ(object sender, IQ iq)
+        void OnIq(object sender, IQ iq)
         {
             Trace.Call(sender, iq);
 
@@ -1971,7 +1986,7 @@ namespace Smuxi.Engine
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        void OnDisconnect(object sender)
+        void OnClose(object sender)
         {
             Trace.Call(sender);
             if (ContactChat != null) {
@@ -2002,7 +2017,7 @@ namespace Smuxi.Engine
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        void OnAuthenticate(object sender)
+        void OnLogin(object sender)
         {
             Trace.Call(sender);
 
