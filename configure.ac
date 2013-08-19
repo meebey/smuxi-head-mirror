@@ -1,5 +1,5 @@
 AC_PREREQ([2.54])
-AC_INIT([smuxi], [0.8.12], [https://smuxi.im/issues/new])
+AC_INIT([smuxi], [0.9], [https://smuxi.im/issues/new])
 # using the --foreign option makes automake less strict about GNU policy 
 AC_CONFIG_MACRO_DIR([.])
 AM_INIT_AUTOMAKE([foreign tar-ustar])
@@ -688,6 +688,7 @@ AC_CONFIG_FILES([
 	po-Frontend/Makefile.in
 	po-Frontend-GNOME/Makefile.in
 	po-Frontend-GNOME-IRC/Makefile.in
+	po-Frontend-GNOME-XMPP/Makefile.in
 ])
 
 AC_OUTPUT

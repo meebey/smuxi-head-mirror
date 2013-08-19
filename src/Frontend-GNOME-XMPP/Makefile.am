@@ -10,6 +10,7 @@ ASSEMBLY = ../../bin/release/smuxi-frontend-gnome-xmpp.dll
 ASSEMBLY_MDB = 
 COMPILE_TARGET = library
 PROJECT_REFERENCES =  \
+	../../bin/release/smuxi-frontend.dll \
 	../../bin/release/smuxi-frontend-gnome.exe \
 	../../bin/release/smuxi-engine.dll \
 	../../bin/release/smuxi-common.dll \
@@ -38,6 +39,7 @@ ASSEMBLY = ../../bin/debug/smuxi-frontend-gnome-xmpp.dll
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = library
 PROJECT_REFERENCES =  \
+	../../bin/debug/smuxi-frontend.dll \
 	../../bin/debug/smuxi-frontend-gnome.exe \
 	../../bin/debug/smuxi-engine.dll \
 	../../bin/debug/smuxi-common.dll \
@@ -83,7 +85,10 @@ all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_PKGCONFIG)
 
 FILES = \
 	$(top_srcdir)/src/AssemblyVersion.cs \
-	AssemblyInfo.cs 
+	AssemblyInfo.cs \
+	InviteToMenu.cs \
+	XmppGroupChatView.cs \
+	XmppPersonChatView.cs
 
 DATA_FILES = 
 
@@ -91,7 +96,9 @@ RESOURCES =
 
 EXTRAS = 
 
-REFERENCES = 
+REFERENCES = \
+	Mono.Posix \
+	$(GTK_SHARP_20_LIBS)
 
 DLL_REFERENCES = 
 
