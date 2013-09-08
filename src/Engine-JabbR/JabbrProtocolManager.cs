@@ -73,16 +73,47 @@ namespace Smuxi.Engine
             Trace.Call(cmd);
 
             if (cmd.IsCommand) {
+                var handled = false;
                 switch (cmd.Command) {
+                    case "help":
+                        CommandHelp(cmd);
+                        handled = true;
+                        break;
                     case "j":
                     case "join":
                         CommandJoin(cmd);
+                        handled = true;
                         break;
                 }
+                return handled;
             } else {
                 CommandMessage(cmd);
             }
             return true;
+        }
+
+        public void CommandHelp(CommandModel cmd)
+        {
+            Trace.Call(cmd);
+
+            // TRANSLATOR: this line is used as a label / category for a
+            // list of commands below
+            var builder = CreateMessageBuilder().
+                AppendEventPrefix().
+                AppendHeader(_("JabbR Commands"));
+            cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
+
+            string[] help = {
+                "connect jabbr username password",
+                "join"
+            };
+
+            foreach (string line in help) {
+                builder = CreateMessageBuilder();
+                builder.AppendEventPrefix();
+                builder.AppendText(line);
+                cmd.FrontendManager.AddMessageToChat(cmd.Chat, builder.ToMessage());
+            }
         }
 
         public void CommandJoin(CommandModel cmd)
@@ -140,6 +171,7 @@ namespace Smuxi.Engine
             Trace.Call(fm, server);
 
             Server = server;
+            Username = server.Username;
             var chatName = String.Format("{0} {1}", Protocol, NetworkID);
             ProtocolChat = new ProtocolChatModel(NetworkID, chatName, this);
             ProtocolChat.InitMessageBuffer(MessageBufferPersistencyType.Volatile);
@@ -173,6 +205,7 @@ namespace Smuxi.Engine
                 }
                 var authProvider = new DefaultAuthenticationProvider(url);
                 Client = new JabbRClient(url, authProvider, transport);
+                Client.AutoReconnect = true;
                 Client.MessageReceived += OnMessageReceived;
                 Client.MeMessageReceived += OnMeMessageReceived;
                 Client.UserLeft += OnUserLeft;
@@ -180,26 +213,12 @@ namespace Smuxi.Engine
                 Client.JoinedRoom += OnJoinedRoom;
                 Client.PrivateMessage += OnPrivateMessage;
 
-                var msg = CreateMessageBuilder().
-                    AppendEventPrefix().
-                    AppendText(_("Connecting to {0}..."), url).
-                    ToMessage();
-                Session.AddMessageToChat(ProtocolChat, msg);
-
-                Username = server.Username;
-                var res = Client.Connect(server.Username, server.Password);
-                res.Wait();
-                // HACK: this event can only be subscribed if we have made an
-                // actual connection o_O
-                Client.Disconnected += OnDisconnected;
-                IsConnected = true;
-                OnConnected(EventArgs.Empty);
-                OnLoggedOn(res.Result.Rooms);
-
                 Me = CreatePerson(Username);
                 Me.IdentityNameColored.ForegroundColor = new TextColor(0, 0, 255);
                 Me.IdentityNameColored.BackgroundColor = TextColor.None;
                 Me.IdentityNameColored.Bold = true;
+
+                Connect();
             } catch (Exception ex) {
 #if LOG4NET
                 Logger.Error(ex);
@@ -211,6 +230,26 @@ namespace Smuxi.Engine
                     ToMessage();
                 Session.AddMessageToChat(ProtocolChat, msg);
             }
+        }
+
+        void Connect()
+        {
+            Trace.Call();
+
+            var msg = CreateMessageBuilder().
+                AppendEventPrefix().
+                    AppendText(_("Connecting to {0}..."), Client.SourceUrl).
+                    ToMessage();
+            Session.AddMessageToChat(ProtocolChat, msg);
+
+            var res = Client.Connect(Server.Username, Server.Password);
+            res.Wait();
+            // HACK: this event can only be subscribed if we have made an
+            // actual connection o_O
+            Client.Disconnected += OnDisconnected;
+            IsConnected = true;
+            OnConnected(EventArgs.Empty);
+            OnLoggedOn(res.Result.Rooms);
         }
 
         void OnPrivateMessage(string fromUserName, string toUserName, string message)
@@ -248,6 +287,17 @@ namespace Smuxi.Engine
         {
             Trace.Call();
 
+            foreach (var chat in Chats) {
+                // don't disable the protocol chat, else the user loses all
+                // control for the protocol manager! e.g. after a manual
+                // reconnect or server-side disconnect
+                if (chat.ChatType == ChatType.Protocol) {
+                    continue;
+                }
+
+                Session.DisableChat(chat);
+            }
+
             IsConnected = false;
             OnDisconnected(EventArgs.Empty);
         }
@@ -283,7 +333,19 @@ namespace Smuxi.Engine
         {
             Trace.Call(fm);
 
-            throw new NotImplementedException();
+            var msg = CreateMessageBuilder().
+                AppendEventPrefix().
+                    AppendText(_("Reconnecting to {0}..."), Server.Hostname).
+                    ToMessage();
+            Session.AddMessageToChat(Chat, msg);
+            try {
+                Client.Disconnect();
+                Connect();
+            } catch (Exception ex) {
+#if LOG4NET
+                Logger.Error("Reconnect(): Exception during reconnect", ex);
+#endif
+            }
         }
 
         public override void Disconnect(FrontendManager fm)
@@ -376,24 +438,32 @@ namespace Smuxi.Engine
             Trace.Call(message, room);
 
             var chat = GetChat(room, ChatType.Group) ?? ProtocolChat;
+            AddMessage(chat, message);
+        }
 
-            string content = message.Content;
-            string name = message.User.Name;
+        void AddMessage(ChatModel chat, Message msg)
+        {
+            if (chat == null) {
+                throw new ArgumentNullException("chat");
+            }
+            if (msg == null) {
+                throw new ArgumentNullException("msg");
+            }
+
+            string content = msg.Content;
+            string name = msg.User.Name;
 
             var builder = CreateMessageBuilder<JabbrMessageBuilder>();
-            ContactModel sender = null;
-            if (name == Username) {
-                sender = Me;
-            } else {
-                sender = CreatePerson(name);
+            if (msg.When != default(DateTimeOffset)) {
+                builder.TimeStamp = msg.When.UtcDateTime;
             }
+            var sender = name == Username ? Me : CreatePerson(name);
             builder.AppendSenderPrefix(sender);
             builder.AppendMessage(content);
             if (sender != Me) {
                 builder.MarkHighlights();
             }
-            var msg = builder.ToMessage();
-            Session.AddMessageToChat(chat, msg);
+            Session.AddMessageToChat(chat, builder.ToMessage());
         }
 
         void OnMeMessageReceived(string userName, string content, string roomName)
@@ -460,8 +530,16 @@ namespace Smuxi.Engine
 
             try {
                 foreach (var room in rooms) {
-                    var groupChat = new GroupChatModel(room.Name, room.Name, this);
-                    groupChat.InitMessageBuffer(MessageBufferPersistencyType.Volatile);
+                    var groupChat = (GroupChatModel) GetChat(room.Name, ChatType.Group);
+                    bool newChat;
+                    if (groupChat == null) {
+                        groupChat = new GroupChatModel(room.Name, room.Name, this);
+                        groupChat.InitMessageBuffer(MessageBufferPersistencyType.Volatile);
+                        newChat = true;
+                    } else {
+                        groupChat.UnsafePersons.Clear();
+                        newChat = false;
+                    }
 
                     var task = Client.GetRoomInfo(room.Name);
                     task.Wait();
@@ -478,7 +556,14 @@ namespace Smuxi.Engine
                     if (!groupChat.UnsafePersons.ContainsKey(Username)) {
                         groupChat.UnsafePersons.Add(Username, Me);
                     }
-                    Session.AddChat(groupChat);
+                    foreach (var msg in roomInfo.RecentMessages) {
+                        AddMessage(groupChat, msg);
+                    }
+                    if (newChat) {
+                        Session.AddChat(groupChat);
+                    } else {
+                        Session.EnableChat(groupChat);
+                    }
                     Session.SyncChat(groupChat);
                 }
             } catch (Exception ex) {

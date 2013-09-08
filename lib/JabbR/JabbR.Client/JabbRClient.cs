@@ -20,7 +20,6 @@ namespace JabbR.Client
 
         private IHubProxy _chat;
         private HubConnection _connection;
-        private int _initialized;
 
         public JabbRClient(string url)
             : this(url, authenticationProvider: null, transportFactory: () => new AutoTransport(new DefaultHttpClient()))
@@ -295,11 +294,6 @@ namespace JabbR.Client
 
         private void SubscribeToEvents()
         {
-            if (Interlocked.Exchange(ref _initialized, 1) != 0)
-            {
-                return;
-            }
-
             if (AutoReconnect)
             {
                 Disconnected += OnDisconnected;
