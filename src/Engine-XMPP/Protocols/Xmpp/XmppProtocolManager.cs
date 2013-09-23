@@ -96,6 +96,7 @@ namespace Smuxi.Engine
         int AutoReconnectDelay { get; set; }
 
         bool IsFacebook { get; set; }
+        bool IsDisposed { get; set; }
 
         bool ShowChatStates { get; set; }
         // pidgin's psychic mode
@@ -116,6 +117,12 @@ namespace Smuxi.Engine
         public override ChatModel Chat {
             get {
                 return NetworkChat;
+            }
+        }
+
+        public override bool IsConnected {
+            get {
+                return JabberClient.Authenticated;
             }
         }
 
@@ -145,6 +152,7 @@ namespace Smuxi.Engine
             JabberClient.OnWriteXml += OnWriteXml;
             JabberClient.OnAuthError += OnAuthError;
             JabberClient.OnIq += OnIq;
+            JabberClient.SendingServiceUnavailable += OnSendingServiceUnavailable;
             JabberClient.AutoAgents = false; // outdated feature
             JabberClient.EnableCapabilities = true;
             JabberClient.Capabilities.Node = "https://smuxi.im";
@@ -171,6 +179,30 @@ namespace Smuxi.Engine
             ElementFactory.AddElementType("own-message", "http://www.facebook.com/xmpp/messages", typeof(OwnMessageQuery));
 
             MucManager = new MucManager(JabberClient);
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        void OnSendingServiceUnavailable(object sender, SendingServiceUnavailableEventArgs e)
+        {
+            if (e.Stanza.To == null) {
+                // can only be received by the server
+                return;
+            }
+            if (e.Stanza.To == JabberClient.MyJID.Server) {
+                // explicitly targeting the server
+                return;
+            }
+            XmppPersonModel person;
+            if (!Contacts.TryGetValue(e.Stanza.To.Bare, out person)) {
+                e.Cancel = true;
+                return;
+            }
+            if (person.Subscription != SubscriptionType.both &&
+                person.Subscription != SubscriptionType.from) {
+                e.Cancel = true;
+                return;
+            }
+            // the person already knows we are online, this does not give away our privacy
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -292,8 +324,6 @@ namespace Smuxi.Engine
         public override void Disconnect(FrontendManager fm)
         {
             Trace.Call(fm);
-            
-            IsConnected = false;
             AutoReconnect = false;
             JabberClient.Close();
         }
@@ -302,12 +332,23 @@ namespace Smuxi.Engine
         public override void Dispose()
         {
             Trace.Call();
+            IsDisposed = true;
 
             base.Dispose();
-            
-            IsConnected = false;
             AutoReconnect = false;
-            JabberClient.Close();
+            JabberClient.OnMessage -= OnMessage;
+            JabberClient.OnClose -= OnClose;
+            JabberClient.OnLogin -= OnLogin;
+            JabberClient.OnError -= OnError;
+            JabberClient.OnStreamError -= OnStreamError;
+            JabberClient.OnPresence -= OnPresence;
+            JabberClient.OnRosterItem -= OnRosterItem;
+            JabberClient.OnReadXml -= OnReadXml;
+            JabberClient.OnWriteXml -= OnWriteXml;
+            JabberClient.OnAuthError -= OnAuthError;
+            JabberClient.OnIq -= OnIq;
+            JabberClient.ClientSocket.OnValidateCertificate -= ValidateCertificate;
+            JabberClient.SocketDisconnect();
         }
 
         // this method is used as status / title
@@ -388,7 +429,11 @@ namespace Smuxi.Engine
                 Session.RemoveChat(chat);
                 ContactChat = null;
             } else if (chat.ChatType == ChatType.Group) {
-                MucManager.LeaveRoom(chat.ID, ((XmppGroupChatModel)chat).OwnNickname);
+                if (IsConnected) {
+                    MucManager.LeaveRoom(chat.ID, ((XmppGroupChatModel)chat).OwnNickname);
+                } else {
+                    Session.RemoveChat(chat);
+                }
             } else if (chat.ChatType == ChatType.Person) {
                 Session.RemoveChat(chat);
             } else {
@@ -404,7 +449,7 @@ namespace Smuxi.Engine
         {
             Trace.Call(status, message);
 
-            if (!IsConnected || !JabberClient.Authenticated) {
+            if (!IsConnected) {
                 return;
             }
 
@@ -2167,9 +2212,10 @@ namespace Smuxi.Engine
                 Session.DisableChat(ContactChat);
             }
 
-            IsConnected = false;
             OnDisconnected(EventArgs.Empty);
 
+            // reset socket
+            JabberClient.ClientSocket.OnValidateCertificate -= ValidateCertificate;
             JabberClient.SocketConnectionType = SocketConnectionType.Direct;
 
             if (AutoReconnect) {
@@ -2182,7 +2228,13 @@ namespace Smuxi.Engine
                 ThreadPool.QueueUserWorkItem(delegate {
                     // sleep for N seconds, we don't want to be abusive
                     Thread.Sleep(AutoReconnectDelay * 1000);
-                    Connect();
+                    lock (this) {
+                        // prevent this timer from calling connect after it has been closed
+                        if (IsDisposed) {
+                            return;
+                        }
+                        Connect();
+                    }
                 });
             }
         }
@@ -2206,8 +2258,6 @@ namespace Smuxi.Engine
         void OnLogin(object sender)
         {
             Trace.Call(sender);
-
-            IsConnected = true;
 
             var builder = CreateMessageBuilder();
             builder.AppendEventPrefix();
