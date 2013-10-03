@@ -89,7 +89,7 @@ namespace Smuxi.Engine
         string LastSentMessage { get; set; }
         bool SupressLocalMessageEcho { get; set; }
         bool AutoReconnect { get; set; }
-        int AutoReconnectDelay { get; set; }
+        TimeSpan AutoReconnectDelay { get; set; }
         bool IsFacebook { get; set; }
         bool IsDisposed { get; set; }
         bool ShowChatStates { get; set; }
@@ -129,7 +129,6 @@ namespace Smuxi.Engine
             SupressLocalMessageEcho = false;
             ShowChatStates = true;
             OpenNewChatOnChatState = true;
-            AutoReconnectDelay = 60;
 
             JabberClient = new XmppClientConnection();
             JabberClient.Resource = "Smuxi";
@@ -293,6 +292,7 @@ namespace Smuxi.Engine
             Contacts.Clear();
 
             AutoReconnect = true;
+            AutoReconnectDelay = TimeSpan.FromMinutes(1);
 
             ApplyConfig(Session.UserConfig, Server);
 
@@ -309,9 +309,17 @@ namespace Smuxi.Engine
         public override void Reconnect(FrontendManager fm)
         {
             Trace.Call(fm);
-
-            AutoReconnect = true;
-            JabberClient.Close();
+            // IsConnected checks for a working xmpp connection
+            // we need to know the socket's state here
+            if (JabberClient.XmppConnectionState != XmppConnectionState.Disconnected) {
+                AutoReconnect = true;
+                AutoReconnectDelay = TimeSpan.Zero;
+                JabberClient.Close();
+            } else {
+                JabberClient.ClientSocket.OnValidateCertificate -= ValidateCertificate;
+                JabberClient.SocketConnectionType = SocketConnectionType.Direct;
+                Reconnect();
+            }
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -392,7 +400,14 @@ namespace Smuxi.Engine
             // HACK: lower probability of sync race condition during connect
             ThreadPool.QueueUserWorkItem(delegate {
                 Thread.Sleep(5000);
-                Session.SyncChat(ContactChat);
+                lock (this) {
+                    if (IsDisposed) {
+                        return;
+                    }
+                    if (ContactChat != null) {
+                        Session.SyncChat(ContactChat);
+                    }
+                }
             });
         }
 
@@ -982,7 +997,6 @@ namespace Smuxi.Engine
                 chat = Session.CreateChat<XmppGroupChatModel>(jid, jid, this);
                 Session.AddChat(chat);
             }
-            Session.DisableChat(chat);
             if (password != null) {
                 chat.Password = password;
             }
@@ -1664,9 +1678,14 @@ namespace Smuxi.Engine
                         // HACK: lower probability of sync race condition swallowing messages
                         ThreadPool.QueueUserWorkItem(delegate {
                             Thread.Sleep(1000);
-                            chat.IsSynced = true;
-                            Session.SyncChat(chat);
-                            Session.EnableChat(chat);
+                            lock (this) {
+                                if (IsDisposed) {
+                                    return;
+                                }
+                                chat.IsSynced = true;
+                                Session.SyncChat(chat);
+                                Session.EnableChat(chat);
+                            }
                         });
                     }
                     break;
@@ -2208,9 +2227,6 @@ namespace Smuxi.Engine
 
                 Session.DisableChat(chat);
             }
-            if (ContactChat != null && ContactChat.IsEnabled) {
-                Session.DisableChat(ContactChat);
-            }
 
             OnDisconnected(EventArgs.Empty);
 
@@ -2219,24 +2235,46 @@ namespace Smuxi.Engine
             JabberClient.SocketConnectionType = SocketConnectionType.Direct;
 
             if (AutoReconnect) {
-                var builder = CreateMessageBuilder();
-                builder.AppendEventPrefix();
-                builder.AppendText(_("Reconnecting to {0} in {1} seconds..."),
-                                   JabberClient.Server, AutoReconnectDelay);
-                Session.AddMessageToChat(Chat, builder.ToMessage());
-
-                ThreadPool.QueueUserWorkItem(delegate {
-                    // sleep for N seconds, we don't want to be abusive
-                    Thread.Sleep(AutoReconnectDelay * 1000);
-                    lock (this) {
-                        // prevent this timer from calling connect after it has been closed
-                        if (IsDisposed) {
-                            return;
-                        }
-                        Connect();
-                    }
-                });
+                Reconnect(AutoReconnectDelay);
             }
+        }
+
+        void Reconnect()
+        {
+            var builder = CreateMessageBuilder();
+            builder.AppendEventPrefix();
+            builder.AppendText(_("Reconnecting to {0}"),
+                               JabberClient.Server);
+            Session.AddMessageToChat(Chat, builder.ToMessage());
+            Connect();
+        }
+
+        void Reconnect(TimeSpan span)
+        {
+            int delay = (int)span.TotalMilliseconds;
+            if (delay <= 0) {
+                Reconnect();
+            }
+            var builder = CreateMessageBuilder();
+            builder.AppendEventPrefix();
+            builder.AppendText(_("Reconnecting to {0} in {1} seconds"),
+                               JabberClient.Server, span.TotalSeconds);
+            Session.AddMessageToChat(Chat, builder.ToMessage());
+            ThreadPool.QueueUserWorkItem(delegate {
+                Thread.Sleep(delay);
+                lock (this) {
+                    // prevent this timer from calling connect after it has been closed
+                    if (IsDisposed) {
+                        return;
+                    }
+                    // prevent this timer from calling connect if during the timout
+                    // some other event already began a connect
+                    if (JabberClient.XmppConnectionState != XmppConnectionState.Disconnected) {
+                        return;
+                    }
+                    Connect();
+                }
+            });
         }
 
         void OnError(object sender, Exception ex)
