@@ -85,7 +85,7 @@ namespace Smuxi.Frontend.Gnome
                 // object?!?
                 return Frontend.MainWindow.HasToplevelFocus &&
                         Object.ReferenceEquals(
-                            Frontend.MainWindow.Notebook.CurrentChatView,
+                            Frontend.MainWindow.ChatViewManager.CurrentChatView,
                             this
                         );
             }
@@ -638,9 +638,7 @@ namespace Smuxi.Frontend.Gnome
         
         protected virtual void OnMessageTextViewMessageAdded(object sender, MessageTextViewMessageAddedEventArgs e)
         {
-            // HACK: out of scope?
-            // probably we should use the ChatViewManager instead?
-            if (Frontend.MainWindow.Notebook.CurrentChatView != this) {
+            if (!IsActive) {
                 switch (e.Message.MessageType) {
                     case MessageType.Normal:
                         HasActivity = true;
