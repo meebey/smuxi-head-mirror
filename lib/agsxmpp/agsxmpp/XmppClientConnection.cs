@@ -103,8 +103,10 @@ namespace agsXMPP
 		private		bool					m_UseSSL			= false;
 #if (CF || CF_2) && !BCCRYPTO
         private     bool                    m_UseStartTLS       = false;
+        private bool f_ForceStartTLS = false;
 #else
         private		bool					m_UseStartTLS		= true;
+        private bool f_ForceStartTLS = true;
 #endif
         private     bool                    m_UseCompression    = false;
 		internal	bool					m_Binded			= false;
@@ -312,6 +314,7 @@ namespace agsXMPP
         /// <summary>
 		/// use "old style" ssl for this connection (Port 5223).
 		/// </summary>
+        [Obsolete("Try to use ForceStartTls instead")]
 		public bool UseSSL
 		{
 			get	{ return m_UseSSL; }
@@ -326,6 +329,16 @@ namespace agsXMPP
 			}
 #endif
 		}
+
+        public bool ForceStartTls {
+            get {
+                return f_ForceStartTLS;
+            }
+            set {
+                UseStartTLS = UseStartTLS || value;
+                f_ForceStartTLS = value;
+            }
+        }
 
 		/// <summary>
 		/// use Start-TLS on this connection when the server supports it. Make sure UseSSL is false when 
@@ -1091,7 +1104,6 @@ namespace agsXMPP
 
 				if(OnRegisterError!=null)
                     OnRegisterError(this, e.IQ);
-                e.Handled = true; // not really
 			}
         }
 
@@ -1102,7 +1114,7 @@ namespace agsXMPP
         /// requests the registration fields
         /// </summary>
         /// <param name="obj">object which contains the features node which we need later for login again</param>
-        private void GetRegistrationFields(Node data)
+        void GetRegistrationFields(Element elem)
         {
             // <iq type='get' id='reg1'>
             //  <query xmlns='jabber:iq:register'/>
@@ -1111,11 +1123,11 @@ namespace agsXMPP
             RegisterIq regIq = new RegisterIq(IqType.get, new Jid(base.Server));
             IqGrabber.SendIq(regIq,
                 (object sender, IQEventArgs e) =>
-                    OnRegistrationFieldsResult(e, data)
+                    OnRegistrationFieldsResult(e, elem)
             );
         }
 
-        private void OnRegistrationFieldsResult(IQEventArgs e, Node data)
+        void OnRegistrationFieldsResult(IQEventArgs e, Element data)
         {
             if (e.IQ.Type != IqType.error)
             {
@@ -1155,7 +1167,7 @@ namespace agsXMPP
             }
         }
         
-        private void OnRegisterResult(IQEventArgs e, Node data)
+        private void OnRegisterResult(IQEventArgs e, Element data)
 		{
 			/*
 			Example 6. Host Informs Entity of Failed Registration (Username Conflict)
@@ -1194,20 +1206,23 @@ namespace agsXMPP
                 { 
                     // init sasl login
                     InitSaslHandler();
-                    m_SaslHandler.OnStreamElement(this, data as Node);
+                    var eventArgs = new ElementEventArgs(data);
+                    m_SaslHandler.OnStreamElement(this, eventArgs);
+                    if (eventArgs.Handled) {
+                        e.Handled = true;
+                    }
                 }
                 else
                 {
                     // old jabber style login
                     RequestLoginInfo();
+                    e.Handled = true;
                 }
-                e.Handled = true;
             }
             else if (e.IQ.Type == IqType.error)
             {
                 if (OnRegisterError != null)
                     OnRegisterError(this, e.IQ);
-                e.Handled = true; // not really
             }
         }
         #endregion
@@ -1232,6 +1247,7 @@ namespace agsXMPP
 			auth.Resource = this.m_Resource;
 			auth.SetAuth(this.m_Username, this.m_Password, this.StreamId);
 			
+            e.Handled = true;
             IqGrabber.SendIq(iq, OnAuthenticate);
 		}
 
@@ -1276,6 +1292,7 @@ namespace agsXMPP
 
 			if (OnAgentEnd != null)
 				OnAgentEnd(this);			
+            e.Handled = true;
 		}
 		#endregion
 
@@ -1320,6 +1337,7 @@ namespace agsXMPP
 			{
                 m_Authenticated = true;
                 RaiseOnLogin();                
+                e.Handled = true;
 			}
             else if(e.IQ.Type == IqType.error)
 			{
@@ -1408,10 +1426,11 @@ namespace agsXMPP
 				CleanupSession();
 		}
 
-		public override void StreamParserOnStreamElement(object sender, Node e)
+        public override void StreamParserOnStreamElement(object sender, ElementEventArgs eventArgs)
 		{
-			base.StreamParserOnStreamElement(sender, e);
+            base.StreamParserOnStreamElement(sender, eventArgs);
             bool handled = false;
+            var e = eventArgs.Element;
 
 			if (e is IQ)
 			{
@@ -1457,6 +1476,11 @@ namespace agsXMPP
 					DoChangeXmppConnectionState(XmppConnectionState.Securing);
 					Send(new StartTls());
 				}
+                // these are the initial ServerCapabilities, don't support Tls, but we require Tls
+                else if (ServerCapabilities == null && (!f.SupportsStartTls && ForceStartTls)) {
+                    FireOnError(this, new StartTlsException("StartTls is not supported on this server"));
+                    Close();
+                }
                 else
 #endif
                 if (m_UseCompression &&
@@ -1517,29 +1541,34 @@ namespace agsXMPP
                 }
             }
 
-            if (!handled) {
-                var stanza = e as protocol.Base.StanzaWithError;
-                if (stanza == null) {
-                    // what should we do here?
-                    return;
-                }
-                if (stanza.Error != null) {
-                    // don't respond to error messages with service unavailable
-                    return;
-                }
-                stanza.Error = new protocol.client.Error(ErrorCondition.ServiceUnavailable);
-                stanza.SwitchDirection();
-
-                // allow the client to prevent this message (privacy/security reasons)
-                var ev = new SendingServiceUnavailableEventArgs(stanza);
-                OnSendingServiceUnavailable(ev);
-                if (ev.Cancel) {
-                    // the client has cancelled this
-                    return;
-                }
-                Send((Element)e);
+            if (handled) {
+                eventArgs.Handled = true;
             }
 		}
+
+        public override void StreamParserStreamElementNotHandled(object sender, UnhandledElementEventArgs eventArgs)
+        {
+            var stanza = eventArgs.Element as protocol.Base.StanzaWithError;
+            if (stanza == null) {
+                // what should we do here?
+                return;
+            }
+            if (stanza.Error != null) {
+                // don't respond to error messages with service unavailable
+                return;
+            }
+            stanza.Error = new protocol.client.Error(ErrorCondition.ServiceUnavailable);
+            stanza.SwitchDirection();
+
+            // allow the client to prevent this message (privacy/security reasons)
+            var ev = new SendingServiceUnavailableEventArgs(stanza);
+            OnSendingServiceUnavailable(ev);
+            if (ev.Cancel) {
+                // the client has cancelled this
+                return;
+            }
+            Send(eventArgs.Element);
+        }
 
 		public override void StreamParserOnStreamError(object sender, Exception ex)
 		{
