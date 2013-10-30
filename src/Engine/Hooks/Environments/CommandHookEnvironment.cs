@@ -21,22 +21,16 @@ using System;
 
 namespace Smuxi.Engine
 {
-    public class ProtocolManagerHookEnvironment : HookEnvironment
+    public class CommandHookEnvironment : HookEnvironment
     {
-        public ProtocolManagerHookEnvironment(IProtocolManager protocolManager)
+        public CommandHookEnvironment(CommandModel cmd)
         {
-            if (protocolManager == null) {
-                throw new ArgumentNullException("protocolManager");
+            if (cmd == null) {
+                throw new ArgumentNullException("cmd");
             }
 
-            this["PROTOCOL_MANAGER_PROTOCOL"] = protocolManager.Protocol;
-            this["PROTOCOL_MANAGER_NETWORK"] = protocolManager.NetworkID;
-            this["PROTOCOL_MANAGER_HOST"] = protocolManager.Host;
-            this["PROTOCOL_MANAGER_PORT"] = protocolManager.Port.ToString();
-            if (protocolManager.Me != null) {
-                this["PROTOCOL_MANAGER_ME_ID"] = protocolManager.Me.ID;
-            }
+            this["CMD"] = cmd.Command;
+            this["CMD_PARAMETER"] = cmd.Parameter;
         }
     }
 }
-

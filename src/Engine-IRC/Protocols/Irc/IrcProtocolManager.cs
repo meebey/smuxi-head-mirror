@@ -941,10 +941,6 @@ namespace Smuxi.Engine
                             }
                             handled = true;
                             break;
-                        default:
-                            CommandFallback(command);
-                            handled = true;
-                            break;
                     }
                 } else {
                     // normal text
@@ -2942,7 +2938,8 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(chat, msg);
 
             OnMessageReceived(
-                new MessageEventArgs(chat, msg, e.Data.Nick, e.Data.Channel)
+                new MessageEventArgs(chat, msg, e.Data.Nick ?? e.Data.From,
+                                     e.Data.Channel)
             );
         }
         
@@ -2962,7 +2959,8 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(chat, msg);
 
             OnMessageReceived(
-                new MessageEventArgs(chat, msg, e.Data.Nick, e.Data.Channel)
+                new MessageEventArgs(chat, msg, e.Data.Nick ?? e.Data.From,
+                                     e.Data.Channel)
             );
         }
         
@@ -2980,7 +2978,8 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(chat, msg);
 
             OnMessageReceived(
-                new MessageEventArgs(chat, msg, e.Data.Nick, e.Data.Channel)
+                new MessageEventArgs(chat, msg, e.Data.Nick ?? e.Data.From,
+                                     e.Data.Channel)
             );
         }
         
@@ -3023,7 +3022,7 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(chat, msg);
 
             OnMessageReceived(
-                new MessageEventArgs(chat, msg, e.Data.Nick, null)
+                new MessageEventArgs(chat, msg, e.Data.Nick ?? e.Data.From, null)
             );
         }
         
@@ -3068,7 +3067,7 @@ namespace Smuxi.Engine
             Session.AddMessageToChat(chat, msg);
 
             OnMessageReceived(
-                new MessageEventArgs(chat, msg, e.Data.Nick, null)
+                new MessageEventArgs(chat, msg, e.Data.Nick ?? e.Data.From, null)
             );
         }
         
@@ -3122,7 +3121,7 @@ namespace Smuxi.Engine
             }
 
             OnMessageReceived(
-                new MessageEventArgs(Chat, msg, e.Data.Nick, null)
+                new MessageEventArgs(Chat, msg, e.Data.Nick ?? e.Data.From, null)
             );
         }
 
