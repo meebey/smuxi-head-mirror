@@ -889,7 +889,34 @@ namespace Smuxi.Engine
                     Session.AddMessageToFrontend(cmd.FrontendManager, chat, msg);
                 }
             }
-         }
+        }
+
+        public void CommandUnfollow(CommandModel cmd)
+        {
+            decimal userId;
+            if (cmd.DataArray.Length >= 2) {
+                userId = decimal.Parse(cmd.DataArray[1]);
+            } else {
+                NotEnoughParameters(cmd);
+                return;
+            }
+            var chat = cmd.Chat as GroupChatModel;
+            if (chat == null) {
+                return;
+            }
+
+            var userUnfollowResponse = TwitterFriendship.Delete(f_OAuthTokens, userId, f_OptionalProperties);
+            CheckResponse(userUnfollowResponse);
+
+            if (userUnfollowResponse.ResponseObject != null && !String.IsNullOrEmpty(userUnfollowResponse.ResponseObject.Name)) {
+                Session.RemovePersonFromGroupChat(chat, chat.GetPerson(userId.ToString ()));
+            }
+        }
+
+        public bool IsHomeTimeLine(ChatModel chatModel)
+        {
+            return chatModel.Equals(f_FriendsTimelineChat);
+        }
 
         private List<TwitterStatus> SortTimeline(TwitterStatusCollection timeline)
         {
@@ -1016,14 +1043,14 @@ namespace Smuxi.Engine
 
                 if (status.User.Id.ToString() == Me.ID) {
                     OnMessageSent(
-                        new MessageEventArgs(f_FriendsTimelineChat, msg,
-                                             null, status.InReplyToScreenName)
+                        new MessageEventArgs(f_FriendsTimelineChat, msg, null,
+                                             status.InReplyToScreenName ?? String.Empty)
                     );
                 } else {
                     OnMessageReceived(
                         new MessageEventArgs(f_FriendsTimelineChat, msg,
                                              status.User.ScreenName,
-                                             status.InReplyToScreenName)
+                                             status.InReplyToScreenName ?? String.Empty)
                     );
                 }
 
@@ -1127,7 +1154,7 @@ namespace Smuxi.Engine
                 OnMessageReceived(
                     new MessageEventArgs(f_RepliesChat, msg,
                                          status.User.ScreenName,
-                                         status.InReplyToScreenName)
+                                         status.InReplyToScreenName ?? String.Empty)
                 );
 
                 f_LastReplyStatusID = status.Id;
