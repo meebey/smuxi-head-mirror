@@ -3,12 +3,12 @@ src/Common/
 src/Engine/
 src/Engine-Campfire/
 src/Engine-IRC/
-src/Engine-JabbR/
-src/Engine-XMPP/
 src/Engine-Twitter/
+src/Engine-XMPP/
 src/Frontend/
 src/Frontend-GNOME/
 src/Frontend-GNOME-IRC/
+src/Frontend-GNOME-XMPP/
 src/Frontend-STFL/
 src/Frontend-SWF/
 src/Frontend-WPF/

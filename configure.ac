@@ -24,8 +24,9 @@ POSUB="
 	po-Engine
 	po-Engine-Campfire
 	po-Engine-IRC
-	po-Engine-XMPP
 	po-Engine-JabbR
+	po-Engine-Twitter
+	po-Engine-XMPP
 	po-Server
 	po-Frontend
 	po-Frontend-GNOME
@@ -57,7 +58,7 @@ GETTEXT_PACKAGE_ENGINE_CAMPFIRE=smuxi-engine-campfire
 AC_SUBST(GETTEXT_PACKAGE_ENGINE_CAMPFIRE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE_ENGINE_CAMPFIRE, "$GETTEXT_PACKAGE_ENGINE_CAMPFIRE", [Gettext package])
 
-GETTEXT_PACKAGE_ENGINE_TWITTER=smuxi-engine-jabbr
+GETTEXT_PACKAGE_ENGINE_JABBR=smuxi-engine-jabbr
 AC_SUBST(GETTEXT_PACKAGE_ENGINE_JABBR)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE_ENGINE_JABBR, "$GETTEXT_PACKAGE_ENGINE_JABBR", [Gettext package])
 
@@ -684,7 +685,9 @@ AC_CONFIG_FILES([
 	po-Engine/Makefile.in
 	po-Engine-Campfire/Makefile.in
 	po-Engine-IRC/Makefile.in
+	po-Engine-JabbR/Makefile.in
 	po-Engine-Twitter/Makefile.in
+	po-Engine-XMPP/Makefile.in
 	po-Server/Makefile.in
 	po-Frontend/Makefile.in
 	po-Frontend-GNOME/Makefile.in
