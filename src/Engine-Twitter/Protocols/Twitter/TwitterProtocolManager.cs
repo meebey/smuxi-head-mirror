@@ -22,6 +22,7 @@ using System;
 using System.Net;
 using System.Net.Security;
 using System.Web;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Collections.Generic;
@@ -620,6 +621,19 @@ namespace Smuxi.Engine
                             CommandTimeline(command);
                             handled = true;
                             break;
+                        case "follow":
+                            CommandFollow(command);
+                            handled = true;
+                            break;
+                        case "unfollow":
+                            CommandUnfollow(command);
+                            handled = true;
+                            break;
+                        case "search":
+                        case "join":
+                            CommandSearch(command);
+                            handled = true;
+                            break;
                     }
                 }
                 switch (command.Command) {
@@ -669,6 +683,9 @@ namespace Smuxi.Engine
             string[] help = {
                 "connect twitter username",
                 "pin pin-number",
+                "follow screen-name|user-id",
+                "unfollow screen-name|user-id",
+                "search keyword",
             };
 
             foreach (string line in help) {
@@ -948,26 +965,63 @@ namespace Smuxi.Engine
             }
         }
 
-        public void CommandUnfollow(CommandModel cmd)
+        public void CommandFollow(CommandModel cmd)
         {
-            decimal userId;
-            if (cmd.DataArray.Length >= 2) {
-                userId = decimal.Parse(cmd.DataArray[1]);
-            } else {
+            if (cmd.DataArray.Length < 2) {
                 NotEnoughParameters(cmd);
                 return;
             }
+
             var chat = cmd.Chat as GroupChatModel;
             if (chat == null) {
                 return;
             }
 
-            var userUnfollowResponse = TwitterFriendship.Delete(f_OAuthTokens, userId, f_OptionalProperties);
-            CheckResponse(userUnfollowResponse);
-
-            if (userUnfollowResponse.ResponseObject != null && !String.IsNullOrEmpty(userUnfollowResponse.ResponseObject.Name)) {
-                Session.RemovePersonFromGroupChat(chat, chat.GetPerson(userId.ToString ()));
+            var options = CreateOptions<CreateFriendshipOptions>();
+            options.Follow = true;
+            decimal userId;
+            TwitterResponse<TwitterUser> res;
+            if (Decimal.TryParse(cmd.Parameter, out userId)) {
+                // parameter is an ID
+                res = TwitterFriendship.Create(f_OAuthTokens, userId, options);
+            } else {
+                // parameter is a screen name
+                var screenName = cmd.Parameter;
+                res = TwitterFriendship.Create(f_OAuthTokens, screenName, options);
             }
+            CheckResponse(res);
+            var person = CreatePerson(res.ResponseObject);
+            Session.AddPersonToGroupChat(chat, person);
+        }
+
+        public void CommandUnfollow(CommandModel cmd)
+        {
+            if (cmd.DataArray.Length < 2) {
+                NotEnoughParameters(cmd);
+                return;
+            }
+
+            var chat = cmd.Chat as GroupChatModel;
+            if (chat == null) {
+                return;
+            }
+
+            PersonModel person;
+            var persons = chat.Persons;
+            if (persons.TryGetValue(cmd.Parameter, out person)) {
+                // parameter is an ID
+                decimal userId;
+                Decimal.TryParse(cmd.Parameter, out userId);
+                var res = TwitterFriendship.Delete(f_OAuthTokens, userId, f_OptionalProperties);
+                CheckResponse(res);
+            } else {
+                // parameter is a screen name
+                var screenName = cmd.Parameter;
+                person = persons.Single((arg) => arg.Value.IdentityName == screenName).Value;
+                var res = TwitterFriendship.Delete(f_OAuthTokens, screenName, f_OptionalProperties);
+                CheckResponse(res);
+            }
+            Session.RemovePersonFromGroupChat(chat, person);
         }
 
         public bool IsHomeTimeLine(ChatModel chatModel)
@@ -987,11 +1041,53 @@ namespace Smuxi.Engine
             return sortedTimeline;
         }
 
+        public void CommandSearch(CommandModel cmd)
+        {
+            if (cmd.DataArray.Length < 2) {
+                NotEnoughParameters(cmd);
+                return;
+            }
+
+            var keyword = cmd.Parameter;
+            var chatName = String.Format(_("Search {0}"), keyword);
+            var chat = Session.CreateChat<GroupChatModel>(keyword, chatName, this);
+            Session.AddChat(chat);
+            var options = CreateOptions<SearchOptions>();
+            options.Count = 50;
+            var response = TwitterSearch.Search(f_OAuthTokens, keyword, options);
+            CheckResponse(response);
+            var search = response.ResponseObject;
+            var sortedSearch = SortTimeline(search);
+            foreach (var status in sortedSearch) {
+                var msg = CreateMessageBuilder().
+                    Append(status, GetPerson(status.User)).
+                    ToMessage();
+                chat.MessageBuffer.Add(msg);
+                var userId = status.User.Id.ToString();
+                if (!chat.UnsafePersons.ContainsKey(userId)) {
+                    chat.UnsafePersons.Add(userId, GetPerson(status.User));
+                }
+            }
+            Session.SyncChat(chat);
+        }
+
         private List<TwitterDirectMessage> SortTimeline(TwitterDirectMessageCollection timeline)
         {
             var sortedTimeline = new List<TwitterDirectMessage>(timeline.Count);
             foreach (TwitterDirectMessage msg in timeline) {
                 sortedTimeline.Add(msg);
+            }
+            sortedTimeline.Sort(
+                (a, b) => (a.CreatedDate.CompareTo(b.CreatedDate))
+            );
+            return sortedTimeline;
+        }
+
+        List<TwitterSearchResult> SortTimeline(TwitterSearchResultCollection timeline)
+        {
+            var sortedTimeline = new List<TwitterSearchResult>(timeline.Count);
+            foreach (var search in timeline) {
+                sortedTimeline.Add(search);
             }
             sortedTimeline.Sort(
                 (a, b) => (a.CreatedDate.CompareTo(b.CreatedDate))
