@@ -1,16 +1,21 @@
-For most applications, Twitterizer2 is the project that will create the assembly you want.
+== This is the end ==
+Twitterizer started in May of 2008 as an excuse for me to explore design patterns, have a little fun coding, and stretch out my architectural legs. I never set out to create an open source library, much less a popular one (in the last 30 days of its life, Twitterizer.net pulled 8,560 unique visitors and nearly 52k views). 
 
-== Build From Source ==
-Requirements:
-* Visual Studio 2010 / Mono
-* [http://www.nuget.org/ NuGet]
+After 4 years of maintenance, a complete rewrite, two addon projects, lots of mistakes (some never fixed), and thousands of questions answered, I grew tired. I had always intended to take a break and pull myself back into it, but the longer time has gone on, the harder it has been to even consider dedicating the time required to get the project to a useful state again (hint: the library was never 'feature complete'). 
 
-Depending on your target application, you may want (or need) to remove the silverlight projects from the solution.
+In the end, I got far more out of this project than I ever hoped. I've worked along side absolutely amazing people and gained some insight into a few breathtaking projects. If not for those people and those projects, I doubt I would have lasted as long as I had.
 
-== New in 2.4.1 ==
-The Twitterizer library is now built for the .NET 4.0 Client Profile. To do this, built-in support for caching has been removed. I highly suggest you cache data and limit requests made to Twitter, especially in high-traffic situations.
+If you find yourself interesting in taking full ownership of Twitterizer, please shout out. @DigitallyBorn
 
-== Build for .NET 3.5 ==
-Twitterizer (as of this writing) is built for .NET 4.0 primarily. It is possible to build the library for .NET 3.5 by selecting it as the target framework in Visual Studio. VS2010 should build this will few changes needed. VS2008 may require more changes.
+== FAQ ==
+I've gotten a few questions since announcing end of development, here are a few ...
 
-I understand that this might put you in a bad spot, but I have a hard time keeping up with code changes and bug fixes just keeping the library working at all. I really don't have the time to make sure that the code I'm writing is backward compatible.
+=== Will applications using Twitterizer stop working? ===
+Not right away, no. I have no power to stop the code or binaries that are already in use from working, nor would I want to. However, the current version of Twitterizer uses version 1.0 of the Twitter API which is scheduled for death in March 2013. At that time, I cannot speak to any functionality.
+
+=== What am I supposed to do now? ===
+As I see it, you have three options: jump to a new library, make Twitterizer your own, or roll your own.
+
+Twitterizer source code will remain available in its current state. I encourage you to download the source and make it your own.
+
+If you'd rather not take that on, there are a couple of other fantastic libraries. For example: [http://linqtotwitter.codeplex.com/ Linq2Twitter] and [https://github.com/danielcrenna/tweetsharp TweetSharp]
