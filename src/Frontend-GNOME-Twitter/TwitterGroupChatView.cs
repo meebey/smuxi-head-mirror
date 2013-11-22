@@ -1,6 +1,7 @@
 // Smuxi - Smart MUltipleXed Irc
 //
 // Copyright (c) 2013 Andrés G. Aragoneses <knocte@gmail.com>
+// Copyright (c) 2013 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 //
@@ -33,6 +34,7 @@ namespace Smuxi.Frontend.Gnome
 
         public TwitterGroupChatView(GroupChatModel groupChat) : base(groupChat)
         {
+            Trace.Call(groupChat);
         }
 
         protected override void OnPersonMenuShown(object sender, EventArgs e)
@@ -45,13 +47,32 @@ namespace Smuxi.Frontend.Gnome
 
             base.OnPersonMenuShown(sender, e);
 
-            if (ID == TwitterChatType.FriendsTimeline.ToString() && Frontend.EngineVersion >= new Version(0, 10)) {
-                Gtk.ImageMenuItem query_item = new Gtk.ImageMenuItem(_("Unfollow"));
-                query_item.Activated += OnUserListMenuUnfollowActivated;
-                PersonMenu.Append(query_item);
+            Gtk.MenuItem item;
+            if (Frontend.EngineVersion >= new Version(0, 7)) {
+                item = new Gtk.ImageMenuItem(_("Direct Message"));
+                item.Activated += OnUserListMenuDirectMessageActivated;
+                PersonMenu.Append(item);
 
-                PersonMenu.ShowAll();
+                PersonMenu.Append(new Gtk.SeparatorMenuItem());
             }
+
+            if (Frontend.EngineVersion >= new Version(0, 10)) {
+                item = new Gtk.ImageMenuItem(_("Timeline"));
+                item.Activated += OnUserListMenuTimelineActivated;
+                PersonMenu.Append(item);
+
+                if (ID == TwitterChatType.FriendsTimeline.ToString()) {
+                    item = new Gtk.ImageMenuItem(_("Unfollow"));
+                    item.Activated += OnUserListMenuUnfollowActivated;
+                    PersonMenu.Append(item);
+                } else {
+                    item = new Gtk.ImageMenuItem(_("Follow"));
+                    item.Activated += OnUserListMenuFollowActivated;
+                    PersonMenu.Append(item);
+                }
+            }
+
+            PersonMenu.ShowAll();
         }
 
         void OnUserListMenuUnfollowActivated(object sender, EventArgs e)
@@ -72,6 +93,87 @@ namespace Smuxi.Frontend.Gnome
                                 Frontend.FrontendManager,
                                 ChatModel,
                                 per.ID
+                            )
+                        );
+                    } catch (Exception ex) {
+                        Frontend.ShowException(ex);
+                    }
+                });
+            }
+        }
+
+        void OnUserListMenuFollowActivated(object sender, EventArgs e)
+        {
+            Trace.Call(sender, e);
+
+            var persons = GetSelectedPersons();
+            if (persons == null) {
+                return;
+            }
+
+            foreach (var person in persons) {
+                var per = person;
+                ThreadPool.QueueUserWorkItem(delegate {
+                    try {
+                        TwitterProtocolManager.CommandFollow(
+                            new CommandModel(
+                                Frontend.FrontendManager,
+                                ChatModel,
+                                per.ID
+                            )
+                        );
+                    } catch (Exception ex) {
+                        Frontend.ShowException(ex);
+                    }
+                });
+            }
+        }
+
+        void OnUserListMenuDirectMessageActivated(object sender, EventArgs e)
+        {
+            Trace.Call(sender, e);
+
+            var persons = GetSelectedPersons();
+            if (persons == null) {
+                return;
+            }
+
+            foreach (var person in persons) {
+                var per = person;
+                ThreadPool.QueueUserWorkItem(delegate {
+                    try {
+                        TwitterProtocolManager.CommandMessage(
+                            new CommandModel(
+                                Frontend.FrontendManager,
+                                ChatModel,
+                                per.IdentityName
+                            )
+                        );
+                    } catch (Exception ex) {
+                        Frontend.ShowException(ex);
+                    }
+                });
+            }
+        }
+
+        void OnUserListMenuTimelineActivated(object sender, EventArgs e)
+        {
+            Trace.Call(sender, e);
+
+            var persons = GetSelectedPersons();
+            if (persons == null) {
+                return;
+            }
+
+            foreach (var person in persons) {
+                var per = person;
+                ThreadPool.QueueUserWorkItem(delegate {
+                    try {
+                        TwitterProtocolManager.CommandTimeline(
+                            new CommandModel(
+                                Frontend.FrontendManager,
+                                ChatModel,
+                                per.IdentityName
                             )
                         );
                     } catch (Exception ex) {

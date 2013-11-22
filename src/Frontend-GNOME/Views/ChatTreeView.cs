@@ -157,7 +157,7 @@ namespace Smuxi.Frontend.Gnome
             }
 
             var iter = FindChatIter(chatView);
-            var path = TreeStore.GetPath(iter);
+            //var path = TreeStore.GetPath(iter);
             //TreeStore.EmitRowChanged(path, iter);
             // HACK: this emits row_changed _and_ sort_iter_changed and there is
             // no other public API in GTK+ to trigger a resort of a modified
@@ -190,6 +190,17 @@ namespace Smuxi.Frontend.Gnome
             }
 
             ThemeSettings = new ThemeSettings(config);
+            if (ThemeSettings.BackgroundColor == null) {
+                ModifyBase(Gtk.StateType.Normal);
+            } else {
+                ModifyBase(Gtk.StateType.Normal, ThemeSettings.BackgroundColor.Value);
+            }
+            if (ThemeSettings.ForegroundColor == null) {
+                ModifyText(Gtk.StateType.Normal);
+            } else {
+                ModifyText(Gtk.StateType.Normal, ThemeSettings.ForegroundColor.Value);
+            }
+            ModifyFont(ThemeSettings.FontDescription);
         }
 
         protected virtual void RenderChatViewIcon(Gtk.TreeViewColumn column,
