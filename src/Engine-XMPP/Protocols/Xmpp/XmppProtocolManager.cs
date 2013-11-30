@@ -52,6 +52,7 @@ using Starksoft.Net.Proxy;
 
 using Smuxi.Common;
 using System.Runtime.CompilerServices;
+using agsXMPP.protocol.extensions.nickname;
 
 namespace Smuxi.Engine
 {
@@ -1168,11 +1169,16 @@ namespace Smuxi.Engine
             if (nickname == null) {
                 nickname = Nicknames[0];
             }
-            MucManager.JoinRoom(jid, nickname, password);
             if (chat == null) {
                 chat = Session.CreateChat<XmppGroupChatModel>(jid, jid, this);
                 Session.AddChat(chat);
             }
+            if (chat.IsJoining) {
+                // double call to JoinRoom
+                return;
+            }
+            chat.IsJoining = true;
+            MucManager.JoinRoom(jid, nickname, password);
             if (password != null) {
                 chat.Password = password;
             }
@@ -1328,27 +1334,7 @@ namespace Smuxi.Engine
                 if (chat.ChatType == ChatType.Person) {
                     var _person = (chat as PersonChatModel).Person as PersonModel;
                     XmppPersonModel person = GetOrCreateContact(_person.ID, _person.IdentityName);
-                    Jid jid = person.Jid;
-                    if ((jid.Server == "gmail.com") ||
-                        (jid.Server == "googlemail.com")) {
-                        // don't send to all high prio resources or to specific resources
-                        // because gtalk clones any message to all resources anyway
-                        JabberClient.Send(new Message(jid.Bare, XmppMessageType.chat, text));
-                    } else if (!String.IsNullOrEmpty(jid.Resource)) {
-                        JabberClient.Send(new Message(jid, XmppMessageType.chat, text));
-                    } else {
-                        var resources = person.GetResourcesWithHighestPriority();
-                        if (resources.Count == 0) {
-                            // no connected resource, send to bare jid
-                            JabberClient.Send(new Message(jid.Bare, XmppMessageType.chat, text));
-                        } else {
-                            foreach (var res in resources) {
-                                Jid j = new Jid(jid);
-                                j.Resource = res.Name;
-                                JabberClient.Send(new Message(j, XmppMessageType.chat, text));
-                            }
-                        }
-                    }
+                    SendPrivateMessage(person, text);
                 } else if (chat.ChatType == ChatType.Group) {
                     JabberClient.Send(new Message(chat.ID, XmppMessageType.groupchat, text));
                     return; // don't show now. the message will be echoed back if it's sent successfully
@@ -1370,6 +1356,42 @@ namespace Smuxi.Engine
             OnMessageSent(
                 new MessageEventArgs(chat, msg, null, chat.ID)
             );
+        }
+
+        void SendPrivateMessage(XmppPersonModel person, Jid jid, string text)
+        {
+            var mesg = new Message(jid, XmppMessageType.chat, text);
+            var res = person.GetOrCreateResource(jid);
+            if (res.NicknameContactKnowsFromMe != Nicknames[0]) {
+                res.NicknameContactKnowsFromMe = Nicknames[0];
+                mesg.Nickname = new Nickname(Nicknames[0]);
+            }
+            JabberClient.Send(mesg);
+        }
+
+        void SendPrivateMessage(XmppPersonModel person, string text)
+        {
+            Jid jid = person.Jid;
+            if ((jid.Server == "gmail.com") ||
+                (jid.Server == "googlemail.com")) {
+                // don't send to all high prio resources or to specific resources
+                // because gtalk clones any message to all resources anyway
+                SendPrivateMessage(person, jid.Bare, text);
+            } else if (!String.IsNullOrEmpty(jid.Resource)) {
+                SendPrivateMessage(person, jid, text);
+            } else {
+                var resources = person.GetResourcesWithHighestPriority();
+                if (resources.Count == 0) {
+                    // no connected resource, send to bare jid
+                    SendPrivateMessage(person, jid.Bare, text);
+                } else {
+                    foreach (var res in resources) {
+                        Jid j = new Jid(jid);
+                        j.Resource = res.Name;
+                        SendPrivateMessage(person, j, text);
+                    }
+                }
+            }
         }
 
         void OnReadXml(object sender, string text)
@@ -1499,24 +1521,22 @@ namespace Smuxi.Engine
 
             if (ContactChat != null) {
                 PersonModel oldp = ContactChat.GetPerson(rosterItem.Jid.Bare);
-                if (oldp == null) {
-                    // doesn't exist, don't need to do anything
-                    return;
+                if (oldp != null) {
+                    Session.UpdatePersonInGroupChat(ContactChat, oldp, contact.ToPersonModel());
+                    Session.AddMessageToChat(ContactChat, new MessageModel(builder.ToMessage()));
                 }
-                Session.UpdatePersonInGroupChat(ContactChat, oldp, contact.ToPersonModel());
-
-                Session.AddMessageToChat(ContactChat, builder.ToMessage());
             }
             
             var chat = Session.GetChat(rosterItem.Jid.Bare, ChatType.Person, this) as PersonChatModel;
             if (chat != null) {
-                // TODO: implement update chat
-                var oldp = chat.Person;
-                Session.RemoveChat(chat);
-                chat = Session.CreatePersonChat(oldp, this);
-                Session.AddChat(chat);
-                Session.AddMessageToChat(chat, builder.ToMessage());
-                Session.SyncChat(chat);
+                chat.Name = contact.IdentityName;
+                builder.MessageType = MessageType.ChatNameChanged;
+                var msg = builder.ToMessage();
+                Session.AddMessageToChat(chat, msg);
+
+                var msg2 = new MessageModel(msg);
+                msg2.MessageType = MessageType.PersonChatPersonChanged;
+                Session.AddMessageToChat(chat, msg2);
             }
         }
 
@@ -1862,6 +1882,7 @@ namespace Smuxi.Engine
 
                     // did I join? then the chat roster is fully received
                     if (pres.From.Resource == chat.OwnNickname) {
+                        chat.IsJoining = false;
                         // HACK: lower probability of sync race condition swallowing messages
                         ThreadPool.QueueUserWorkItem(delegate {
                             Thread.Sleep(1000);
@@ -1884,20 +1905,37 @@ namespace Smuxi.Engine
                     }
                     break;
                 case PresenceType.error:
-                    if (pres.Error == null) break;
-                    switch (pres.Error.Type) {
-                        case ErrorType.cancel:
-                            switch (pres.Error.Condition) {
-                                case ErrorCondition.Conflict:
-                                    // nickname already in use
-                                    // autorejoin with _ appended to nickname
-                                    JoinRoom(chat.ID, chat.OwnNickname + "_", chat.Password);
-                                    break;
-                            }
-                            break;
+                    OnGroupChatPresenceError(chat, pres);
+                    break;
+            }
+        }
+
+        void OnGroupChatPresenceError(XmppGroupChatModel chat, Presence pres)
+        {
+            var builder = CreateMessageBuilder();
+            if (pres.Error == null) {
+                builder.AppendErrorText(_("An unknown groupchat error occurred: {0}"), pres);
+                Session.AddMessageToChat(NetworkChat, builder.ToMessage());
+                return;
+            }
+            switch (pres.Error.Type) {
+                case ErrorType.cancel:
+                    switch (pres.Error.Condition) {
+                        case ErrorCondition.Conflict:
+                            // nickname already in use
+                            // autorejoin with _ appended to nickname
+                            JoinRoom(chat.ID, chat.OwnNickname + "_", chat.Password);
+                            return;
                     }
                     break;
             }
+            if (String.IsNullOrEmpty(pres.Error.ErrorText)) {
+                builder.AppendErrorText(_("An unhandled groupchat error occurred: {0}"), pres);
+            } else {
+                builder.AppendErrorText(_("Error in Groupchat {0}: {1}"), chat.ID, pres.Error.ErrorText);
+            }
+            Session.AddMessageToChat(NetworkChat, builder.ToMessage());
+            Session.RemoveChat(chat);
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -2111,6 +2149,15 @@ namespace Smuxi.Engine
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
+        void ProcessNickname(XmppPersonModel person, Nickname nick)
+        {
+            if (String.IsNullOrEmpty(nick.Value)) {
+                return;
+            }
+            JabberClient.RosterManager.UpdateRosterItem(person.ID, nick.Value);
+        }
+
+        [MethodImpl(MethodImplOptions.Synchronized)]
         void OnPrivateChatMessage(Message msg)
         {
             var chat = Session.GetChat(msg.From, ChatType.Person, this) as PersonChatModel;
@@ -2118,6 +2165,9 @@ namespace Smuxi.Engine
             if (chat == null) {
                 // in case full jid doesn't have a chat window, use bare jid
                 chat = GetOrCreatePersonChat(msg.From.Bare, out isNew);
+            }
+            if (msg.Nickname != null) {
+                ProcessNickname(GetOrCreateContact(msg.From, msg.Nickname.Value), msg.Nickname);
             }
             var message = CreateMessage(chat.Person, msg, true, true);
             AddMessageToChatIfNotFiltered(message, chat, isNew);
@@ -2498,6 +2548,15 @@ namespace Smuxi.Engine
             RequestCapabilities(JabberClient.Server, JabberClient.Server);
 
             OnConnected(EventArgs.Empty);
+            foreach (var chat in Chats) {
+                if (chat is PersonChatModel) {
+                    Session.EnableChat(chat);
+                    Session.SyncChat(chat);
+                } else if (chat is XmppGroupChatModel) {
+                    var muc = (XmppGroupChatModel)chat;
+                    JoinRoom(muc.ID, muc.OwnNickname, muc.Password);
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -2571,11 +2630,8 @@ namespace Smuxi.Engine
             }
 
             Me = new PersonModel(
-                String.Format("{0}@{1}",
-                    JabberClient.Username,
-                    JabberClient.Server
-                ),
-                JabberClient.Username,
+                JabberClient.MyJID.Bare,
+                Nicknames[0],
                 NetworkID, Protocol, this
             );
             Me.IdentityNameColored.ForegroundColor = new TextColor(0, 0, 255);
