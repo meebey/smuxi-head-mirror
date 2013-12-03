@@ -236,9 +236,9 @@ namespace Smuxi.Frontend.Gnome
             _TopicScrolledWindow.NoShowAll = true;
             _TopicScrolledWindow.SizeRequested += delegate(object o, Gtk.SizeRequestedArgs args) {
                 // predict and set useful topic heigth
-                int lineWidth, lineHeigth;
+                int lineWidth, lineHeight;
                 using (var layout = _TopicTextView.CreatePangoLayout("Test Topic")) {
-                    layout.GetPixelSize(out lineWidth, out lineHeigth);
+                    layout.GetPixelSize(out lineWidth, out lineHeight);
                 }
                 var lineSpacing = _TopicTextView.PixelsAboveLines +
                                   _TopicTextView.PixelsBelowLines;
@@ -253,7 +253,7 @@ namespace Smuxi.Frontend.Gnome
                 }
                 newLines = Math.Min(newLines, 3);
                 var bestSize = new Gtk.Requisition() {
-                    Height = ((lineHeigth + lineSpacing) * newLines) + 2
+                    Height = ((lineHeight + lineSpacing) * newLines) + 4
                 };
                 args.Requisition = bestSize;
             };
