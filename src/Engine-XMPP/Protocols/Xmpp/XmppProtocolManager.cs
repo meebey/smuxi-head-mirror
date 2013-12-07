@@ -850,7 +850,7 @@ namespace Smuxi.Engine
                     break;
                 case SubscriptionType.remove:
 #if LOG4NET
-                    _Logger.Error("a contact with SubscriptionType remove has been found");
+                    _Logger.Debug("a contact with SubscriptionType remove has been found");
 #endif
                     break;
             }
@@ -1580,12 +1580,9 @@ namespace Smuxi.Engine
         void OnDiscoInfo(IQEventArgs e, string hash)
         {
             if (e.IQ.Error != null) {
-                var msg = CreateMessageBuilder();
-                msg.AppendEventPrefix();
-                msg.AppendErrorText(_("An error happened during service discovery for {0}: {1}"),
-                                    e.IQ.From,
-                                    e.IQ.Error.ErrorText ?? e.IQ.Error.Condition.ToString());
-                Session.AddMessageToChat(NetworkChat, msg.ToMessage());
+#if LOG4NET
+                _Logger.DebugFormat("An error happened during service discovery: {0}", e.IQ);
+#endif
                 // clear item from cache so the request is done again some time
                 DiscoCache.Remove(hash);
                 e.Handled = true;
@@ -1593,13 +1590,13 @@ namespace Smuxi.Engine
             }
             if (e.IQ.Type != IqType.result) {
 #if LOG4NET
-                _Logger.Error("OnDiscoInfo(): iq is not a result");
+                _Logger.Debug("OnDiscoInfo(): iq is not a result");
 #endif
                 return;
             }
             if (!(e.IQ.Query is DiscoInfo)) {
 #if LOG4NET
-                _Logger.Error("OnDiscoInfo(): query is not a DiscoInfo");
+                _Logger.Debug("OnDiscoInfo(): query is not a DiscoInfo");
 #endif
                 return;
             }
@@ -1994,6 +1991,10 @@ namespace Smuxi.Engine
         void OnPrivateChatPresence(Presence pres)
         {
             Jid jid = pres.From;
+            if (jid.Bare == JabberClient.MyJID.Bare) {
+                // don't process any of my own resources
+                return;
+            }
             var person = GetOrCreateContact(jid.Bare, jid);
             PrintPrivateChatPresence(person, pres);
             switch (pres.Type) {
