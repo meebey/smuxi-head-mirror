@@ -1190,6 +1190,8 @@ namespace Smuxi.Engine
                 // ok, these channels will be queued
                 builder = CreateMessageBuilder();
                 builder.AppendEventPrefix();
+                // TRANSLATOR: some IRC networks dislike too many joins in a
+                // short period and thus Smuxi throttles/queues them
                 builder.AppendText(_("Queuing joins: {0}"),
                                    String.Join(" ", channels));
                 Session.AddMessageToFrontend(cd.FrontendManager, Chat,
@@ -1206,7 +1208,8 @@ namespace Smuxi.Engine
                 }
 
                 string key = keys != null && keys.Length > i ? keys[i] : null;
-                if (GetChat(chan, ChatType.Group) != null) {
+                var chat = GetChat(chan, ChatType.Group);
+                if (chat != null && chat.IsEnabled) {
                     builder = CreateMessageBuilder();
                     builder.AppendEventPrefix();
                     builder.AppendText(
