@@ -20,6 +20,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 using System;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
@@ -43,6 +44,7 @@ namespace Smuxi.Engine
         public TextColor HighlightColor { get; set; }
         public List<string> HighlightWords { get; set; }
         public PersonModel Me { get; set; }
+        public MessageBuilderSettings Settings { get; private set; }
 
         public MessageType MessageType {
             get {
@@ -71,13 +73,12 @@ namespace Smuxi.Engine
         public MessageBuilder()
         {
             Message = new MessageModel();
+            Settings = new MessageBuilderSettings();
             NickColors = true;
         }
 
         public MessageModel ToMessage()
         {
-            //MessageParser.ParseSmileys
-            MessageParser.ParseUrls(Message);
             Message.Compact();
             return Message;
         }
@@ -274,7 +275,7 @@ namespace Smuxi.Engine
 
         public virtual MessageBuilder AppendMessage(string msg)
         {
-            return AppendText(msg);
+            return Append(ParseSmartLinks(CreateText(msg)));
         }
 
         public  MessageBuilder AppendMessage(ContactModel sender, string msg)
@@ -853,6 +854,92 @@ namespace Smuxi.Engine
         static string _(string msg)
         {
             return LibraryCatalog.GetString(msg, LibraryTextDomain);
+        }
+
+        public static IList<MessagePartModel> ParseSmartLinks(TextMessagePartModel textPart,
+                                                              List<MessageBuilderSettings.SmartLink> links)
+        {
+            var msgParts = new List<MessagePartModel>();
+            if (links.Count == 0) {
+                // all smartlinks have been tried -> this text is PURE text
+                msgParts.Add(textPart);
+                return msgParts;
+            }
+            var subLinks = new List<MessageBuilderSettings.SmartLink>(links);
+            var link = subLinks.First();
+            subLinks.Remove(link);
+            
+            var linkMatch = link.MessagePartPattern.Match(textPart.Text);
+            if (!linkMatch.Success) {
+                // no smartlinks in this MessagePart, try other smartlinks
+                return ParseSmartLinks(textPart, subLinks);
+            }
+            
+            int lastindex = 0;
+            do {
+                var groupValues = new string[linkMatch.Groups.Count];
+                int i = 0;
+                foreach (Group @group in linkMatch.Groups) {
+                    groupValues[i++] = @group.Value;
+                }
+                
+                string url;
+                if (link.LinkFormat != null) {
+                    url = String.Format(link.LinkFormat, groupValues);
+                } else {
+                    url = linkMatch.Value;
+                }
+                string text;
+                if (link.TextFormat != null) {
+                    text = String.Format(link.TextFormat, groupValues);
+                } else {
+                    text = (linkMatch.Value == url) ? null : linkMatch.Value;
+                }
+
+                if (lastindex != linkMatch.Index) {
+                    // there were some non-url-chars before this url
+                    // copy TextMessagePartModel
+                    var notLinkPart = new TextMessagePartModel(textPart);
+                    // only take the proper chunk of text
+                    notLinkPart.Text = textPart.Text.Substring(lastindex, linkMatch.Index - lastindex);
+                    // and try other smartlinks on this part
+                    var parts = ParseSmartLinks(notLinkPart, subLinks);
+                    foreach (var part in parts) {
+                        msgParts.Add(part);
+                    }
+                }
+                
+                MessagePartModel model;
+                if (link.MessagePartType == typeof(UrlMessagePartModel)) {
+                    model = new UrlMessagePartModel(url, text);
+                } else if (link.MessagePartType == typeof(ImageMessagePartModel)) {
+                    model = new ImageMessagePartModel(url, text);
+                } else {
+                    model = new TextMessagePartModel(text);
+                }
+                msgParts.Add(model);
+                lastindex = linkMatch.Index + linkMatch.Length;
+                linkMatch = linkMatch.NextMatch();
+            } while (linkMatch.Success);
+            
+            if (lastindex != textPart.Text.Length) {
+                // there were some non-url-chars before this url
+                // copy TextMessagePartModel
+                TextMessagePartModel notLinkPart = new TextMessagePartModel(textPart);
+                // only take the proper chunk of text
+                notLinkPart.Text = textPart.Text.Substring(lastindex);
+                // and try other smartlinks on this part
+                var parts = ParseSmartLinks(notLinkPart, subLinks);
+                foreach (var part in parts) {
+                    msgParts.Add(part);
+                }
+            }
+            return msgParts;
+        }
+        
+        public IEnumerable<MessagePartModel> ParseSmartLinks(TextMessagePartModel part)
+        {
+            return ParseSmartLinks(part, Settings.SmartLinks);
         }
     }
 }
