@@ -346,7 +346,7 @@ namespace Smuxi.Frontend
         {
             Trace.Call(cmd);
 
-            var count = 100;
+            var count = 1000;
             var showHelp = false;
             var appendMessage = false;
             var appendText = false;
@@ -356,7 +356,7 @@ namespace Smuxi.Frontend
                     { "c|count=", v => count = Int32.Parse(v) },
                     { "m|append-message", v => appendMessage = true },
                     { "t|append-text", v => appendText = true },
-                    { "T|to-message", v => appendText = true },
+                    { "T|to-message", v => toMessage = true },
                 };
                 opts.Add("h|?|help", x => {
                     showHelp = true;
@@ -398,7 +398,9 @@ namespace Smuxi.Frontend
                 if (appendText) {
                     builder.AppendText("This is message with just text.");
                 }
-                var msg = builder.ToMessage();
+                if (toMessage) {
+                    var msg = builder.ToMessage();
+                }
             }
             stop = DateTime.UtcNow;
 
