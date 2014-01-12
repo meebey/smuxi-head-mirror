@@ -53,6 +53,8 @@ namespace Smuxi.Frontend
         TaskQueue       f_TaskQueue;
         TimeSpan        f_LastCommandTimeSpan;
 
+        public Version EngineVersion { get; set; }
+
         public TimeSpan LastCommandTimeSpan {
             get {
                 return f_LastCommandTimeSpan;
@@ -241,7 +243,7 @@ namespace Smuxi.Frontend
                                                cmd.CommandCharacter, output));
                 } else {
                     var msg = new MessageBuilder().AppendText(output).ToMessage();
-                    f_Session.AddMessageToFrontend(cmd, msg);
+                    AddMessageToFrontend(cmd, msg);
                 }
             };
 
@@ -288,7 +290,7 @@ namespace Smuxi.Frontend
                         AppendErrorText("Executing '{0}' failed with: {1}",
                                         command, ex.Message).
                         ToMessage();
-                    f_Session.AddMessageToFrontend(cmd, msg);
+                    AddMessageToFrontend(cmd, msg);
                 }
             }
         }
@@ -301,7 +303,7 @@ namespace Smuxi.Frontend
                 AppendEventPrefix().
                     AppendText(cmd.Parameter).
                     ToMessage();
-            f_Session.AddMessageToFrontend(cmd, msg);
+            AddMessageToFrontend(cmd, msg);
         }
 
         public void CommandGenerateMessages(CommandModel cmd, IChatView chat)
@@ -366,7 +368,7 @@ namespace Smuxi.Frontend
                     showHelp = true;
                     var writer = new StringWriter();
                     opts.WriteOptionDescriptions(writer);
-                    f_Session.AddMessageToFrontend(
+                    AddMessageToFrontend(
                         cmd,
                         CreateMessageBuilder().
                             AppendHeader("{0} usage", cmd.Command).
@@ -382,7 +384,7 @@ namespace Smuxi.Frontend
                     return;
                 }
             } catch (Exception ex) {
-                f_Session.AddMessageToFrontend(
+                AddMessageToFrontend(
                     cmd,
                     CreateMessageBuilder().
                         AppendErrorText("Invalid parameter: {0}", ex.Message).
@@ -441,7 +443,7 @@ namespace Smuxi.Frontend
                 (stop - start).TotalMilliseconds,
                 (stop - start).TotalMilliseconds / count
             );
-            f_Session.AddMessageToFrontend(cmd, builder.ToMessage());
+            AddMessageToFrontend(cmd, builder.ToMessage());
         }
 
         private void Unknown(CommandModel cmd)
@@ -450,7 +452,7 @@ namespace Smuxi.Frontend
                 AppendEventPrefix().
                 AppendText(_("Unknown Command: {0}"), cmd.Command).
                 ToMessage();
-            f_Session.AddMessageToFrontend(cmd, msg);
+            AddMessageToFrontend(cmd, msg);
         }
 
         void NotEnoughParameters(CommandModel cmd)
@@ -459,12 +461,28 @@ namespace Smuxi.Frontend
                 AppendEventPrefix().
                 AppendText(_("Not enough parameters for {0} command"), cmd.Command).
                 ToMessage();
-            f_Session.AddMessageToFrontend(cmd, msg);
+            AddMessageToFrontend(cmd, msg);
         }
 
         MessageBuilder CreateMessageBuilder()
         {
             return new MessageBuilder();
+        }
+
+        void AddMessageToFrontend(CommandModel cmd, MessageModel msg)
+        {
+            if (cmd == null) {
+                throw new ArgumentNullException("cmd");
+            }
+            if (msg == null) {
+                throw new ArgumentNullException("msg");
+            }
+
+            if (EngineVersion != null && EngineVersion >= new Version(0, 10)) {
+                f_Session.AddMessageToFrontend(cmd, msg);
+            } else {
+                f_Session.AddMessageToChat(cmd.Chat, msg);
+            }
         }
 
         protected virtual void OnTaskQueueExceptionEvent(object sender, TaskQueueExceptionEventArgs e)
