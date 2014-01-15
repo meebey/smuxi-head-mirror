@@ -334,11 +334,9 @@
   <ItemGroup>
     <Content Include="..\GettingStarted.txt">
       <Link>GettingStarted.txt</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="..\Twitterizer2.license.txt">
       <Link>Twitterizer2.license.txt</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
