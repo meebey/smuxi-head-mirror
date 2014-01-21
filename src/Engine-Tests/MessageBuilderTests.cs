@@ -540,16 +540,44 @@ namespace Smuxi.Engine
             builder.TimeStamp = DateTime.MinValue;
             builder.Append(new UrlMessagePartModel("http://en.wikipedia.org/Talk:Main_Page"));
             TestMessage(msg, builder.ToMessage());
+
+            msg = "<astronouth7303> ok, this is just trippy URL matching: http://couchdb.local/mydb/_magic";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("<astronouth7303> ok, this is just trippy URL matching: "));
+            builder.Append(new UrlMessagePartModel("http://couchdb.local/mydb/_magic"));
+            TestMessage(msg, builder.ToMessage());
+
+            msg = "https://web.archive.org/web/20050208144213/http://www.jaganelli.de/";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new UrlMessagePartModel("https://web.archive.org/web/20050208144213/http://www.jaganelli.de/"));
+            TestMessage(msg, builder.ToMessage());
         }
 
         [Test]
         [Ignore]
         public void BrokenAppendMessageWithOddUrls()
         {
-            var msg = "https://web.archive.org/web/20050208144213/http://www.jaganelli.de/";
+        }
+
+        [Test]
+        public void AppendMessageWithNonUrls()
+        {
+            var msg = "ServiceStack.Common";
             var builder = new MessageBuilder();
             builder.TimeStamp = DateTime.MinValue;
-            builder.Append(new UrlMessagePartModel("https://web.archive.org/web/20050208144213/http://www.jaganelli.de/"));
+            builder.Append(new TextMessagePartModel("ServiceStack.Common"));
+            TestMessage(msg, builder.ToMessage());
+        }
+
+        [Test]
+        public void AppendMessageWithSmartLinks()
+        {
+            var msg = "RFC2812";
+            var builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new UrlMessagePartModel("http://www.ietf.org/rfc/rfc2812.txt", "RFC2812"));
             TestMessage(msg, builder.ToMessage());
         }
 
