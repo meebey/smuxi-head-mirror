@@ -704,11 +704,7 @@ namespace Smuxi.Engine
                 case "get":
                 case "list":
                     string key = null;
-                    if (action == "get") {
-                        if (cd.DataArray.Length < 3) {
-                            _NotEnoughParameters(cd);
-                            return;
-                        }
+                    if (action == "get" && cd.DataArray.Length >= 3) {
                         key = cd.DataArray[2];
                     }
                     foreach (var entry in _UserConfig.OrderBy(kvp => kvp.Key)) {
@@ -727,7 +723,7 @@ namespace Smuxi.Engine
                         _NotEnoughParameters(cd);
                         return;
                     }
-                    string setParam = cd.DataArray[2];
+                    var setParam = String.Join(" ", cd.DataArray.Skip(2).ToArray());
                     if (!setParam.Contains("=")) {
                         builder.AppendErrorText(
                             _("Invalid key/value format.")
@@ -735,10 +731,10 @@ namespace Smuxi.Engine
                         AddMessageToFrontend(cd, builder.ToMessage());
                         return;
                     }
-                    string setKey = setParam.Split('=')[0];
-                    string setValue = String.Join(
+                    var setKey = setParam.Split('=')[0].Trim();
+                    var setValue = String.Join(
                         "=", setParam.Split('=').Skip(1).ToArray()
-                    );
+                    ).Trim();
                     object oldValue = _UserConfig[setKey];
                     if (oldValue == null && setKey.StartsWith("MessagePatterns/")) {
                         var id = setKey.Split('/')[1];
