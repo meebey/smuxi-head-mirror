@@ -1,5 +1,5 @@
 AC_PREREQ([2.54])
-AC_INIT([smuxi], [0.11], [https://smuxi.im/issues/new])
+AC_INIT([smuxi], [0.12], [https://smuxi.im/issues/new])
 # using the --foreign option makes automake less strict about GNU policy 
 AC_CONFIG_MACRO_DIR([.])
 AM_INIT_AUTOMAKE([foreign tar-ustar])
@@ -143,9 +143,12 @@ SHAMROCK_FIND_MONO_2_0_COMPILER_OR_HIGHER
 SHAMROCK_CHECK_MONO_2_0_GAC_ASSEMBLIES([
 	System
 	System.Core
-	System.Xml
+	System.Data
 	System.Runtime.Remoting
+	System.Runtime.Serialization
+	System.Xml
 	Mono.Posix
+	Mono.Data.Sqlite
 ])
 
 PROFILE=debug

@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 // 
-// Copyright (c) 2011 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2012 Mirco Bauer <meebey@meebey.net>
 // 
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 // 
@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
-
+#if LIBGIT2SHARP
 using System;
 using System.IO;
 using NUnit.Framework;
@@ -26,16 +26,26 @@ using Smuxi.Common;
 namespace Smuxi.Engine
 {
     [TestFixture]
-    public class ListMessageBufferTests : MessageBufferTestsBase
+    public class GitMessageBufferTests : MessageBufferTestsBase
     {
         protected override IMessageBuffer CreateBuffer()
         {
-            return new ListMessageBuffer();
+            var repoPath = Path.Combine(Platform.GetBuffersPath("testuser"),
+                                        "testprot");
+            repoPath = Path.Combine(repoPath, "testnet");
+            repoPath = Path.Combine(repoPath, "testchat.git");
+            if (Directory.Exists(repoPath)) {
+                Directory.Delete(repoPath, true);
+            }
+
+            return OpenBuffer();
         }
 
         protected override IMessageBuffer OpenBuffer()
         {
-            return CreateBuffer();
+            return new GitMessageBuffer("testuser", "testprot", "testnet", "testchat");
         }
+
     }
 }
+#endif

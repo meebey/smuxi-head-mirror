@@ -42,7 +42,6 @@ namespace Smuxi.Engine
         IObjectContainer Database { get; set; }
         string           DatabaseFile { get; set; }
         bool             IsEmptyDatabase { get; set; }
-        string           SessionUsername { get; set; }
         bool             AggressiveGC { get; set; }
 #if DB4O_8_0
         IEmbeddedConfiguration DatabaseConfiguration { get; set; }
@@ -73,43 +72,23 @@ namespace Smuxi.Engine
             }
         }
 
-        private Db4oMessageBuffer()
+        public Db4oMessageBuffer(string sessionUsername, string protocol,
+                                 string networkId, string chatId) :
+                            base(sessionUsername, protocol, networkId, chatId)
         {
             FlushInterval = DefaultFlushInterval;
-        }
-
-        public Db4oMessageBuffer(string sessionUsername, string protocol,
-                                 string networkId, string chatId) : this()
-        {
-            if (sessionUsername == null) {
-                throw new ArgumentNullException("sessionUsername");
-            }
-            if (protocol == null) {
-                throw new ArgumentNullException("protocol");
-            }
-            if (networkId == null) {
-                throw new ArgumentNullException("networkId");
-            }
-            if (chatId == null) {
-                throw new ArgumentNullException("chatId");
-            }
-
-            SessionUsername = sessionUsername;
-            Protocol = protocol;
-            NetworkID = networkId;
-            ChatID = chatId;
-
             AggressiveGC = true;
             DatabaseFile = GetDatabaseFile();
             InitDatabase();
         }
 
-        public Db4oMessageBuffer(string dbPath) : this()
+        public Db4oMessageBuffer(string dbPath)
         {
             if (dbPath == null) {
                 throw new ArgumentNullException("dbPath");
             }
 
+            FlushInterval = DefaultFlushInterval;
             DatabaseFile = dbPath;
             InitDatabase();
         }
@@ -180,18 +159,6 @@ namespace Smuxi.Engine
             // TODO: benchmark me!
             //return Database.Query<MessageModel>().Contains(item);
             return IndexOf(item) != -1;
-        }
-
-        public override void CopyTo(MessageModel[] array, int arrayIndex)
-        {
-            if (array == null) {
-                throw new ArgumentNullException("array");
-            }
-
-            int i = arrayIndex;
-            foreach (var msg in this) {
-                array[i++] = msg;
-            }
         }
 
         public override IEnumerator<MessageModel> GetEnumerator()
@@ -375,21 +342,7 @@ namespace Smuxi.Engine
 
         string GetDatabaseFile()
         {
-            var dbPath = Platform.GetBuffersPath(SessionUsername);
-            var protocol = Protocol.ToLower();
-            var network = NetworkID.ToLower();
-            dbPath = Path.Combine(dbPath, protocol);
-            if (network != protocol) {
-                dbPath = Path.Combine(dbPath, network);
-            }
-            dbPath = IOSecurity.GetFilteredPath(dbPath);
-            if (!Directory.Exists(dbPath)) {
-                Directory.CreateDirectory(dbPath);
-            }
-
-            var chatId = IOSecurity.GetFilteredFileName(ChatID.ToLower());
-            dbPath = Path.Combine(dbPath, String.Format("{0}.db4o", chatId));
-            return dbPath;
+            return String.Format("{0}.db4o", GetBufferPath());
         }
 
         void OpenDatabase()
@@ -656,7 +609,7 @@ namespace Smuxi.Engine
 #endif
         }
 
-        void Flush()
+        public override void Flush()
         {
             var counter = FlushCounter;
             if (counter == 0) {

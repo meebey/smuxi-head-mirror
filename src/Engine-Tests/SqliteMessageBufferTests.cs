@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 //
-// Copyright (c) 2011 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2014 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 //
@@ -27,14 +27,14 @@ using Smuxi.Common;
 namespace Smuxi.Engine
 {
     [TestFixture]
-    public class Db4oMessageBufferTests : MessageBufferTestsBase
+    public class SqliteMessageBufferTests : MessageBufferTestsBase
     {
         protected override IMessageBuffer CreateBuffer()
         {
             var dbFile = Path.Combine(Platform.GetBuffersPath("testuser"),
                                       "testprot");
             dbFile = Path.Combine(dbFile, "testnet");
-            dbFile = Path.Combine(dbFile, "testchat.db4o");
+            dbFile = Path.Combine(dbFile, "testchat.sqlite3");
             if (File.Exists(dbFile)) {
                 File.Delete(dbFile);
             }
@@ -44,7 +44,7 @@ namespace Smuxi.Engine
 
         protected override IMessageBuffer OpenBuffer()
         {
-            return new Db4oMessageBuffer("testuser", "testprot", "testnet", "testchat");
+            return new SqliteMessageBuffer("testuser", "testprot", "testnet", "testchat");
         }
 
         [Test]
@@ -54,28 +54,6 @@ namespace Smuxi.Engine
 
             Buffer = OpenBuffer();
             Enumerator();
-        }
-
-        [Test]
-        public void ImplicitFlush()
-        {
-            // generate 32 extra messsages to exceed the buffer size which
-            // forces a flush of the buffer to db4o
-            var bufferCount = Buffer.Count;
-            var msgs = new List<MessageModel>(Buffer);
-            for (int i = 1; i <= 32; i++) {
-                var builder = new MessageBuilder();
-                builder.AppendText("msg{0}", bufferCount + i);
-                var msg = builder.ToMessage();
-                msgs.Add(msg);
-                Buffer.Add(msg);
-            }
-
-            int j = 0;
-            foreach (var msg in Buffer) {
-                Assert.AreEqual(msgs[j++].ToString(), msg.ToString());
-            }
-            Assert.AreEqual(msgs.Count, j);
         }
 
         [Test]
