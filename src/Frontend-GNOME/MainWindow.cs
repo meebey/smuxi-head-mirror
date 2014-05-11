@@ -38,6 +38,7 @@ namespace Smuxi.Frontend.Gnome
         private static readonly log4net.ILog f_Logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 #endif
         private bool             _IsFullscreen;
+        string f_NetworkStatus;
 
         Gtk.Statusbar NetworkStatusbar { get; set; }
         Gtk.Statusbar Statusbar { get; set; }
@@ -68,6 +69,7 @@ namespace Smuxi.Frontend.Gnome
         public NotificationAreaIconMode NotificationAreaIconMode { get; set; }
         public bool IsMinimized { get; private set; }
         public bool IsMaximized { get; private set; }
+        public int WindowWidth { get; private set; }
 
         public bool CaretMode {
             get {
@@ -100,6 +102,7 @@ namespace Smuxi.Frontend.Gnome
                 }
                 NetworkStatusbar.Pop(0);
                 NetworkStatusbar.Push(0, value);
+                f_NetworkStatus = value;
             }
         } 
 
@@ -351,6 +354,9 @@ namespace Smuxi.Frontend.Gnome
             if (chatView == null) {
                 chatView = ChatViewManager.CurrentChatView;
             }
+            if (protocolStatus == null) {
+                protocolStatus = f_NetworkStatus;
+            }
             if (chatView == null) {
                 return;
             }
@@ -360,6 +366,14 @@ namespace Smuxi.Frontend.Gnome
                 title = String.Empty;
             } else if (chatView is ProtocolChatView) {
                 title = protocolStatus;
+            } else if (chatView is GroupChatView) {
+                var groupChatView = (GroupChatView) chatView;
+                var users = String.Format(_("{0} Users"),
+                                          groupChatView.Participants.Count);
+                title = String.Format("{0} ({1}) @ {2}",
+                                      chatView.Name,
+                                      users,
+                                      protocolStatus);
             } else {
                 title = String.Format("{0} @ {1}",
                                       chatView.Name,
@@ -377,7 +391,8 @@ namespace Smuxi.Frontend.Gnome
         {
             Trace.Call(e);
 
-            TreeViewHPaned.Position = e.Width / 6;
+            WindowWidth = e.Width;
+            CheckLayout();
             return base.OnConfigureEvent(e);
         }
 
@@ -507,6 +522,10 @@ namespace Smuxi.Frontend.Gnome
 #if LOG4NET
                     f_Logger.Debug("OnWindowStateEvent(): IsMaximized: " + IsMaximized);
 #endif
+                    GLib.Idle.Add(() => {
+                        CheckLayout();
+                        return false;
+                    });
                 }
             } catch (Exception ex) {
                 Frontend.ShowException(this, ex);
@@ -578,6 +597,16 @@ namespace Smuxi.Frontend.Gnome
                 }
                 Entry.GrabFocus();
             };
+            if (e.ChatView is GroupChatView) {
+                var groupChatView = (GroupChatView) e.ChatView;
+                groupChatView.ParticipantsChanged += (o, args) => {
+                    if (ChatViewManager.CurrentChatView != groupChatView) {
+                        return;
+                    }
+                    UpdateTitle(groupChatView, null);
+                };
+                groupChatView.OutputHPaned.Position = (WindowWidth / 6) * 4;
+            }
             UpdateProgressBar();
         }
         
@@ -620,6 +649,18 @@ namespace Smuxi.Frontend.Gnome
                 ProgressBar.Hide();
             } else {
                 ProgressBar.Show();
+            }
+        }
+
+        void CheckLayout()
+        {
+            TreeViewHPaned.Position = WindowWidth / 6;
+            foreach (var chat in ChatViewManager.Chats) {
+                if (!(chat is GroupChatView)) {
+                    continue;
+                }
+                var groupChat = (GroupChatView) chat;
+                groupChat.OutputHPaned.Position = (WindowWidth / 6) * 4;
             }
         }
 
