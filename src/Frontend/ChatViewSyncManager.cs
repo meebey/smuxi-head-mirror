@@ -72,32 +72,50 @@ namespace Smuxi.Frontend
 
             public virtual void ExecuteAdd()
             {
-                throw new InvalidStateException("could not add in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not add in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
 
             public virtual void ExecuteRemove()
             {
-                throw new InvalidStateException("could not remove in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not remove in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
 
             public virtual void ExecuteRemoveFinished()
             {
-                throw new InvalidStateException("could not remove in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not finished remove in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
 
             public virtual void ExecuteSync()
             {
-                throw new InvalidStateException("could not sync in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not sync in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
 
             public virtual void ExecuteReadyToSync()
             {
-                throw new InvalidStateException("could not be ready to sync in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not be ready to sync in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
 
             public virtual void ExecuteSyncFinished()
             {
-                throw new InvalidStateException("could not finish sync in " + this.GetType().Name);
+                throw new InvalidStateException(
+                    String.Format("<{0}> could not finish sync in {1}",
+                                  SyncInfo.ChatModel, GetType().Name)
+                );
             }
         }
 
@@ -109,7 +127,7 @@ namespace Smuxi.Frontend
 
             public override void ExecuteAdd()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new AddedState(SyncInfo);
             }
         }
@@ -153,19 +171,19 @@ namespace Smuxi.Frontend
 
             public override void ExecuteReadyToSync()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new WaitingForSyncState(SyncInfo);
             }
 
             public override void ExecuteSync()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new SyncQueuedState(SyncInfo);
             }
 
             public override void ExecuteRemove()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new RemovingState(SyncInfo);
             }
         }
@@ -178,7 +196,7 @@ namespace Smuxi.Frontend
 
             public override void ExecuteReadyToSync()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new SyncingState(SyncInfo);
             }
         }
@@ -191,13 +209,13 @@ namespace Smuxi.Frontend
 
             public override void ExecuteSync()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new SyncingState(SyncInfo);
             }
 
             public override void ExecuteRemove()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new RemovingState(SyncInfo);
             }
         }
@@ -225,7 +243,7 @@ namespace Smuxi.Frontend
 
             public override void ExecuteSyncFinished()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new SyncState(SyncInfo);
             }
         }
@@ -238,14 +256,14 @@ namespace Smuxi.Frontend
 
             public override void ExecuteRemove()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new RemovingState(SyncInfo);
             }
 
             public override void ExecuteSync()
             {
                 // this happens for example in /rejoin
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.State = new SyncingState(SyncInfo);
             }
         }
@@ -263,12 +281,13 @@ namespace Smuxi.Frontend
 
             public override void ExecuteRemoveFinished()
             {
-                Trace.Call(SyncInfo.ChatModel);
+                Trace.Call();
                 SyncInfo.Manager.Remove(SyncInfo.ChatModel);
             }
 
             public override void ExecuteReadyToSync()
             {
+                Trace.Call();
                 // no-op
                 // this can happen when you add and remove very fast after each other.
                 // the add callback might be in a different thread and therefore be delayed
