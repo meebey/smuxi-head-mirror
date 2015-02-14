@@ -39,11 +39,6 @@ namespace Smuxi.Engine
                 File.Delete(dbFile);
             }
 
-            return OpenBuffer();
-        }
-
-        protected override IMessageBuffer OpenBuffer()
-        {
             return new Db4oMessageBuffer("testuser", "testprot", "testnet", "testchat");
         }
 
@@ -51,8 +46,7 @@ namespace Smuxi.Engine
         public void Reopen()
         {
             Buffer.Dispose();
-
-            Buffer = OpenBuffer();
+            Buffer = new Db4oMessageBuffer("testuser", "testprot", "testnet", "testchat");
             Enumerator();
         }
 
@@ -95,7 +89,7 @@ namespace Smuxi.Engine
             }
 
             Assert.AreEqual(Buffer.MaxCapacity, Buffer.Count);
-            Assert.AreEqual(msgs[32 - (Buffer.MaxCapacity - bufferCount)].ToString(), Buffer[0].ToString());
+            Assert.AreEqual(msgs[19].ToString(), Buffer[0].ToString());
         }
     }
 }

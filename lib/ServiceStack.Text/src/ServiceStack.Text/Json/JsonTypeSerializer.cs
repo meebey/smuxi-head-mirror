@@ -274,7 +274,7 @@ namespace ServiceStack.Text.Json
 		{
 			if (String.IsNullOrEmpty(value)) return value;
 
-			return value[0] == JsonUtils.QuoteChar && value[value.Length - 1] == JsonUtils.QuoteChar && value.Length > 1
+			return value[0] == JsonUtils.QuoteChar
 				? value.Substring(1, value.Length - 2)
 				: value;
 		}

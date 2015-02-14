@@ -20,7 +20,7 @@ Depending on your operating system and favorite distribution the installation of
 Compiling Source
 ================
 
-    ./autogen.sh || ./configure
+    ./configure
     make
 
 Installing

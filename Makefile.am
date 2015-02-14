@@ -60,7 +60,6 @@ DISTCLEANFILES = \
 
 PODIRS =	po \
 		po-Engine \
-		po-Engine-MessageBuffer \
 		$(PO_ENGINE_CAMPFIRE) \
 		$(PO_ENGINE_IRC) \
 		$(PO_ENGINE_JABBR) \
@@ -145,17 +144,14 @@ LINUX_STATIC_BUILD_DIR = $(top_builddir)/bin-linux-static
 
 WIN32_EXE_FILES = \
 	$(BUILD_DIR)/smuxi-frontend-gnome.exe \
-	$(BUILD_DIR)/smuxi-server.exe \
-	$(BUILD_DIR)/smuxi-message-buffer.exe
+	$(BUILD_DIR)/smuxi-server.exe
 
 WIN32_FILES = \
 	$(WIN32_EXE_FILES) \
-	$(LIB_DIR)/Mono.Data.Sqlite.dll \
 	$(LIB_DIR)/Mono.Posix.dll \
 	$(LIB_DIR)/Nini.dll \
 	$(LIB_DIR)/log4net.dll \
 	$(WIN32_LIB_DIR)/plink.exe \
-	$(WIN32_LIB_DIR)/sqlite3.dll \
 	$(WIN32_LIB_DIR)/fixedsys500c/Fixedsys500c.ttf \
 	$(BUILD_DIR)/smuxi-common.dll \
 	$(BUILD_DIR)/smuxi-engine.dll \
@@ -191,7 +187,6 @@ OSX_FILES = \
 	$(BUILD_DIR)/smuxi-frontend-gnome-twitter.dll \
 	$(BUILD_DIR)/smuxi-frontend-gnome-xmpp.dll \
 	$(BUILD_DIR)/smuxi-server.exe \
-	$(BUILD_DIR)/smuxi-message-buffer.exe \
 	$(BUILD_DIR)/smuxi-common.dll \
 	$(BUILD_DIR)/smuxi-engine.dll \
 	$(BUILD_DIR)/smuxi-engine-campfire.dll \
@@ -213,30 +208,19 @@ OSX_FILES = \
 	$(BUILD_DIR)/JabbR.Client.dll
 
 LINUX_STATIC_FILES = \
-	$(LIB_DIR)/Mono.Data.Sqlite.dll \
 	$(LIB_DIR)/Mono.Posix.dll \
 	$(LIB_DIR)/Nini.dll \
 	$(LIB_DIR)/log4net.dll \
 	$(BUILD_DIR)/smuxi-common.dll \
 	$(BUILD_DIR)/smuxi-engine.dll \
-	$(BUILD_DIR)/smuxi-engine-campfire.dll \
 	$(BUILD_DIR)/smuxi-engine-irc.dll \
-	$(BUILD_DIR)/smuxi-engine-jabbr.dll \
 	$(BUILD_DIR)/smuxi-engine-twitter.dll \
-	$(BUILD_DIR)/smuxi-engine-xmpp.dll \
-	$(BUILD_DIR)/smuxi-server.exe.config \
-	$(BUILD_DIR)/Meebey.SmartIrc4net.dll \
-	$(BUILD_DIR)/Twitterizer2.dll \
-	$(BUILD_DIR)/Newtonsoft.Json.dll \
 	$(BUILD_DIR)/agsxmpp.dll \
+	$(BUILD_DIR)/Meebey.SmartIrc4net.dll \
 	$(BUILD_DIR)/StarkSoftProxy.dll \
-	$(BUILD_DIR)/Db4objects.Db4o.dll \
-	$(BUILD_DIR)/ServiceStack.Text.dll \
-	$(BUILD_DIR)/ServiceStack.Interfaces.dll \
-	$(BUILD_DIR)/ServiceStack.Common.dll \
-	$(BUILD_DIR)/Microsoft.AspNet.SignalR.Client.dll \
-	$(BUILD_DIR)/JabbR.Client.dll
-
+	$(BUILD_DIR)/Twitterizer2.dll \
+	$(BUILD_DIR)/Newtonsoft.Json.dll
+		
 dist-win32:
 	if [ -x /usr/bin/dmcs ]; then \
 		COMPILER_OVERRIDE="MCS=/usr/bin/dmcs"; \
@@ -281,27 +265,14 @@ dist-osx:
 	-rm smuxi-osx.zip
 	cd $(OSX_BUILD_DIR) && zip -r ../smuxi-osx.zip Smuxi.app
 
-dist-linux-static:
-	DIST_VERSION=$$(git describe); \
-	./autogen.sh --without-indicate --without-messaging-menu --without-notify --without-dbus \
-	  --with-db4o=included \
-	  --with-vendor-package-version="dist-linux-static $$DIST_VERSION" \
-	  --disable-frontend-gnome --disable-frontend-stfl
+dist-linux-x86-static:
 	$(MAKE)
 	mkdir -p $(LINUX_STATIC_BUILD_DIR)
-	mkbundle --deps --static -z -L $(BUILD_DIR) \
-	  -o $(LINUX_STATIC_BUILD_DIR)/smuxi-server \
-	  $(BUILD_DIR)/smuxi-server.exe \
-	  $(BUILD_DIR)/log4net.dll \
-	  $(BUILD_DIR)/Nini.dll \
-	  $(BUILD_DIR)/smuxi-common.dll \
-	  $(BUILD_DIR)/smuxi-engine.dll \
-	  $(BUILD_DIR)/Db4objects.Db4o.dll \
-	  $(BUILD_DIR)/ServiceStack.Text.dll
+	mkbundle --static -o $(LINUX_STATIC_BUILD_DIR)/smuxi-server $(BUILD_DIR)/smuxi-server.exe
 	for FILE in $(LINUX_STATIC_FILES); do \
 		cp $$FILE $(LINUX_STATIC_BUILD_DIR); \
 	done
-	tar -czf smuxi-server-$(VERSION)-linux-$$(uname -m)-static.tar.gz $(LINUX_STATIC_BUILD_DIR)
+	tar -czf smuxi-server-$(VERSION)-linux-x86-static.tar.gz $(LINUX_STATIC_BUILD_DIR)
 
 dist-linux-debs:
 	git checkout -- debian/changelog

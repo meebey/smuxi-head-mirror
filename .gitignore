@@ -2,7 +2,6 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
-compile
 config.guess
 config.log
 config.status
@@ -39,4 +38,3 @@ po-*/*~
 bin/
 bin-osx/
 bin-win32/
-Thumbs.db

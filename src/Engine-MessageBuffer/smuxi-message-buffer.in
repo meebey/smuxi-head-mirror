@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec mono --debug "@expanded_libdir@/@PACKAGE@/smuxi-message-buffer.exe" "$@"

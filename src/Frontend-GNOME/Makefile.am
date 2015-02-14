@@ -1,5 +1,5 @@
 TARGET_DIR = $(top_builddir)/bin/$(PROFILE)
-EXTRA_DIST = $(WIN_ICON) $(DESKTOP_FILE).in $(man_MANS) $(appdata_in_files)
+EXTRA_DIST = $(WIN_ICON) $(DESKTOP_FILE).in $(man_MANS)
 man_MANS = smuxi-frontend-gnome.1
 
 ICON_NAME = smuxi-frontend-gnome
@@ -45,11 +45,6 @@ desktopdir = $(datadir)/applications
 desktop_in_files = $(DESKTOP_FILE).in
 desktop_DATA = $(DESKTOP_FILE)
 build_datafiles = $(DESKTOP_FILE)
-
-@INTLTOOL_XML_RULE@
-appdatadir = $(datarootdir)/appdata
-appdata_DATA = $(appdata_in_files:.xml.in=.xml)
-appdata_in_files = smuxi-frontend-gnome.appdata.xml.in
 
 FRONTEND_GNOME_EXE_CONFIG_SOURCE = smuxi-frontend-gnome.exe.config
 FRONTEND_GNOME_EXE_CONFIG = $(BUILD_DIR)/smuxi-frontend-gnome.exe.config
@@ -157,7 +152,6 @@ FILES = \
 	Views/Assistants/Engine/EngineAssistantConnectionWidget.cs \
 	Views/Assistants/Engine/EngineAssistantIntroWidget.cs \
 	Views/Assistants/Engine/EngineAssistant.cs \
-	Views/Tags/EmojiTag.cs \
 	Views/Tags/LinkTag.cs \
 	Views/Tags/PersonTag.cs \
 	QuickConnectDialog.cs \
@@ -234,8 +228,7 @@ DLL_REFERENCES = $(MESSAGINGMENU_SHARP_INCLUDED_LIBS)
 
 CLEANFILES = $(LINUX_DESKTOPAPPLICATIONS) $(PROGRAMFILES) $(BINARIES) \
 	$(top_builddir)/images/256/$(GROUP_CHAT_ICON_NAME).png \
-	$(top_builddir)/images/256/$(PERSON_CHAT_ICON_NAME).png \
-	$(appdata_DATA)
+	$(top_builddir)/images/256/$(PERSON_CHAT_ICON_NAME).png
 
 include $(top_srcdir)/Makefile.include
 

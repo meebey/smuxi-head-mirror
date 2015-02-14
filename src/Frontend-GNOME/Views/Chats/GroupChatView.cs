@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2006, 2009-2014 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2006, 2009-2013 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -55,8 +55,6 @@ namespace Smuxi.Frontend.Gnome
         public override IList<PersonModel> Participants { get; protected set; }
         protected Gtk.CellRendererText IdentityNameCellRenderer { get; set; }
         Gtk.ScrolledWindow PersonScrolledWindow { get; set; }
-
-        public event EventHandler ParticipantsChanged;
 
         public override bool HasSelection {
             get {
@@ -112,12 +110,6 @@ namespace Smuxi.Frontend.Gnome
             }
         }
 
-        public Gtk.HPaned OutputHPaned {
-            get {
-                return _OutputHPaned;
-            }
-        }
-
         static GroupChatView()
         {
             IconPixbuf = Frontend.LoadIcon(
@@ -134,13 +126,45 @@ namespace Smuxi.Frontend.Gnome
             // person list
             Participants = new List<PersonModel>();
             _OutputHPaned = new Gtk.HPaned();
+            _OutputHPaned.ButtonPressEvent += (sender, e) => {;
+                // reset person list size on double click
+                if (e.Event.Type == Gdk.EventType.TwoButtonPress &&
+                    e.Event.Button == 1) {
+                    GLib.Timeout.Add(200, delegate {
+                        _OutputHPaned.Position = -1;
+                        return false;
+                    });
+                }
+            };
 
             Gtk.TreeView tv = new Gtk.TreeView();
             _PersonTreeView = tv;
             Gtk.ScrolledWindow sw = new Gtk.ScrolledWindow();
             PersonScrolledWindow = sw;
-            sw.ShadowType = Gtk.ShadowType.None;
             sw.HscrollbarPolicy = Gtk.PolicyType.Never;
+            sw.SizeRequested += (o, args) => {
+                // predict and set useful treeview width
+                var persons = SyncedPersons;
+                if (persons == null || persons.Count == 0) {
+                    return;
+                }
+
+                int longestNameWidth = 0;
+                foreach (var person in persons.Values) {
+                    int lineWidth, lineHeigth;
+                    using (var layout = _PersonTreeView.CreatePangoLayout(person.IdentityName)) {
+                        layout.GetPixelSize(out lineWidth, out lineHeigth);
+                    }
+                    if (lineWidth > longestNameWidth) {
+                        longestNameWidth = lineWidth;
+                    }
+                }
+
+                var bestSize = new Gtk.Requisition() {
+                    Width = longestNameWidth
+                };
+                args.Requisition = bestSize;
+            };
 
             //tv.CanFocus = false;
             tv.BorderWidth = 0;
@@ -148,15 +172,12 @@ namespace Smuxi.Frontend.Gnome
             sw.Add(tv);
             
             Gtk.TreeViewColumn column;
-            var cellr = new Gtk.CellRendererText() {
-                Ellipsize = Pango.EllipsizeMode.End
-            };
+            Gtk.CellRendererText cellr = new Gtk.CellRendererText();
             IdentityNameCellRenderer = cellr;
             column = new Gtk.TreeViewColumn(String.Empty, cellr);
             column.SortColumnId = 0;
             column.Spacing = 0;
             column.SortIndicator = false;
-            column.Expand = true;
             column.Sizing = Gtk.TreeViewColumnSizing.Autosize;
             // FIXME: this callback leaks memory
             column.SetCellDataFunc(cellr, new Gtk.TreeCellDataFunc(RenderPersonIdentityName));
@@ -180,7 +201,6 @@ namespace Smuxi.Frontend.Gnome
                 return !person.IdentityName.StartsWith(key, StringComparison.InvariantCultureIgnoreCase);
             };
             tv.EnableSearch = true;
-            tv.HeadersVisible = false;
             tv.RowActivated += new Gtk.RowActivatedHandler(OnPersonsRowActivated);
             tv.FocusOutEvent += OnPersonTreeViewFocusOutEvent;
             
@@ -194,17 +214,13 @@ namespace Smuxi.Frontend.Gnome
             _PersonTreeView.ButtonPressEvent += _OnPersonTreeViewButtonPressEvent;
             _PersonTreeView.KeyPressEvent += OnPersonTreeViewKeyPressEvent;
             // frame needed for events when selecting something in the treeview
-            _PersonTreeViewFrame = new Gtk.Frame() {
-                ShadowType = Gtk.ShadowType.In
-            };
+            _PersonTreeViewFrame = new Gtk.Frame();
             _PersonTreeViewFrame.ButtonReleaseEvent += new Gtk.ButtonReleaseEventHandler(_OnUserListButtonReleaseEvent);
             _PersonTreeViewFrame.Add(sw);
             
             // topic
             // don't worry, ApplyConfig() will add us to the OutputVBox!
-            _OutputVBox = new Gtk.VBox() {
-                Spacing = 1
-            };
+            _OutputVBox = new Gtk.VBox();
 
             _TopicTextView = new MessageTextView();
             _TopicTextView.Editable = false;
@@ -278,7 +294,7 @@ namespace Smuxi.Frontend.Gnome
             
             _TopicTextView.Buffer.Text = String.Empty;
             _PersonListStore.Clear();
-            OnParticipantsChanged(EventArgs.Empty);
+            UpdatePersonCount();
         }
         
         public override void Sync()
@@ -343,7 +359,8 @@ namespace Smuxi.Frontend.Gnome
                 _PersonTreeView.Model = ls;
                 _PersonTreeView.SearchColumn = 0;
 
-                OnParticipantsChanged(EventArgs.Empty);
+                PersonScrolledWindow.CheckResize();
+                UpdatePersonCount();
 
                 // TRANSLATOR: this string will be appended to the one above
                 status += String.Format(" {0}", _("done."));
@@ -376,6 +393,12 @@ namespace Smuxi.Frontend.Gnome
             }
         }
         
+        protected void UpdatePersonCount()
+        {
+            _IdentityNameColumn.Title = String.Format(_("Person") + " ({0})",
+                                                      _PersonListStore.IterNChildren());
+        }
+        
         public void AddPerson(PersonModel person)
         {
             Trace.Call(person);
@@ -387,7 +410,7 @@ namespace Smuxi.Frontend.Gnome
             
             _PersonListStore.AppendValues(person);
             Participants.Add(person);
-            OnParticipantsChanged(EventArgs.Empty);
+            UpdatePersonCount();
         }
         
         public void UpdatePerson(PersonModel oldPerson, PersonModel newPerson)
@@ -459,7 +482,7 @@ namespace Smuxi.Frontend.Gnome
                 }
             }
 
-            OnParticipantsChanged(EventArgs.Empty);
+            UpdatePersonCount();
         }
 
         public override void ApplyConfig(UserConfig config)
@@ -482,11 +505,11 @@ namespace Smuxi.Frontend.Gnome
                 _OutputVBox.Remove(OutputScrolledWindow);
             }
             if (topic_pos == "top") {
-                _OutputVBox.PackStart(_TopicScrolledWindow, false, false, 0);
+                _OutputVBox.PackStart(_TopicScrolledWindow, false, false, 2);
                 _OutputVBox.PackStart(OutputScrolledWindow, true, true, 0);
             } else if  (topic_pos == "bottom") {
                 _OutputVBox.PackStart(OutputScrolledWindow, true, true, 0);
-                _OutputVBox.PackStart(_TopicScrolledWindow, false, false, 0);
+                _OutputVBox.PackStart(_TopicScrolledWindow, false, false, 2);
             } else if (topic_pos == "none") {
                 _OutputVBox.PackStart(OutputScrolledWindow, true, true, 0);
             } else {
@@ -523,8 +546,8 @@ namespace Smuxi.Frontend.Gnome
                 _OutputHPaned.Pack1(_PersonTreeViewFrame, false, true);
                 _OutputHPaned.Pack2(_OutputVBox, true, true);
             } else if (userlist_pos == "right") {
-                _OutputHPaned.Pack1(_OutputVBox, true, false);
-                _OutputHPaned.Pack2(_PersonTreeViewFrame, false, false);
+                _OutputHPaned.Pack1(_OutputVBox, true, true);
+                _OutputHPaned.Pack2(_PersonTreeViewFrame, false, true);
             } else if (userlist_pos == "none") {
                 _OutputHPaned.Pack1(_OutputVBox, true, true);
             } else {
@@ -566,13 +589,6 @@ namespace Smuxi.Frontend.Gnome
             PersonModel person2 = (PersonModel) liststore.GetValue(iter2, 0); 
 
             return person1.CompareTo(person2);
-        }
-
-        protected virtual void OnParticipantsChanged(EventArgs e)
-        {
-            if (ParticipantsChanged != null) {
-                ParticipantsChanged(this, EventArgs.Empty);
-            }
         }
 
         protected virtual void OnPersonsRowActivated(object sender, Gtk.RowActivatedArgs e)

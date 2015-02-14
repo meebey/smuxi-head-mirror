@@ -31,7 +31,6 @@ using Smuxi.Common;
 namespace Smuxi.Engine
 {
     [Serializable]
-    [DataContract]
     public class MessageModel : ISerializable
     {
         static readonly Regex NickRegex = new Regex("^<([^ ]+)> ");
@@ -41,7 +40,6 @@ namespace Smuxi.Engine
         [NonSerialized]
         private bool                    f_IsCompactable;
 
-        [DataMember]
         public DateTime TimeStamp {
             get {
                 return f_TimeStamp;
@@ -50,22 +48,19 @@ namespace Smuxi.Engine
                 f_TimeStamp = value;
             }
         }
-
-        [DataMember]
+        
         public IList<MessagePartModel> MessageParts {
             get {
                 return f_MessageParts;
             }
         }
 
-        [IgnoreDataMember]
         public bool IsEmpty {
             get {
                 return f_MessageParts.Count == 0;
             }
         }
         
-        [DataMember]
         public MessageType MessageType {
             get {
                 return f_MessageType;
@@ -75,7 +70,6 @@ namespace Smuxi.Engine
             }
         }
         
-        [IgnoreDataMember]
         public bool IsCompactable {
             get {
                 return f_IsCompactable;
@@ -180,8 +174,7 @@ namespace Smuxi.Engine
                 return false;
             }
 
-            // millisecond precision
-            if (Math.Abs(f_TimeStamp.Subtract(msg.TimeStamp).TotalMilliseconds) > 1) {
+            if (f_TimeStamp != msg.TimeStamp) {
                 return false;
             }
             if (f_MessageType != msg.MessageType) {

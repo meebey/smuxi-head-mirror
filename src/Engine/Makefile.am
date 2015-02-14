@@ -67,7 +67,6 @@ FILES = \
 	MessageBuffers/ListMessageBuffer.cs \
 	MessageBuffers/MessageBufferBase.cs \
 	MessageBuffers/MessageBufferPersistencyType.cs \
-	MessageBuffers/SqliteMessageBuffer.cs \
 	Messages/FeedMessageBuilder.cs \
 	Messages/MessageBuilder.cs \
 	Messages/MessageModel.cs \
@@ -76,7 +75,6 @@ FILES = \
 	Messages/UrlMessagePartModel.cs \
 	Messages/ImageMessagePartModel.cs \
 	Messages/MessageType.cs \
-	Messages/Dto/MessageDtoModelV1.cs \
 	Chats/ChatType.cs \
 	Chats/ChatModel.cs \
 	Chats/GroupChatModel.cs \
@@ -124,22 +122,18 @@ EXTRAS = \
 	smuxi-engine.pc.in 
 
 REFERENCES =  \
+	System.Runtime.Remoting \
 	System \
 	System.Core \
-	System.Data \
-	System.Runtime.Remoting \
-	System.Runtime.Serialization \
 	System.Web \
 	System.Xml \
 	Mono.Posix \
-	Mono.Data.Sqlite \
 	$(NINI_LIBS) \
 	$(LOG4NET_LIBS) \
 	$(DB4O_LIBS) \
 	$(DB4O_INCLUDED_LIBS)
 
-DLL_REFERENCES = \
-	$(BUILD_DIR)/ServiceStack.Text.dll
+DLL_REFERENCES =
 
 CLEANFILES = $(PROGRAMFILES) $(LINUX_PKGCONFIG) 
 

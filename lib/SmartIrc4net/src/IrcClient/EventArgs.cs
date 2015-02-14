@@ -28,7 +28,6 @@
 
 using System;
 using System.Collections.Specialized;
-using System.Collections.Generic;
 
 namespace Meebey.SmartIrc4net
 {
@@ -778,18 +777,6 @@ namespace Meebey.SmartIrc4net
         {
             Server = server;
             Port = Port;
-        }
-    }
-
-    public class ChannelModeChangeEventArgs : IrcEventArgs
-    {
-        public string Channel { get; private set; }
-        public List<ChannelModeChangeInfo> ModeChanges { get; private set; }
-
-        internal ChannelModeChangeEventArgs(IrcMessageData data, string channel, List<ChannelModeChangeInfo> modeChanges) : base(data)
-        {
-            Channel = channel;
-            ModeChanges = modeChanges;
         }
     }
 }

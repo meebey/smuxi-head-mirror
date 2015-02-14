@@ -1,7 +1,6 @@
 glade/
 src/Common/
 src/Engine/
-src/Engine-MessageBuffer/
 src/Engine-Campfire/
 src/Engine-IRC/
 src/Engine-Twitter/

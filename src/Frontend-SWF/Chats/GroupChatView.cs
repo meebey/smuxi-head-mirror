@@ -40,7 +40,6 @@ namespace Smuxi.Frontend.Swf
     {
         private TextBox _TopicTextView;
         private ListBox _PersonListBox;
-        private MessageModel _Topic;
 
         public GroupChatView(ChatModel chat) :
                         base(chat)
@@ -120,7 +119,6 @@ namespace Smuxi.Frontend.Swf
             foreach (PersonModel person in persons.Values) {
                 _PersonListBox.Items.Add(person.IdentityName);
             }
-            Topic = GroupChatModel.Topic;
         }
 
         public override void Disable()
@@ -137,23 +135,6 @@ namespace Smuxi.Frontend.Swf
                     participants.Add(person);
                 }
                 return new List<PersonModel>(participants.OrderBy(x => x));
-            }
-        }
-
-        public MessageModel Topic
-        {
-            get {
-                return _Topic;
-            }
-            set {
-                _Topic = value;
-                _TopicTextView.Clear();
-                if (value != null) {
-                    // TODO: Convert the TextBox into a rich one, and then add parsing code (like in ChatView)
-                    // TODO: And also wrapping
-                    _TopicTextView.Text = value.ToString();
-                }
-                _TopicTextView.Visible = !(_TopicTextView.Text == String.Empty);
             }
         }
     }
