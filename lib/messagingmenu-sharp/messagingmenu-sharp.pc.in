@@ -5,5 +5,5 @@ libdir=@libdir@
 Name: @ASSEMBLY_TITLE@
 Description: @ASSEMBLY_DESCRIPTION@
 Version: @VERSION@
-Requires: 
+Requires: gio-sharp-2.0
 Libs: -r:${libdir}/mono/@ASSEMBLY_NAME@/@ASSEMBLY_NAME@.dll

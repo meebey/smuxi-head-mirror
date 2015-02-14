@@ -38,6 +38,9 @@ namespace Twitterizer
     using System.Linq;
     using System.Net;
     using System.Text;
+#if !SILVERLIGHT
+    using System.Runtime.Serialization;
+#endif
     using Core;
 
     /// <summary>
@@ -107,6 +110,18 @@ namespace Twitterizer
 #endif
             }
         }
+
+#if !SILVERLIGHT
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwitterizerException"/> class.
+        /// </summary>
+        /// <param name="info">The serialization info.</param>
+        /// <param name="context">The streaming context.</param>
+        protected TwitterizerException(SerializationInfo info, StreamingContext context) :
+            base(info, context)
+        {
+        }
+#endif
         #endregion
 
         /// <summary>
@@ -191,20 +206,20 @@ namespace Twitterizer
         {
             this.RateLimiting = new RateLimiting();
 
-            if (response.Headers.AllKeys.Contains("X-RateLimit-Limit") && !string.IsNullOrEmpty(response.Headers["X-RateLimit-Limit"]))
+            if (response.Headers.AllKeys.Contains("X-Rate-Limit-Limit") && !string.IsNullOrEmpty(response.Headers["X-Rate-Limit-Limit"]))
             {
-                this.RateLimiting.Total = int.Parse(response.Headers["X-RateLimit-Limit"], CultureInfo.InvariantCulture);
+                this.RateLimiting.Total = int.Parse(response.Headers["X-Rate-Limit-Limit"], CultureInfo.InvariantCulture);
             }
 
-            if (response.Headers.AllKeys.Contains("X-RateLimit-Remaining") && !string.IsNullOrEmpty(response.Headers["X-RateLimit-Remaining"]))
+            if (response.Headers.AllKeys.Contains("X-Rate-Limit-Remaining") && !string.IsNullOrEmpty(response.Headers["X-Rate-Limit-Remaining"]))
             {
-                this.RateLimiting.Remaining = int.Parse(response.Headers["X-RateLimit-Remaining"], CultureInfo.InvariantCulture);
+                this.RateLimiting.Remaining = int.Parse(response.Headers["X-Rate-Limit-Remaining"], CultureInfo.InvariantCulture);
             }
 
-            if (!string.IsNullOrEmpty(response.Headers["X-RateLimit-Reset"]) && !string.IsNullOrEmpty(response.Headers["X-RateLimit-Reset"]))
+            if (!string.IsNullOrEmpty(response.Headers["X-Rate-Limit-Reset"]) && !string.IsNullOrEmpty(response.Headers["X-Rate-Limit-Reset"]))
             {
                 this.RateLimiting.ResetDate = DateTime.SpecifyKind(new DateTime(1970, 1, 1, 0, 0, 0, 0)
-                    .AddSeconds(double.Parse(response.Headers["X-RateLimit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
+                    .AddSeconds(double.Parse(response.Headers["X-Rate-Limit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
             }
         }
     }
