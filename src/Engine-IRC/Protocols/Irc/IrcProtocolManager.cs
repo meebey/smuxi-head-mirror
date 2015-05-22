@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2014 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2015 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -3119,7 +3119,10 @@ namespace Smuxi.Engine
                     targetChats.Add(chat);
                 }
             }
-            if (targetChats.Count == 0 && e.Data.Nick != null) {
+            // show notice on shared channels except the sender is Nick/ChanServ
+            if (targetChats.Count == 0 && e.Data.Nick != null &&
+                String.Compare(e.Data.Nick, "NickServ", true) != 0 &&
+                String.Compare(e.Data.Nick, "ChanServ", true) != 0) {
                 // always show on server chat
                 targetChats.Add(_NetworkChat);
                 // check if we share a channel with the sender
@@ -3732,6 +3735,15 @@ namespace Smuxi.Engine
 
             // WHO ourself so OnWho() can retrieve our ident, host and realname
             _IrcClient.RfcWho(_IrcClient.Nickname);
+
+            // NickServ authentication
+            if (_ServerModel != null &&
+                !String.IsNullOrEmpty(_ServerModel.Password)) {
+                _IrcClient.WriteLine(
+                    String.Format("NS IDENTIFY {0}", _ServerModel.Password),
+                    Priority.Critical
+                );
+            }
         }
 
         protected override void OnConnected(EventArgs e)
