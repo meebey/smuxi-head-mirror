@@ -3,292 +3,291 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Ş. Uzun <hashirrrt@gmail.com>, 2014-2015
-# U, 2011
+# Moo, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: Smuxi - IRC client\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-03 12:30+0200\n"
-"PO-Revision-Date: 2015-02-07 18:15+0000\n"
-"Last-Translator: Ş. Uzun <hashirrrt@gmail.com>\n"
-"Language-Team: Turkish (http://www.transifex.com/projects/p/smuxi/language/tr/)\n"
+"PO-Revision-Date: 2014-12-01 13:57+0000\n"
+"Last-Translator: Moo\n"
+"Language-Team: Lithuanian (http://www.transifex.com/projects/p/smuxi/language/lt/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: tr\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: lt\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../src/Engine/FrontendManager.cs:218
 msgid "No network connections"
-msgstr "Ağ bağlantısı yok"
+msgstr "Nėra tinklo ryšių"
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:263
 #, csharp-format
 msgid "Optimizing: {0}..."
-msgstr "{0} en uygun duruma getiriliyor..."
+msgstr "Optimizuojama: {0}..."
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:281
 #, csharp-format
 msgid "Failed to optimize: {0}. Reason: {1}"
-msgstr "{0} en uygun duruma getirilemedi. Neden: {1}"
+msgstr "Nepavyko optimizuoti: {0}. Priežastis: {1}"
 
 #: ../src/Engine/MessageBuffers/Db4oMessageBuffer.cs:315
 msgid ""
 "Your chat history is no longer available because of an error but will be "
 "preserved from now on."
-msgstr "Sohbet geçmişiniz bir hata nedeniyle artık kullanılabilir değil ancak şu andan itibaren tutulacaktır."
+msgstr "Jūsų susirašinėjimų žurnalas dėl klaidos yra daugiau nepasiekiamas, tačiau nuo dabar bus vėl išsaugomas."
 
 #: ../src/Engine/Messages/MessageBuilder.cs:771
 #, csharp-format
 msgid "{0} is typing..."
-msgstr "{0} yazıyor..."
+msgstr "{0} rašo..."
 
 #: ../src/Engine/Messages/MessageBuilder.cs:777
 #, csharp-format
 msgid "{0} has stopped typing..."
-msgstr "{0} yazmayı bıraktı..."
+msgstr "{0} nustojo rašyti..."
 
 #: ../src/Engine/Messages/MessageBuilder.cs:820
 #, csharp-format
 msgid "{0} is away"
-msgstr "{0} uzakta"
+msgstr "{0} yra pasitraukęs"
 
 #: ../src/Engine/Messages/MessageBuilder.cs:826
 #, csharp-format
 msgid "{0} is offline"
-msgstr "{0} çevrimdışı"
+msgstr "{0} yra atsijungęs"
 
 #: ../src/Engine/Messages/MessageBuilder.cs:832
 #, csharp-format
 msgid "{0} is online"
-msgstr "{0} çevrimiçi"
+msgstr "{0} yra prisijungęs"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:162
 msgid "not connected"
-msgstr "bağlantı yok"
+msgstr "neprisijungta"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:193
 msgid "Not connected to server"
-msgstr "Sunucuyla bağlantı yok"
+msgstr "Neprisijungta prie serverio"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:201
 #: ../src/Engine/Session.cs:1067
 #, csharp-format
 msgid "Not enough parameters for {0} command"
-msgstr "{0} komutu için yetersiz parametre"
+msgstr "Nepakanka parametrų {0} komandai"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:212
 #, csharp-format
 msgid "Connected to {0}"
-msgstr "{0} ile bağlantı kuruldu"
+msgstr "Prisijungta prie {0}"
 
 #: ../src/Engine/Protocols/ProtocolManagerBase.cs:242
 #, csharp-format
 msgid "Disconnected from {0}"
-msgstr "{0} ile bağlantı kesildi"
+msgstr "Atsijungta nuo {0}"
 
 #: ../src/Engine/Session.cs:247
 #, csharp-format
 msgid "Automatically connecting to {0}..."
-msgstr "{0} ile kendiliğinden bağlantı kuruluyor..."
+msgstr "Automatiškai jungiamasi prie {0}..."
 
 #: ../src/Engine/Session.cs:278
 #, csharp-format
 msgid "Automatic connect to {0} failed!"
-msgstr "{0} ile kendiliğinden bağlantı başarısız oldu!"
+msgstr "Automatinis prisijungimas prie {0} nepavyko!"
 
 #. TRANSLATOR: this line is used as a label / category for a
 #. list of commands below
 #: ../src/Engine/Session.cs:505
 msgid "Engine Commands"
-msgstr "Motor Komutları"
+msgstr "Varikliuko Komandos"
 
 #: ../src/Engine/Session.cs:634
 msgid "Connect failed!"
-msgstr "Bağlantı başarısız oldu!"
+msgstr "Prisijungimas nepavyko!"
 
 #: ../src/Engine/Session.cs:657
 #, csharp-format
 msgid "Disconnect failed - could not find server: {0}"
-msgstr "Bağlantı kesilmesi başarısız oldu - {0} sunucusu bulunamadı."
+msgstr "Atsijungimas nepavyko - nepavyko rasti serverio: {0}"
 
 #: ../src/Engine/Session.cs:699
 msgid "Reconnect failed!"
-msgstr "Yeniden bağlantı başarısız oldu!"
+msgstr "Prisijungimas iš naujo nepavyko!"
 
 #: ../src/Engine/Session.cs:723
 msgid "Configuration reloaded"
-msgstr "Yapılandırma yeniden yüklendi"
+msgstr "Konfigūracija įkelta iš naujo"
 
 #: ../src/Engine/Session.cs:727
 msgid "Configuration saved"
-msgstr "Yapılandırma kaydedildi"
+msgstr "Konfigūracija išsaugota"
 
 #: ../src/Engine/Session.cs:754
 msgid "Invalid key/value format."
-msgstr "Geçersiz anahtar/değer biçimi."
+msgstr "Neteisingas rakto/reikšmės formatas."
 
 #: ../src/Engine/Session.cs:778
 #, csharp-format
 msgid "Invalid config key: '{0}'"
-msgstr "Geçersiz yapılandırma anahtarı: '{0}'"
+msgstr "Neteisingas konfigūracijos raktas: '{0}'"
 
 #: ../src/Engine/Session.cs:794 ../src/Engine/Session.cs:800
 #, csharp-format
 msgid "Could not convert config value: '{0}' to type: {1}"
-msgstr "'{0}' yapılandırma değeri {1} türüne dönüştürülemedi"
+msgstr "Nepavyko konvertuoti konfigūracijos reikšmės: '{0}' į tipą: {1}"
 
 #: ../src/Engine/Session.cs:814
 #, csharp-format
 msgid ""
 "Invalid config remove key: '{0}'. Valid remove keys: MessagePatterns/{{ID}}."
-msgstr "Geçersiz yapılandırma kaldırma anahtarı: '{0}'. Geçerli kaldırma anahtarları: MessagePatterns/{{Kimlik}}."
+msgstr "Neteisingas konfigūracijos šalinimo raktas: '{0}'. Teisingi šalinimo raktai: MessagePatterns/{{ID}}."
 
 #: ../src/Engine/Session.cs:827
 #, csharp-format
 msgid "Message pattern with ID: '{0}' does not exist."
-msgstr "'{0}' kimlikli ileti kalıbı mevcut değil."
+msgstr "Pranešimo šablono su ID: '{0}' nėra."
 
 #: ../src/Engine/Session.cs:834
 #, csharp-format
 msgid "Message pattern with ID: '{0}' removed."
-msgstr "'{0}' kimlikli ileti kalıbı kaldırıldı."
+msgstr "Pranešimo šablonas su ID: '{0}' pašalintas."
 
 #: ../src/Engine/Session.cs:842
 msgid "Invalid parameter for config; use load, save, get or set."
-msgstr "Yapılandırma için geçersiz parametre; load, save, get ya da set parametrelerini kullanın."
+msgstr "Neteisingas konfigūracijos parametras; naudokite load, save, get arba set."
 
 #: ../src/Engine/Session.cs:919
 msgid "Invalid parameter for network; use list, switch, or close"
-msgstr "Ağ için geçersiz parametre; list, switch ya da close parametrelerini kullanın"
+msgstr "Neteisingas tinklo parametras; naudokite list, switch, arba close"
 
 #. TRANSLATOR: this line is used as a label / category for a
 #. list of networks below
 #: ../src/Engine/Session.cs:949
 msgid "Connected Networks"
-msgstr "Bağlantı Kurulmuş Ağlar"
+msgstr "Prijungti Tinklai"
 
 #: ../src/Engine/Session.cs:954 ../src/Engine/Session.cs:978
 msgid "Network"
-msgstr "Ağ"
+msgstr "Tinklas"
 
 #: ../src/Engine/Session.cs:955
 msgid "Protocol"
-msgstr "Protokol"
+msgstr "Protokolas"
 
 #: ../src/Engine/Session.cs:956
 msgid "Host"
-msgstr "Host"
+msgstr "Serveris"
 
 #: ../src/Engine/Session.cs:957
 msgid "Port"
-msgstr "Port"
+msgstr "Prievadas"
 
 #. TRANSLATOR: no connected networks
 #. TRANSLATOR: no available networks
 #: ../src/Engine/Session.cs:963 ../src/Engine/Session.cs:984
 msgid "None"
-msgstr "Yok"
+msgstr "Nėra"
 
 #. TRANSLATOR: this line is used as a label / category for a
 #. list of networks below
 #: ../src/Engine/Session.cs:970
 msgid "Available Networks"
-msgstr "Kullanılabilir Ağlar"
+msgstr "Prieinami Tinklai"
 
 #: ../src/Engine/Session.cs:998
 #, csharp-format
 msgid "Network close failed - could not find network: {0}"
-msgstr "Ağ sonlandırma başarısız oldu - {0} ağı bulunamadı"
+msgstr "Tinklo uždarymas nepavyko - nepavyko rasti tinklo: {0}"
 
 #: ../src/Engine/Session.cs:1042
 #, csharp-format
 msgid "Network switch failed - could not find network: {0}"
-msgstr "Ağ değişimi başarısız oldu - {0} ağı bulunamadı"
+msgstr "Tinklo perjungimas nepavyko - nepavyko rasti tinklo: {0}"
 
 #: ../src/Engine/Session.cs:1060
 msgid "Not connected to any network"
-msgstr "Hiçbir ağla bağlantı yok"
+msgstr "Neprisijungta prie jokio tinklo"
 
 #: ../src/Engine/Session.cs:1317
 #, csharp-format
 msgid ""
 "Failed to write to chat history. Your chat history will not be preserved. "
 "Reason: {0}"
-msgstr "Sohbet geçmişine yazım işlemi başarısız oldu. Sohbet geçmişiniz tutulmayacak. Neden: {0}"
+msgstr "Nepavyko įrašyti susirašinėjimų žurnalo. Jūsų susirašinėjimų žurnalas nebus saugomas. Priežastis: {0}"
 
 #. just in case the ProtocolManager is not setting the
 #. protocol chat
 #: ../src/Engine/Session.cs:1550
 msgid "Connect failed."
-msgstr "Bağlantı başarısız oldu."
+msgstr "Prisijungimas nepavyko."
 
 #: ../src/Engine/Session.cs:1564
 #, csharp-format
 msgid "No protocol manager found for the protocol: {0}"
-msgstr "{0} protokolü için bir protokol yönetici bulunamadı"
+msgstr "Nerasta protokolų tvarkytuvė protokolui: {0}"
 
 #: ../src/Engine/Session.cs:1896
 msgid "Welcome to Smuxi"
-msgstr "Smuxi'ye hoş geldiniz"
+msgstr "Sveiki atvykę į Smuxi"
 
 #: ../src/Engine/Session.cs:1903
 msgid "Type /help to get a list of available commands."
-msgstr "Kullanılabilir komutlar listesi için /help yazın."
+msgstr "Norėdami gauti prieinamų komandų sąrašą, įrašykite /help."
 
 #: ../src/Engine/Session.cs:1909
 msgid ""
 "After you have made a connection the list of available commands changes. Go "
 "to the newly opened connection tab and use the /help command again to see "
 "the extended command list."
-msgstr "Bir bağlantı kurmanızın ardından kullanılabilir komutlar listesi değişecektir. Genişletilmiş komut listesini görmek için yeni açılmış bağlantı sekmesine gidin /help komutunu tekrar kullanın."
+msgstr "Po jūsų prisijungimo, prieinamų komandų sąrašas pasikeičia. Pereikite į naujai atvertą kortelę ir vėl naudokite /help komandą, kad matytumėte išplėstą komandų sąrašą."
 
 #: ../src/Engine/Config/UserListController.cs:117
 msgid "Username must not be empty."
-msgstr "Kullanıcı adı boş bırakılamaz."
+msgstr "Vartotojo vardas negali būti tuščias."
 
 #: ../src/Engine/Config/UserListController.cs:127
 msgid "Password must not be empty."
-msgstr "Parola boş bırakılamaz."
+msgstr "Slaptažodis negali būti tuščias."
 
 #: ../src/Engine/Config/UserListController.cs:136
 #, csharp-format
 msgid "User \"{0}\" doesn't exist."
-msgstr "\"{0}\" kullanıcısı mevcut değil."
+msgstr "Naudotojo \"{0}\" nėra."
 
 #: ../src/Engine/Config/UserListController.cs:145
 #, csharp-format
 msgid "User \"{0}\" already exists."
-msgstr "\"{0}\" kullanıcısı zaten mevcut."
+msgstr "Naudotojas \"{0}\" jau yra."
 
 #: ../src/Engine/Config/ServerListController.cs:118
 msgid "Network must not be empty."
-msgstr "Ağ boş bırakılamaz."
+msgstr "Tinklas negali būti tuščias."
 
 #: ../src/Engine/Config/ServerListController.cs:138
 msgid "Server hostname must not be empty."
-msgstr "Sunucu host adı boş bırakılamaz."
+msgstr "Serverio pagrindinio kompiuterio vardas negali būti tuščias."
 
 #: ../src/Engine/Config/ServerListController.cs:141
 msgid "Server hostname contains invalid characters (newline)."
-msgstr "Sunucu host adı geçersiz karakter içeriyor (yenisatır)."
+msgstr "Serverio pagrindinio kompiuterio varde yra neteisingų simbolių (nauja eilutė)."
 
 #: ../src/Engine/Config/ServerListController.cs:148
 #, csharp-format
 msgid "Server ID '{0}' already exists."
-msgstr "Sunucu kimliği '{0}' zaten mevcut."
+msgstr "Serverio ID '{0}' jau yra."
 
 #: ../src/Engine/Chats/ChatModel.cs:109
 #, csharp-format
 msgid ""
 "Failed to load chat history. Your chat history will not be preserved. "
 "Reason: {0}"
-msgstr "Sohbet geçmişi yüklemesi başarısız oldu. Sohbet geçmişiniz tutulmayacak. Neden: {0}"
+msgstr "Nepavyko įkelti susirašinėjimų žurnalo. Jūsų susirašinėjimų žurnalas nebus saugomas. Priežastis: {0}"
 
 #: ../src/Engine/Chats/ChatModel.cs:311
 #, csharp-format
 msgid ""
 "Failed to open chat history for writing. Your chat history will not be "
 "preserved. Reason: {0}"
-msgstr "Yazım için sohbet geçmişinin açılması başarısız oldu. Sohbet geçmişiniz tutulmayacak. Neden: {0}"
+msgstr "Nepavyko įrašymui atidaryti susirašinėjimų žurnalo. Jūsų susirašinėjimų žurnalas nebus saugomas. Priežastis: {0}"

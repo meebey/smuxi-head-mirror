@@ -3,143 +3,142 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# zeugma <sunder67@hotmail.com>, 2013
-# Ş. Uzun <hashirrrt@gmail.com>, 2014-2015
-# U, 2013
+# Andrius Bentkus <andrius.bentkus@gmail.com>, 2015
+# Moo, 2014-2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Smuxi - IRC client\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-03 12:31+0200\n"
-"PO-Revision-Date: 2015-01-17 10:22+0000\n"
-"Last-Translator: Ş. Uzun <hashirrrt@gmail.com>\n"
-"Language-Team: Turkish (http://www.transifex.com/projects/p/smuxi/language/tr/)\n"
+"PO-Revision-Date: 2015-05-26 11:27+0000\n"
+"Last-Translator: Moo\n"
+"Language-Team: Lithuanian (http://www.transifex.com/projects/p/smuxi/language/lt/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: tr\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: lt\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:255
 #, csharp-format
 msgid "{0} invites you to {1}"
-msgstr "{0} sizi {1} sohbetine davet ediyor"
+msgstr "{0} kviečia jus į {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:279
 msgid "Accept invite (join room)"
-msgstr "Daveti kabul et (odaya katıl)"
+msgstr "Priimti kvietimą (užeiti į kambarį)"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:307
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1770
 msgid "away"
-msgstr "uzakta"
+msgstr "pasitraukęs"
 
 #. TRANSLATOR: {0} is the amount of seconds
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:313
 #, csharp-format
 msgid "lag: {0} seconds"
-msgstr "gecikme: {0} saniye"
+msgstr "delsa: {0} sekundžių"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:319
 msgid "not connected"
-msgstr "bağlantı yok"
+msgstr "neprisijungta"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:379
 #, csharp-format
 msgid "Using proxy: {0}:{1}"
-msgstr "{0}:{1} vekil sunucusu kullanılıyor"
+msgstr "Naudojamas įgaliotasis serveris: {0}:{1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:386
 #, csharp-format
 msgid "Connecting to {0} port {1}..."
-msgstr "{0} port {1} ile bağlantı kuruluyor..."
+msgstr "Jungiamasi prie {0} prievadas {1}..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:400
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:541
 #, csharp-format
 msgid "Connection to {0} established"
-msgstr "{0} ile bağlantı kuruldu"
+msgstr "Užmegztas ryšys su {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:409
 msgid "Logging in..."
-msgstr "Oturum açılıyor..."
+msgstr "Prisjungiama..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:449
 msgid "Connection failed!"
-msgstr "Bağlantı kurulamadı!"
+msgstr "Prisijungimas nepavyko!"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:453
 msgid "Connection failed! Reason: "
-msgstr "Bağlantı kurulamadı! Neden:"
+msgstr "Prisijungimas nepavyko! Priežastis:"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:466
 msgid "Disconnecting..."
-msgstr "Bağlantı kesiliyor..."
+msgstr "Atsijungiama..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:471
 #, csharp-format
 msgid "Disconnecting from {0}..."
-msgstr "{0} ile bağlantı kesiliyor..."
+msgstr "Atsijungiama nuo {0}..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:478
 #, csharp-format
 msgid "Disconnected from {0}"
-msgstr "{0} ile bağlantı kesildi"
+msgstr "Atsijungta nuo {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:484
 msgid "Connection closed"
-msgstr "Bağlantıya son verildi"
+msgstr "Ryšys nutrauktas"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:493
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:568
 msgid "Not connected"
-msgstr "Bağlantı yok"
+msgstr "Neprisijungta"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:527
 msgid "Reconnecting..."
-msgstr "Yeniden bağlantı kuruluyor..."
+msgstr "Jungiamasi iš naujo..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:535
 #, csharp-format
 msgid "Reconnecting to {0}..."
-msgstr "{0} ile yeniden bağlantı kuruluyor..."
+msgstr "Iš naujo jungiamasi prie {0}..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:554
 msgid "Reconnect Error"
-msgstr "Yeniden Bağlantı Hatası"
+msgstr "Jungimosi iš naujo Klaida"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:948
 #, csharp-format
 msgid "Sleeping for {0} milliseconds"
-msgstr "{0} milisaniyelik uyku"
+msgstr "Miegama {0} milisekundžių"
 
 #. TRANSLATOR: this line is used as label / category for a
 #. list of commands below
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1033
 msgid "IrcProtocolManager Commands"
-msgstr "IrcProtokolYöneticisi Komutları"
+msgstr "IrcProtocolManager komandos"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1115
 #, csharp-format
 msgid "Invalid port: {0}"
-msgstr "Geçersiz port: {0}"
+msgstr "Neteisingas prievadas: {0}"
 
 #. TRANSLATOR: some IRC networks dislike too many joins in a
 #. short period and thus Smuxi throttles/queues them
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1210
 #, csharp-format
 msgid "Queuing joins: {0}"
-msgstr "Katılmalar sıraya alınıyor: {0}"
+msgstr "Prisijungimai eilėje: {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1231
 #, csharp-format
 msgid "Already joined to channel: {0}. Type /window {0} to switch to it."
-msgstr "{0} kanalına zaten katılmışsınız. Geçiş yapmak için /window {0} yazın."
+msgstr "Jau prisijungta prie kanalo: {0}. Įveskite /window {0}, kad perjungtumėte į jį."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1265
 #, csharp-format
 msgid "Active joins: {0} - Queued joins: {1}"
-msgstr "Etkin katılımlar: {0} - Sıraya alınmış katılımlar: {1}"
+msgstr "Aktyvūs prisijungimai: {0} - Prisijungimai eilėje: {1}"
 
 #. TRANSLATORS: final message will look like this:
 #. Joining: #chan1 - Remaining active joins: #chan2 / queued joins: #chan3
@@ -147,140 +146,140 @@ msgstr "Etkin katılımlar: {0} - Sıraya alınmış katılımlar: {1}"
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1319
 #, csharp-format
 msgid "Joining: {0}"
-msgstr "Katılım gerçekleşiyor: {0}"
+msgstr "Prisijungiama prie: {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1291
 msgid "Remaining"
-msgstr "Kalan"
+msgstr "Liko"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1296
 #, csharp-format
 msgid "active joins: {0}"
-msgstr "etkin katılımlar: {0}"
+msgstr "aktyvių prisijungimų: {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1305
 #, csharp-format
 msgid "queued joins: {0}"
-msgstr "sıraya alınmış katılımlar: {0}"
+msgstr "prisijungimų eilėje: {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1751
 msgid "IRC Op"
-msgstr "IRC Op"
+msgstr "IRC Operatorius"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1753
 msgid "Owner"
-msgstr "Owner"
+msgstr "Savininkas"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1755
 msgid "ChanAdmin"
-msgstr "ChanAdmin"
+msgstr "Kanalo Administratorius"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1757
 msgid "Op"
-msgstr "Op"
+msgstr "Operatorius"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1759
 msgid "Halfop"
-msgstr "Halfop"
+msgstr "Pusiau operatorius"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1761
 msgid "Voice"
-msgstr "Voice"
+msgstr "Turi balso teisę"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1824
 #, csharp-format
 msgid "Topic for {0}: {1}"
-msgstr "{0} için konu: {1}"
+msgstr "Kanalo {0} tema: {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1826
 #, csharp-format
 msgid "No topic set for {0}"
-msgstr "{0} için bir konu belirlenmemiş"
+msgstr "{0} nėra nustatytos temos"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:1991
 msgid "ban"
-msgstr "yasaklama"
+msgstr "banas"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2002
 msgid "No bans in channel"
-msgstr "Kanalda yasaklama yok"
+msgstr "Kanale nėra ban'ų"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2039
 msgid "ban exception"
-msgstr "yasak istisnası"
+msgstr "ban'o išimtis"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2050
 msgid "No ban exceptions in channel"
-msgstr "Kanalda yasak istisnası yok"
+msgstr "Kanale nėra ban'o išimčių"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2087
 msgid "invite exception"
-msgstr "davet istisnası"
+msgstr "pakvietimo išimtis"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2098
 msgid "No invite exceptions in channel"
-msgstr "Kanalda davet istisnası yok"
+msgstr "Kanale nėra pakvietimo išimčių"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2212
 #, csharp-format
 msgid "Your user mode is {0}"
-msgstr "Kullanıcı modunuz {0}"
+msgstr "Jūsų vartotojo veiksena yra {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2238
 #, csharp-format
 msgid "{0} is already on {1}"
-msgstr "{0} zaten {1} sohbetinde"
+msgstr "{0} jau yra kanale {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2246
 #, csharp-format
 msgid "Inviting {0} to {1}"
-msgstr "{0} {1} sohbetine davet ediliyor"
+msgstr "Kviečiama {0} į {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2269
 msgid "Users"
-msgstr "Kullanıcılar"
+msgstr "Vartotojai"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2320
 #, csharp-format
 msgid "Total of {0} users [{1} ops, {2} voices, {3} normal]"
-msgstr "Toplam {0} kullanıcı [{1} op, {2} voice, {3} normal]"
+msgstr "Viso {0} naudotojų [{1} operatorių, {2} turinčių balso teisę, {3} normalių]"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2458
 msgid "Connection error! Reason: "
-msgstr "Bağlantı hatası! Neden:"
+msgstr "Ryšio klaida! Priežastis: "
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2470
 #, csharp-format
 msgid "Not enough parameters for {0} command"
-msgstr "{0} komutu için yetersiz parametre"
+msgstr "Neužtenka parametrų {0} komandai"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2479
 msgid "Not connected to server"
-msgstr "Sunucuyla bağlantı yok"
+msgstr "Neprisijungta prie serverio"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2688
 #, csharp-format
 msgid "{0}: No such nick/channel"
-msgstr "{0} şeklinde bir takma ad/kanal yok"
+msgstr "{0}: Tokio slapyvardžio/kanalo nėra"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2807
 #, csharp-format
 msgid ""
 "Increased send delay to {0}ms to avoid being flooded off the server again."
-msgstr "Sık iletim sebebiyle sunucudan yine atılmamak için gönderim geciktirmesi {0}ms olarak arttırıldı."
+msgstr "Siuntimo delsa buvo padidinta iki {0}ms, siekiant išvengti pakartotinio flood iš serverio."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2822
 #, csharp-format
 msgid "Nick {0} is already in use"
-msgstr "{0} takma adı zaten kullanımda"
+msgstr "Slapyvardis {0} jau yra naudojamas"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2838
 msgid "Cannot join to channel:"
-msgstr "Kanala katılım gerçekleştirilemiyor:"
+msgstr "Nepavyko prisijungti prie kanalo:"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2840
 msgid "You are banned"
-msgstr "Yasaklısınız"
+msgstr "Jūs esate užbaninti"
 
 #. TRANSLATOR: {0}: nickname, {1}: ident@host,
 #. {2}: CTCP command, {3}: own nickname, {4}: CTCP parameter
@@ -289,85 +288,85 @@ msgstr "Yasaklısınız"
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2923
 #, csharp-format
 msgid "{0} [{1}] requested CTCP {2} from {3}: {4}"
-msgstr "{0} [{1}] {3} ile CTCP {2} talep etti: {4}"
+msgstr "{0} [{1}] užklausė CTCP {2} iš {3}: {4}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2950
 #, csharp-format
 msgid "CTCP PING reply from {0}: {1} seconds"
-msgstr "{0} tarafından CTCP PING yanıtı : {1} saniye"
+msgstr "CTCP PING atsakymas nuo {0}: {1} sekundžių"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:2959
 #, csharp-format
 msgid "CTCP {0} reply from {1}: {2}"
-msgstr "{1} tarafından CTCP {0} yanıtı: {2}"
+msgstr "CTCP {0} atsakymas nuo {1}: {2}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3207
 #, csharp-format
 msgid "{0} [{1}] has joined {2}"
-msgstr "{0} [{1}] {2} sohbetine katıldı"
+msgstr "{0} [{1}] prisijungė prie {2}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3349
 #, csharp-format
 msgid "{0} [{1}] has left {2}"
-msgstr "{0} [{1}] {2} sohbetinden ayrıldı"
+msgstr "{0} [{1}] paliko {2}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3374
 #, csharp-format
 msgid "You were kicked from {0} by {1}"
-msgstr "{1} tarafından {0} sohbetinden atıldınız"
+msgstr "Jus iš {0} išmetė {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3382
 #, csharp-format
 msgid "{0} was kicked from {1} by {2}"
-msgstr "{0} {2} tarafından {1} sohbetinden atıldı"
+msgstr "{2} išmetė {0} iš {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3400
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3432
 #, csharp-format
 msgid "You're now known as {0}"
-msgstr "Artık {0} adını kullanıyorsunuz"
+msgstr "Jūs dabar žinomi kaip {0}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3435
 #, csharp-format
 msgid "{0} is now known as {1}"
-msgstr "{0} artık {1} adını kullanıyor"
+msgstr "{0} yra dabar žinomas kaip {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3469
 #, csharp-format
 msgid "{0} changed the topic of {1} to: {2}"
-msgstr "{0} {1} için konuyu değiştirdi: {2}"
+msgstr "{0} pakeitė kanalo {1} temą į: {2}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3629
 #, csharp-format
 msgid "Mode change [{0}] for user {1}"
-msgstr "{1} kullanıcısı için mod [{0}] değişimi"
+msgstr "Veiksenos pakeitimas [{0}] vartotojui {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3660
 #, csharp-format
 msgid "mode/{0} [{1}] by {2}"
-msgstr "{2} tarafından mod/{0} [{1}]"
+msgstr "veiksena/{0} [{1}] pagal {2}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3696
 #, csharp-format
 msgid "{0} [{1}] has quit"
-msgstr "{0} [{1}] çıktı"
+msgstr "{0} [{1}] atsijungė"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3786
 #, csharp-format
 msgid ""
 "Connection to {0} port {1} has failed (attempt {2}), retrying in {3} "
 "seconds..."
-msgstr "{0} port {1} ile bağlantı başarısız oldu ({2}. girişim), {3} saniye içinde yeniden denenecek..."
+msgstr "Prisijungimas prie {0} prievado {1} nepavyko ({2} bandymas), bandoma dar kartą po {3} sekundžių..."
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3836
 #, csharp-format
 msgid "{0} is away: {1}"
-msgstr "{0} uzakta: {1}"
+msgstr "{0} yra pasitraukęs: {1}"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3846
 msgid "You are no longer marked as being away"
-msgstr "Artık uzakta olarak işaretli değilsiniz"
+msgstr "Jūs daugiau nesate pažymėti kaip atsitraukę"
 
 #: ../src/Engine-IRC/Protocols/Irc/IrcProtocolManager.cs:3856
 msgid "You have been marked as being away"
-msgstr "Uzakta olarak işaretlendiniz"
+msgstr "Jūs esate pažymėti kaip atsitraukę"
