@@ -1,4 +1,4 @@
-AC_INIT([messagingmenu-sharp], [1.0])
+AC_INIT([messagingmenu-sharp], [1.0.1])
 AC_CONFIG_SRCDIR([README])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE
@@ -7,7 +7,7 @@ AC_PROG_INSTALL
 
 dnl Package settings
 ASSEMBLY_COMPANY=""
-ASSEMBLY_COPYRIGHT="2012 Andreia Gaita"
+ASSEMBLY_COPYRIGHT="2012 (C) Mirco Bauer <meebey@meebey.net>"
 ASSEMBLY_DESCRIPTION="MessagingMenu-1.0 bindings for Mono"
 ASSEMBLY_NAME="messagingmenu-sharp"
 ASSEMBLY_NAMESPACE="MessagingMenu"
@@ -31,6 +31,11 @@ dnl Check for pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 if test "x$PKG_CONFIG" = "xno"; then
 	AC_MSG_ERROR(['pkg-config' is not in your PATH.])
+fi
+
+AC_PATH_PROG(WHICH, which, no)
+if test "x$WHICH" = "xno"; then
+	AC_MSG_ERROR(['which' is not in your PATH.])
 fi
 
 dnl Check for Mono
@@ -101,9 +106,9 @@ dnl Check for gapi
 AC_PATH_PROG(GAPI_PARSER, gapi2-parser, no)
 if test "x$GAPI_PARSER" = "xno"; then
 	AC_MSG_CHECKING(for gapi2-parser.exe)
-	GAPI_PARSER=`which gapi2-parser.exe 2> /dev/null`
-	if test "x$GAPI_PARSER" = "xno" ; then
-		AC_MSG_ERROR(['gapi2_parser'/'gapi2-parser.exe' not found.])
+	GAPI_PARSER=`$WHICH gapi2-parser.exe`
+	if test "x$GAPI_PARSER" = "x" ; then
+		AC_MSG_ERROR(['gapi2-parser'/'gapi2-parser.exe' not found.])
 	fi
 	AC_MSG_RESULT($GAPI_PARSER)
 	GAPI_PARSER="$MONO $GAPI_PARSER"
@@ -113,9 +118,9 @@ AC_SUBST(GAPI_PARSER)
 AC_PATH_PROG(GAPI_FIXUP, gapi2-fixup, no)
 if test "x$GAPI_FIXUP" = "xno"; then
 	AC_MSG_CHECKING(for gapi2-fixup.exe)
-	GAPI_FIXUP=`which gapi2-fixup.exe 2> /dev/null`
-	if test "x$GAPI_FIXUP" = "xno" ; then
-		AC_MSG_ERROR(['gapi2_fixup'/'gapi2-fixup.exe' not found.])
+	GAPI_FIXUP=`$WHICH gapi2-fixup.exe`
+	if test "x$GAPI_FIXUP" = "x" ; then
+		AC_MSG_ERROR(['gapi2-fixup'/'gapi2-fixup.exe' not found.])
 	fi
 	AC_MSG_RESULT($GAPI_FIXUP)
 	GAPI_FIXUP="$MONO $GAPI_FIXUP"
@@ -125,8 +130,8 @@ AC_SUBST(GAPI_FIXUP)
 AC_PATH_PROG(GAPI_CODEGEN, gapi2-codegen, no)
 if test "x$GAPI_CODEGEN" = "xno"; then
 	AC_MSG_CHECKING(for gapi2_codegen.exe)
-	GAPI_CODEGEN=`which gapi2_codegen.exe 2> /dev/null`
-	if test "x$GAPI_CODEGEN" = "xno" ; then
+	GAPI_CODEGEN=`$WHICH gapi2_codegen.exe`
+	if test "x$GAPI_CODEGEN" = "x" ; then
 		AC_MSG_ERROR(['gapi2-codegen'/'gapi2_codegen.exe' not found.])
 	fi
 	AC_MSG_RESULT([$GAPI_CODEGEN])

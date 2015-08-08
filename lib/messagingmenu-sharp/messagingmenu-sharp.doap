@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gnome="http://api.gnome.org/doap-extensions#"
+         xmlns="http://usefulinc.com/ns/doap#">
+
+  <name xml:lang="en">messagingmenu-sharp</name>
+
+  <shortdesc xml:lang="en">
+  C# binding for MessagingMenu
+  </shortdesc>
+
+  <description>
+  MessagingMenu# is C# binding for the C API of the MessagingMenu library part of Ubuntu's Ayatana project.
+  </description>
+
+  <homepage rdf:resource="https://www.meebey.net/projects/messagingmenu-sharp/" />
+  <download-page rdf:resource="https://www.meebey.net/projects/messagingmenu-sharp/#Download" />
+  <bug-database rdf:resource="https://github.com/meebey/messagingmenu-sharp/issues" />
+  <license rdf:resource="https://www.gnu.org/licenses/gpl-3.0.html" />
+  <programming-language>C#</programming-language>
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Mirco Bauer</foaf:name>
+      <foaf:mbox rdf:resource="mailto:meebey@meebey.net" />
+      <gnome:userid>mmmbauer</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
+  <!-- Version Control -->
+  <repository>
+    <GitRepository>
+      <browse rdf:resource="https://git.gnome.org/browse/messagingmenu-sharp" />
+      <location rdf:resource="git://git.gnome.org/messagingmenu-sharp" />
+    </GitRepository>
+  </repository>
+</Project>
