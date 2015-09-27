@@ -36,20 +36,12 @@ if ENABLE_FRONTEND_GNOME_XMPP
 PO_FRONTEND_GNOME_XMPP = po-Frontend-GNOME-XMPP
 endif
 
-ACLOCAL_AMFLAGS = -I .
+ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
 EXTRA_DIST =	install-sh \
-		expansions.m4 \
-		mono.m4 \
-		programs.m4 \
-		HACKING \
+		HACKING.md \
 		LICENSE \
-		README.md \
-		CREDITS \
-		PROFILING \
-		FEATURES \
-		BUGS \
-		TODO
+		README.md
 
 # HACK: distclean in po/ does not work for some reason
 DISTCLEANFILES = \
