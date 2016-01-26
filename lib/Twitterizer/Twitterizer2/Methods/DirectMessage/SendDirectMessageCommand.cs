@@ -133,7 +133,7 @@ namespace Twitterizer.Commands
             this.RequestParameters.Add("text", this.Text);
 
             if (this.RecipientUserId > 0)
-                this.RequestParameters.Add("user_id", this.RecipientUserId.ToString("#"));
+                this.RequestParameters.Add("user_id", this.RecipientUserId.ToString(CultureInfo.InvariantCulture));
 
             if (!string.IsNullOrEmpty(this.RecipientUserName) && this.RecipientUserId <= 0)
                 this.RequestParameters.Add("screen_name", this.RecipientUserName);

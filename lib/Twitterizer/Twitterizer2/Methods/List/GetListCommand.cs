@@ -96,7 +96,7 @@ namespace Twitterizer.Commands
         {
             if (ListId > 0)
             {
-                this.RequestParameters.Add("list_id", this.ListId.ToString("#"));
+                this.RequestParameters.Add("list_id", this.ListId.ToString(CultureInfo.InvariantCulture));
             }
 
             if (!string.IsNullOrEmpty(this.Slug))

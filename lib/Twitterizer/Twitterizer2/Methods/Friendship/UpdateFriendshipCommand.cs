@@ -116,7 +116,7 @@ namespace Twitterizer.Commands
         {
             if (this.UserId > 0)
             {
-                this.RequestParameters.Add("user_id", this.UserId.ToString("#"));
+                this.RequestParameters.Add("user_id", this.UserId.ToString(CultureInfo.InvariantCulture));
             }
             else if (!string.IsNullOrEmpty(this.UserName))
             {

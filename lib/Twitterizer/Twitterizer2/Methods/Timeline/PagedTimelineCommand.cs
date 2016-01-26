@@ -74,10 +74,10 @@ namespace Twitterizer.Commands
                 return;
             }
             if (options.SinceStatusId > 0)
-                this.RequestParameters.Add("since_id", options.SinceStatusId.ToString("#"));
+                this.RequestParameters.Add("since_id", options.SinceStatusId.ToString(CultureInfo.InvariantCulture));
 
             if (options.MaxStatusId > 0)
-                this.RequestParameters.Add("max_id", options.MaxStatusId.ToString("#"));
+                this.RequestParameters.Add("max_id", options.MaxStatusId.ToString(CultureInfo.InvariantCulture));
 
             if (options.Count > 0)
                 this.RequestParameters.Add("count", options.Count.ToString(CultureInfo.InvariantCulture));

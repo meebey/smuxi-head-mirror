@@ -43,7 +43,6 @@ namespace Twitterizer.Core
     using System.Web;
 #endif
     using Twitterizer;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// The base command class.
@@ -247,22 +246,6 @@ namespace Twitterizer.Core
                 responseData = ConversionUtility.ReadStream(exceptionResponse.GetResponseStream());
                 twitterResponse.Content = Encoding.UTF8.GetString(responseData, 0, responseData.Length);
 
-#if MONO_4_0
-                if (!String.IsNullOrEmpty(twitterResponse.Content))
-                {
-                    var responseContent = JsonConvert.DeserializeObject<dynamic>(twitterResponse.Content);
-                    if (responseContent != null && responseContent.errors != null)
-                    {
-                        var errors = responseContent.errors;
-                        if (errors != null && ((IEnumerable<dynamic>)errors).Any())
-                        {
-                            foreach (var error in errors)
-                                twitterResponse.ErrorMessage += error.code + ":" + error.message + ";";
-                        }
-                    }
-                }
-#endif
-
 #if !SILVERLIGHT
                 rateLimiting = ParseRateLimitHeaders(exceptionResponse.Headers);
 
@@ -335,11 +318,10 @@ namespace Twitterizer.Core
                     break;
 
                 case HttpStatusCode.BadRequest:
-                    twitterResponse.Result = RequestResult.BadRequest;
+                    twitterResponse.Result = (rateLimiting != null && rateLimiting.Remaining == 0) ? RequestResult.RateLimited : RequestResult.BadRequest;
                     break;
 
                 case (HttpStatusCode)420: //Rate Limited from Search/Trends API
-                case (HttpStatusCode)429:
                     twitterResponse.Result = RequestResult.RateLimited;
                     break;
 
@@ -390,20 +372,20 @@ namespace Twitterizer.Core
         {
             RateLimiting rateLimiting = new RateLimiting();
 
-            if (responseHeaders.AllKeys.Any(x => x.Equals("X-Rate-Limit-Limit", StringComparison.InvariantCultureIgnoreCase)))
+            if (responseHeaders.AllKeys.Contains("X-RateLimit-Limit"))
             {
-                rateLimiting.Total = int.Parse(responseHeaders["X-Rate-Limit-Limit"], CultureInfo.InvariantCulture);
+                rateLimiting.Total = int.Parse(responseHeaders["X-RateLimit-Limit"], CultureInfo.InvariantCulture);
             }
 
-            if (responseHeaders.AllKeys.Any(x => x.Equals("X-Rate-Limit-Remaining", StringComparison.InvariantCultureIgnoreCase)))
+            if (responseHeaders.AllKeys.Contains("X-RateLimit-Remaining"))
             {
-                rateLimiting.Remaining = int.Parse(responseHeaders["X-Rate-Limit-Remaining"], CultureInfo.InvariantCulture);
+                rateLimiting.Remaining = int.Parse(responseHeaders["X-RateLimit-Remaining"], CultureInfo.InvariantCulture);
             }
 
-            if (!string.IsNullOrEmpty(responseHeaders["X-Rate-Limit-Reset"]))
+            if (!string.IsNullOrEmpty(responseHeaders["X-RateLimit-Reset"]))
             {
                 rateLimiting.ResetDate = DateTime.SpecifyKind(new DateTime(1970, 1, 1, 0, 0, 0, 0)
-                    .AddSeconds(double.Parse(responseHeaders["X-Rate-Limit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
+                    .AddSeconds(double.Parse(responseHeaders["X-RateLimit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
             }
             else if(!string.IsNullOrEmpty(responseHeaders["Retry-After"]))
             {

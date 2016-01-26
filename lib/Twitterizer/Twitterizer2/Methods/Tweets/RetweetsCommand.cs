@@ -86,7 +86,7 @@ namespace Twitterizer.Commands
         /// </summary>
         public override void Init()
         {
-            this.RequestParameters.Add("id", this.StatusId.ToString("#"));
+            this.RequestParameters.Add("id", this.StatusId.ToString(CultureInfo.InvariantCulture));
 
             RetweetsOptions options = this.OptionalProperties as RetweetsOptions;
 

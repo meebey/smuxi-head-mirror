@@ -74,7 +74,7 @@ namespace Twitterizer.Commands
             }
 
             if (options.UserId > 0)
-                this.RequestParameters.Add("user_id", options.UserId.ToString("#"));
+                this.RequestParameters.Add("user_id", options.UserId.ToString(CultureInfo.InvariantCulture.NumberFormat));
 
             if (!string.IsNullOrEmpty(options.ScreenName))
                 this.RequestParameters.Add("screen_name", options.ScreenName);

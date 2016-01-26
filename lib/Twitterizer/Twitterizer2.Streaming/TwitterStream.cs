@@ -410,7 +410,7 @@ namespace Twitterizer.Streaming
                                             rawJsonCallback(blockbuilderstring);
                                         }
                                         ThreadPool.QueueUserWorkItem(delegate { ParseMessage(blockbuilderstring.Trim()); });
-                                        blockBuilder.Length = 0;
+                                        blockBuilder.Clear();
                                     }
                                 }
                             }
