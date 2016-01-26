@@ -119,7 +119,48 @@ namespace Twitterizer
         /// </value>
         [DataMember, JsonProperty(PropertyName = "favorited")]
         public bool? IsFavorited { get; set; }
+        
+         /// <summary>
+        /// Gets the favorite count string.
+        /// </summary>
+        /// <value>
+        /// The Number of favorites.
+        /// </value>
+        [DataMember, JsonProperty(PropertyName = "favorite_count")]
+        public string FavoriteCountString { get; set; }
 
+        /// <summary>
+        /// Gets the Favorite count.
+        /// </summary>
+        /// <value>
+        /// The Number of favorites.
+        /// </value>
+        [DataMember]
+        public int? FavoriteCount
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(this.FavoriteCountString)) return null;
+
+                int parsedResult;
+
+                if (
+                    this.FavoriteCountString.EndsWith("+") &&
+                    !int.TryParse(this.FavoriteCountString.Substring(0, this.FavoriteCountString.Length - 1), out parsedResult)
+                    )
+                {
+                    return null;
+                }
+
+                if (!int.TryParse(this.FavoriteCountString, out parsedResult))
+                {
+                    return null;
+                }
+
+                return parsedResult;
+            }
+        }
+        
         /// <summary>
         /// Gets or sets the text of the status.
         /// </summary>
@@ -222,6 +263,27 @@ namespace Twitterizer
         /// <value><c>true</c> if retweeted; otherwise, <c>false</c>.</value>
         [DataMember, JsonProperty(PropertyName = "retweeted")]
         public bool Retweeted { get; set; }
+
+        /// <summary>
+        /// Gets or sets the quoted tweet.
+        /// </summary>
+        /// <value>The quoted tweet.</value>
+        [DataMember, JsonProperty(PropertyName = "quoted_status")]
+        public TwitterStatus QuotedStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the quoted tweet id.
+        /// </summary>
+        /// <value>The status id.</value>
+        [DataMember, JsonProperty(PropertyName = "quoted_status_id")]
+        public decimal? QuotedStatusId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the quoted tweet string id.
+        /// </summary>
+        /// <value>The string id.</value>
+        [DataMember, JsonProperty(PropertyName = "quoted_status_id_str")]
+        public string QuotedStatusStringId { get; set; }
         #endregion
 
         /// <summary>

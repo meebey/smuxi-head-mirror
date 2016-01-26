@@ -43,6 +43,7 @@ namespace Twitterizer.Core
     using System.Web;
 #endif
     using Twitterizer;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// The base command class.
@@ -246,6 +247,22 @@ namespace Twitterizer.Core
                 responseData = ConversionUtility.ReadStream(exceptionResponse.GetResponseStream());
                 twitterResponse.Content = Encoding.UTF8.GetString(responseData, 0, responseData.Length);
 
+#if MONO_4_0
+                if (!String.IsNullOrEmpty(twitterResponse.Content))
+                {
+                    var responseContent = JsonConvert.DeserializeObject<dynamic>(twitterResponse.Content);
+                    if (responseContent != null && responseContent.errors != null)
+                    {
+                        var errors = responseContent.errors;
+                        if (errors != null && ((IEnumerable<dynamic>)errors).Any())
+                        {
+                            foreach (var error in errors)
+                                twitterResponse.ErrorMessage += error.code + ":" + error.message + ";";
+                        }
+                    }
+                }
+#endif
+
 #if !SILVERLIGHT
                 rateLimiting = ParseRateLimitHeaders(exceptionResponse.Headers);
 
@@ -259,7 +276,7 @@ namespace Twitterizer.Core
                 // Try to read the error message, if there is one.
                 try
                 {
-                    TwitterErrorDetails errorDetails = SerializationHelper<TwitterErrorDetails>.Deserialize(responseData);
+                    var errorDetails = SerializationHelper<TwitterErrorDetails>.Deserialize(twitterResponse.Content);
                     twitterResponse.ErrorMessage = errorDetails.ErrorMessage;
                 }
                 catch (Exception)
@@ -318,10 +335,11 @@ namespace Twitterizer.Core
                     break;
 
                 case HttpStatusCode.BadRequest:
-                    twitterResponse.Result = (rateLimiting != null && rateLimiting.Remaining == 0) ? RequestResult.RateLimited : RequestResult.BadRequest;
+                    twitterResponse.Result = RequestResult.BadRequest;
                     break;
 
                 case (HttpStatusCode)420: //Rate Limited from Search/Trends API
+                case (HttpStatusCode)429:
                     twitterResponse.Result = RequestResult.RateLimited;
                     break;
 
@@ -372,20 +390,20 @@ namespace Twitterizer.Core
         {
             RateLimiting rateLimiting = new RateLimiting();
 
-            if (responseHeaders.AllKeys.Contains("X-RateLimit-Limit"))
+            if (responseHeaders.AllKeys.Any(x => x.Equals("X-Rate-Limit-Limit", StringComparison.InvariantCultureIgnoreCase)))
             {
-                rateLimiting.Total = int.Parse(responseHeaders["X-RateLimit-Limit"], CultureInfo.InvariantCulture);
+                rateLimiting.Total = int.Parse(responseHeaders["X-Rate-Limit-Limit"], CultureInfo.InvariantCulture);
             }
 
-            if (responseHeaders.AllKeys.Contains("X-RateLimit-Remaining"))
+            if (responseHeaders.AllKeys.Any(x => x.Equals("X-Rate-Limit-Remaining", StringComparison.InvariantCultureIgnoreCase)))
             {
-                rateLimiting.Remaining = int.Parse(responseHeaders["X-RateLimit-Remaining"], CultureInfo.InvariantCulture);
+                rateLimiting.Remaining = int.Parse(responseHeaders["X-Rate-Limit-Remaining"], CultureInfo.InvariantCulture);
             }
 
-            if (!string.IsNullOrEmpty(responseHeaders["X-RateLimit-Reset"]))
+            if (!string.IsNullOrEmpty(responseHeaders["X-Rate-Limit-Reset"]))
             {
                 rateLimiting.ResetDate = DateTime.SpecifyKind(new DateTime(1970, 1, 1, 0, 0, 0, 0)
-                    .AddSeconds(double.Parse(responseHeaders["X-RateLimit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
+                    .AddSeconds(double.Parse(responseHeaders["X-Rate-Limit-Reset"], CultureInfo.InvariantCulture)), DateTimeKind.Utc);
             }
             else if(!string.IsNullOrEmpty(responseHeaders["Retry-After"]))
             {
@@ -402,8 +420,9 @@ namespace Twitterizer.Core
         /// <returns>An enum of the current access level of the OAuth Token being used.</returns>
         private AccessLevel ParseAccessLevel(WebHeaderCollection responseHeaders)
         {
-            if (responseHeaders.AllKeys.Contains("X-Access-Level"))
-            {
+            if (responseHeaders.AllKeys.Any(
+                x => x.Equals("X-Access-Level",
+                              StringComparison.InvariantCultureIgnoreCase))) {
                 switch (responseHeaders["X-Access-Level"].ToLower())
                 {
                     case "read":

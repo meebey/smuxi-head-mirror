@@ -84,7 +84,6 @@ namespace Twitterizer.Commands
 				throw new ArgumentException("file");
 			}
 
-            this.OptionalProperties.APIBaseAddress = "https://upload.twitter.com/1/";
             this.SetCommandUri("statuses/update_with_media.json");
 
 			this.Text = text;
@@ -104,7 +103,7 @@ namespace Twitterizer.Commands
 			if (options != null)
 			{
 				if (options.InReplyToStatusId > 0)
-					this.RequestParameters.Add("in_reply_to_status_id", options.InReplyToStatusId.ToString(CultureInfo.CurrentCulture));
+					this.RequestParameters.Add("in_reply_to_status_id", options.InReplyToStatusId.ToString("#"));
 
 				if (options.Latitude != 0)
 					this.RequestParameters.Add("lat", options.Latitude.ToString());
