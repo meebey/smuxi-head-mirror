@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2014 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2016 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -645,9 +645,15 @@ namespace Smuxi.Frontend.Gnome
 
         public void UpdateProgressBar()
         {
-            var totalChatCount = ChatViewManager.Chats.Count;
-            var syncedChatCount =  ChatViewManager.SyncedChats.Count;
-            ProgressBar.Fraction = (double)syncedChatCount / totalChatCount;
+            var chats = ChatViewManager.Chats;
+            var totalChatCount = chats.Count;
+            var syncedChatCount = chats.Count(x => x.IsSynced);
+            var fraction = (double) syncedChatCount / totalChatCount;
+            if (totalChatCount == 0) {
+                // x / 0d -> Infinity
+                fraction = 0;
+            }
+            ProgressBar.Fraction = fraction;
             ProgressBar.Text = String.Format("{0} / {1}",
                                               syncedChatCount,
                                               totalChatCount);
