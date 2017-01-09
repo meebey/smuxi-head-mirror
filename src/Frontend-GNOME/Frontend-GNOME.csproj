@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\bin\debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;LOG4NET;CONFIG_NINI;GTK_SHARP_2_10;INDICATE_SHARP;NOTIFY_SHARP;IPC_DBUS;DBUS_SHARP;GTKSPELL</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;LOG4NET;CONFIG_NINI;GTK_SHARP_2_10;NOTIFY_SHARP;IPC_DBUS;DBUS_SHARP;GTKSPELL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
@@ -37,7 +37,7 @@
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\bin\release</OutputPath>
-    <DefineConstants>TRACE;LOG4NET;CONFIG_NINI;GTK_SHARP_2_10;INDICATE_SHARP;NOTIFY_SHARP;IPC_DBUS;DBUS_SHARP</DefineConstants>
+    <DefineConstants>TRACE;LOG4NET;CONFIG_NINI;GTK_SHARP_2_10;NOTIFY_SHARP;IPC_DBUS;DBUS_SHARP</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunWithWarnings>false</RunWithWarnings>
@@ -92,6 +92,12 @@
       <LogicalName>session-chat_256x256.png</LogicalName>
       <Link>images\session-chat_256x256.png</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="Interfaces\PreferencesDialog2.ui">
+      <LogicalName>PreferencesDialog2.ui</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Interfaces\ServerListWidget.ui">
+      <LogicalName>ServerListWidget.ui</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AboutDialog.cs" />
@@ -108,7 +114,6 @@
     <Compile Include="SplashScreenWindow.cs" />
     <Compile Include="ChatViewManager.cs" />
     <Compile Include="Preferences\ServerListView.cs" />
-    <Compile Include="Preferences\PreferencesDialog.cs" />
     <Compile Include="gtk-gui\generated.cs" />
     <Compile Include="QuickConnectDialog.cs" />
     <Compile Include="SteticPreferencesDialog.cs" />
@@ -165,6 +170,7 @@
     <Compile Include="Views\Tags\PersonTag.cs" />
     <Compile Include="Views\ChatTreeView.cs" />
     <Compile Include="Views\Tags\EmojiTag.cs" />
+    <Compile Include="Views\PreferencesDialog.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="smuxi-frontend-gnome.exe.config">
@@ -224,10 +230,6 @@
     <Reference Include="System.Core" />
     <Reference Include="gio-sharp, Version=2.14.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Package>gio-sharp-2.0</Package>
-    </Reference>
-    <Reference Include="indicate-sharp, Version=0.4.1.0, Culture=neutral, PublicKeyToken=2e8e49ba7d172cb0">
-      <Private>False</Private>
-      <Package>indicate-sharp-0.1</Package>
     </Reference>
     <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
       <Private>False</Private>
