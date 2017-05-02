@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 //
-// Copyright (c) 2014 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2014, 2017 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 //
@@ -54,14 +54,7 @@ namespace Smuxi.Engine
             };
             parser.Add("h|help", _("Show this help"),
                 val => {
-                    Console.WriteLine(_("Usage: smuxi-message-buffer [options] action action-options"));
-                    Console.WriteLine();
-                    Console.WriteLine(_("Actions:"));
-                    Console.WriteLine("  cat");
-                    Console.WriteLine("  convert/copy/cp");
-                    Console.WriteLine();
-                    Console.WriteLine(_("Options:"));
-                    parser.WriteOptionDescriptions(Console.Out);
+                    ShowUsage(parser);
                     Environment.Exit(0);
                 }
             );
@@ -73,7 +66,12 @@ namespace Smuxi.Engine
                     repo.Threshold = log4net.Core.Level.Debug;
                 }
 
-                var action = args.Skip(mainArgs.Count()).First();
+                var action = args.Skip(mainArgs.Count()).FirstOrDefault();
+                if (String.IsNullOrEmpty(action)) {
+                    ShowUsage(parser);
+                    Environment.Exit(1);
+                }
+
                 var actionArgs = args.Skip(mainArgs.Count() + 1);
                 switch (action.ToLower()) {
                     case "cat":
@@ -99,6 +97,18 @@ namespace Smuxi.Engine
             } catch (Exception e) {
                 Logger.Fatal(e);
             }
+        }
+
+        static void ShowUsage(OptionSet mainOptions)
+        {
+            Console.WriteLine(_("Usage: smuxi-message-buffer [options] action action-options"));
+            Console.WriteLine();
+            Console.WriteLine(_("Actions:"));
+            Console.WriteLine("  cat");
+            Console.WriteLine("  convert/copy/cp");
+            Console.WriteLine();
+            Console.WriteLine(_("Options:"));
+            mainOptions.WriteOptionDescriptions(Console.Out);
         }
 
         static void CatAction(string action, IEnumerable<string> args)
@@ -137,7 +147,7 @@ namespace Smuxi.Engine
                         )
                     );
                     Console.WriteLine();
-                    Console.WriteLine("  db_path " + _("Database path"));
+                    Console.WriteLine("  db_path(s)... " + _("Database path(s)"));
                     Console.WriteLine();
                     Console.WriteLine(_("Options:"));
                     parser.WriteOptionDescriptions(Console.Out);
@@ -152,8 +162,8 @@ namespace Smuxi.Engine
                     action
                 );
             }
-            var dbPath = parameters[0];
-            Copy(dbPath, dbFormat, null, null);
+            var dbPaths = parameters.ToArray();
+            Copy(dbPaths, dbFormat, null, null);
         }
 
         static void CopyAction(string action, IEnumerable<string> args)
@@ -196,12 +206,12 @@ namespace Smuxi.Engine
                 val => {
                     Console.WriteLine(
                         String.Format(
-                            _("Usage: smuxi-message-buffer {0} [action-options] source_db destination_db"),
+                            _("Usage: smuxi-message-buffer {0} [action-options] source_db(s)... destination_db"),
                             action
                         )
                     );
                     Console.WriteLine();
-                    Console.WriteLine("  source_db " + _("Source file path"));
+                    Console.WriteLine("  source_db(s)... " + _("Source file path(s)"));
                     Console.WriteLine("  destination_db " + _("Destination file path or -/empty for stdout"));
                     Console.WriteLine();
                     Console.WriteLine(_("Options:"));
@@ -217,12 +227,12 @@ namespace Smuxi.Engine
                     action
                 );
             }
-            var sourceFile = parameters[0];
-            var destinationFile = parameters[1];
+            var sourceFiles = parameters.Take(parameters.Count - 1).ToArray();
+            var destinationFile = parameters.Last();
             if (destinationFile == "-") {
                 destinationFile = "";
             }
-            Copy(sourceFile, sourceFormat, destinationFile, destinationFormat);
+            Copy(sourceFiles, sourceFormat, destinationFile, destinationFormat);
         }
 
         static void Copy(string sourceFile, string sourceFormat,
@@ -231,11 +241,24 @@ namespace Smuxi.Engine
             if (String.IsNullOrEmpty(sourceFile)) {
                 throw new ArgumentException(_("sourceFile must not be empty."));
             }
+            Copy(new string[] { sourceFile }, sourceFormat, destinationFile, destinationFormat);
+        }
 
-            IMessageBuffer sourceBuffer = null, destinationBuffer = null;
+        static void Copy(string[] sourceFiles, string sourceFormat,
+                         string destinationFile, string destinationFormat)
+        {
+            if (sourceFiles == null || sourceFiles.Length == 0) {
+                throw new ArgumentException(_("sourceFiles must not be empty."));
+            }
+
+            var sourceBuffers = new List<IMessageBuffer>();
+            IMessageBuffer destinationBuffer = null;
             try {
-                var sourceBufferType = ParseMessageBufferType(sourceFile, sourceFormat);
-                sourceBuffer = CreateMessageBuffer(sourceFile, sourceBufferType);
+                foreach (var sourceFile in sourceFiles) {
+                    var sourceBufferType = ParseMessageBufferType(sourceFile, sourceFormat);
+                    var sourceBuffer = CreateMessageBuffer(sourceFile, sourceBufferType);
+                    sourceBuffers.Add(sourceBuffer);
+                }
 
                 if (!String.IsNullOrEmpty(destinationFile)) {
                     var destinationBufferType = ParseMessageBufferType(destinationFile,
@@ -252,37 +275,56 @@ namespace Smuxi.Engine
                     }
                 }
 
+                // append all messages of all source buffers together in a lazy way
+                IEnumerable<MessageModel> concatenatedMessages = new List<MessageModel>(0);
+                sourceBuffers.ForEach(x =>
+                    concatenatedMessages = concatenatedMessages.Concat(x)
+                );
+
                 if (destinationBuffer == null) {
                     // JSON pipe
-                    Console.WriteLine("[");
-                    var msgCount = sourceBuffer.Count;
-                    var i = 0;
-                    foreach (var msg in sourceBuffer) {
-                        var dto = new MessageDtoModelV1(msg);
-                        var json = JsonSerializer.SerializeToString(dto);
-                        if (i++ < msgCount - 1) {
-                            Console.WriteLine("{0},", json);
-                        } else {
-                            Console.WriteLine(json);
-                        }
-                    }
-                    if (destinationBuffer == null) {
-                        Console.WriteLine("]");
-                    }
+                    WriteMessagesToJson(concatenatedMessages, Console.Out);
                 } else {
-                    foreach (var msg in sourceBuffer) {
+                    foreach (var msg in concatenatedMessages) {
                         destinationBuffer.Add(msg);
                     }
                     destinationBuffer.Flush();
                 }
             } finally {
-                if (sourceBuffer != null) {
+                foreach (var sourceBuffer in sourceBuffers) {
                     sourceBuffer.Dispose();
                 }
                 if (destinationBuffer != null) {
                     destinationBuffer.Dispose();
                 }
             }
+        }
+
+        static void WriteMessagesToJson(IEnumerable<MessageModel> messages, TextWriter writer)
+        {
+            // OPT: if you are wondering why this code is handling the
+            // serialization of JSON list manually instead of passing it as a
+            // List<T> in a single method call to JsonSerializer.SerializeToWriter(dtoMessages)
+            // then this is because it would mean that all messages from the
+            // source message buffer would need to be read completely into
+            // memory before serializing it into JSON and then writing the result
+            // of that to the console or file. Instead this is a read one message
+            // from the message buffer, copy it to a DTO object, serialize that
+            // one message to JSON and then write that single JSON object to the
+            // target which is a TextWriter.
+            writer.Write("[");
+            bool first = true;
+            foreach (var message in messages) {
+                if (first) {
+                    first = false;
+                } else {
+                    writer.Write(",");
+                }
+                var dtoMessage = new MessageDtoModelV1(message);
+                JsonSerializer.SerializeToWriter(dtoMessage, writer);
+            }
+            writer.WriteLine("]");
+            writer.Flush();
         }
 
         static MessageBufferType ParseMessageBufferType(string fileName, string type)
