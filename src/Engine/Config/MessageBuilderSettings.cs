@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 //
-// Copyright (c) 2011, 2014-2015 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2011, 2014-2017 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 //
@@ -68,6 +68,7 @@ namespace Smuxi.Engine
             HighlightWords = settings.HighlightWords;
         }
 
+        internal const string StartDelimiterGroupName = "DelimiterForStartOfPattern";
         internal const string EndDelimiterGroupName = "DelimiterForEndOfPattern";
 
         static void InitBuiltinSmartLinks()
@@ -94,6 +95,8 @@ namespace Smuxi.Engine
             string path = @"/(?:["+ path_chars +"]*["+ path_last_chars +"]+)?";
             string protocol = @"[a-z][a-z0-9\-+]*://";
             string protocol_user_host_port_path = protocol + user_host_port + "(?:" + path + ")?";
+            string start_delimiter = String.Format(@"(?<{0}>^|\s|\W)", StartDelimiterGroupName);
+            string end_delimiter = String.Format(@"(?<{0}>$|\s|\W)", EndDelimiterGroupName);
 
             // facebook attachment
             var regex = new Regex(
@@ -121,18 +124,39 @@ namespace Smuxi.Engine
                 LinkFormat = "mailto:{1}"
             });
 
+            // bitcoin address
+            var bitcoin_address = @"[13][a-km-zA-HJ-NP-Z1-9]{25,34}";
+            var query = @"(\?[" + path_chars + @"]+)?";
+            var bitcoin_address_query = bitcoin_address + query;
+            regex = new Regex(
+                @"(?:bitcoin:)?(" + bitcoin_address_query + @")",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled
+            );
+            BuiltinPatterns.Add(new MessagePatternModel(regex) {
+                LinkFormat = "bitcoin:{1}"
+            });
+
+            // bitcoin tx hash
+            var bitcoin_tx_hash = @"[a-fA-F0-9]{64}";
+            regex = new Regex(
+                start_delimiter + @"(" + bitcoin_tx_hash + @")" + end_delimiter,
+                RegexOptions.IgnoreCase | RegexOptions.Compiled
+            );
+            BuiltinPatterns.Add(new MessagePatternModel(regex) {
+                LinkFormat = "https://blockchain.info/tx/{1}"
+            });
+
             // addresses without protocol (heuristical)
             // include well known TLDs to prevent autogen.sh, configure.ac or
             // Gst.Buffer.Unref() from matching
             string heuristic_domain = @"(?:(?:" + subdomain + ")+(?:" + common_tld + ")|localhost)";
-            string end_delimiter = String.Format(@"(?<{0}>$|\s|\W)", EndDelimiterGroupName);
-            string heuristic_address = heuristic_domain + "(?:" + path + ")?" + end_delimiter;
+            string heuristic_address = @"(" +heuristic_domain + ")(?:" + path + ")?" + end_delimiter;
             regex = new Regex(
                 heuristic_address,
                 RegexOptions.IgnoreCase | RegexOptions.Compiled
             );
             BuiltinPatterns.Add(new MessagePatternModel(regex) {
-                LinkFormat = "http://{0}"
+                LinkFormat = "http://{1}"
             });
 
             // Smuxi bugtracker
