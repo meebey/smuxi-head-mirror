@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 // 
-// Copyright (c) 2010-2014 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2010-2015, 2017 Mirco Bauer <meebey@meebey.net>
 // 
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 // 
@@ -47,21 +47,34 @@ namespace Smuxi.Frontend.Gnome
 
         public string Protocol {
             set {
+                if (value == null) {
+                    // clear selection
+                    f_ProtocolComboBox.Active = -1;
+                    return;
+                }
+
                 Gtk.ListStore store = (Gtk.ListStore) ProtocolComboBox.Model;
                 int protocolPosition = -1;
                 int j = 0;
                 foreach (object[] row in store) {
-                    string protocolName = (string) row[0];
-                    if (protocolName == value) {
+                    var protocolId = (string) row[1];
+                    if (protocolId == value) {
                         protocolPosition = j;
                         break;
                     }
                     j++;
                 }
                 if (protocolPosition == -1) {
-                    throw new ArgumentOutOfRangeException(
-                        "Unsupported protocol: " + value
+                    var iter = store.AppendValues(
+                        String.Format(
+                            "{0} ({1})",
+                            value,
+                            _("Unsupported")
+                        ),
+                        value
                     );
+                    f_ProtocolComboBox.SetActiveIter(iter);
+                    return;
                 }
                 f_ProtocolComboBox.Active = protocolPosition;
             }
@@ -256,10 +269,11 @@ namespace Smuxi.Frontend.Gnome
             f_ProtocolComboBox.PackStart(cell, false);
             f_ProtocolComboBox.AddAttribute(cell, "text", 0);
 
-            Gtk.ListStore store = new Gtk.ListStore(typeof(string));
+            var store = new Gtk.ListStore(typeof(string),
+                                          typeof(string));
             // fill protocols in ListStore
             foreach (string protocol in protocols) {
-                store.AppendValues(protocol);
+                store.AppendValues(protocol, protocol);
             }
             store.SetSortColumnId(0, Gtk.SortType.Ascending);
             f_ProtocolComboBox.Model = store;
@@ -486,6 +500,11 @@ namespace Smuxi.Frontend.Gnome
                     f_ValidateServerCertificateCheckButton.Sensitive = true;
                     break;
             }
+        }
+
+        private static string _(string msg)
+        {
+            return Mono.Unix.Catalog.GetString(msg);
         }
     }
 }
