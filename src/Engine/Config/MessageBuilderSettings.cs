@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 //
-// Copyright (c) 2011, 2014-2015 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2011, 2014-2017 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 //
@@ -18,6 +18,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 using System;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Smuxi.Common;
@@ -27,6 +28,7 @@ namespace Smuxi.Engine
     public class MessageBuilderSettings
     {
         static List<MessagePatternModel> BuiltinPatterns { get; set; }
+        static MessagePatternModel EmojiMessagePattern { get; set; }
         public List<MessagePatternModel> UserPatterns { get; set; }
         public List<MessagePatternModel> Patterns { get; set; }
         public bool NickColors { get; set; }
@@ -34,10 +36,39 @@ namespace Smuxi.Engine
         public bool StripColors { get; set; }
         public TextColor HighlightColor { get; set; }
         public List<string> HighlightWords { get; set; }
-        public bool Emojis { get; set; }
+
+        public bool Emojis {
+            get {
+                return Patterns.Contains(EmojiMessagePattern);
+            }
+            set {
+                if (value && !Emojis) {
+                    Patterns.Add(EmojiMessagePattern);
+                }
+                if (!value) {
+                    Patterns.Remove(EmojiMessagePattern);
+                }
+            }
+        }
 
         static MessageBuilderSettings()
         {
+            // OPT: this emoji regex is really long, around 27k characters
+            var emojiRegexBuilder = new StringBuilder(32 * 1024);
+            emojiRegexBuilder.Append(":(");
+            foreach (var emojiShortname in Emojione.ShortnameToUnicodeMap.Keys) {
+                emojiRegexBuilder.AppendFormat("{0}|", Regex.Escape(emojiShortname));
+            }
+            // remove trailing |
+            emojiRegexBuilder.Length--;
+            emojiRegexBuilder.Append("):");
+
+            var emojiRegex = new Regex(emojiRegexBuilder.ToString(), RegexOptions.Compiled);
+            EmojiMessagePattern = new MessagePatternModel(emojiRegex) {
+                MessagePartType = typeof(ImageMessagePartModel),
+                LinkFormat = "smuxi-emoji://{1}"
+            };
+
             BuiltinPatterns = new List<MessagePatternModel>();
             InitBuiltinSmartLinks();
         }
@@ -68,14 +99,17 @@ namespace Smuxi.Engine
             HighlightWords = settings.HighlightWords;
         }
 
+        internal const string StartDelimiterGroupName = "DelimiterForStartOfPattern";
+        internal const string EndDelimiterGroupName = "DelimiterForEndOfPattern";
+
         static void InitBuiltinSmartLinks()
         {
             string path_last_chars = @"a-zA-Z0-9#/%&@=\-_+;:~'";
             string path_chars = path_last_chars + @"\(\)\[\]\{\}?!.,";
-            string domainchars = @"[a-z0-9\-]+";
-            string subdomain = domainchars + @"\.";
+            string domain_chars = @"[a-z0-9\-\p{L}]+";
+            string subdomain = domain_chars + @"\.";
             string common_tld = @"de|es|im|us|com|net|org|info|biz|gov|name|edu|onion|museum";
-            string any_tld = @"[a-z]+";
+            string any_tld = @"[a-z\p{L}]+";
             string ip6 = @"(?:[0-9a-f]{0,4}:){1,7}[0-9a-f]{1,4}";
             string quoted_ip6 = @"\[" + ip6 + @"\]";
             string ip4 = @"(?:[0-9]{1,3}\.){3}[0-9]{1,3}";
@@ -92,6 +126,8 @@ namespace Smuxi.Engine
             string path = @"/(?:["+ path_chars +"]*["+ path_last_chars +"]+)?";
             string protocol = @"[a-z][a-z0-9\-+]*://";
             string protocol_user_host_port_path = protocol + user_host_port + "(?:" + path + ")?";
+            string start_delimiter = String.Format(@"(?<{0}>^|\s|\W)", StartDelimiterGroupName);
+            string end_delimiter = String.Format(@"(?<{0}>$|\s|\W)", EndDelimiterGroupName);
 
             // facebook attachment
             var regex = new Regex(
@@ -119,17 +155,48 @@ namespace Smuxi.Engine
                 LinkFormat = "mailto:{1}"
             });
 
+            // bitcoin address
+            var bitcoin_address = @"[13][a-km-zA-HJ-NP-Z1-9]{25,34}";
+            var query = @"(\?[" + path_chars + @"]+)?";
+            var bitcoin_address_query = bitcoin_address + query;
+            regex = new Regex(
+                @"bitcoin:(" + bitcoin_address_query + @")",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled
+            );
+            BuiltinPatterns.Add(new MessagePatternModel(regex) {
+                LinkFormat = "bitcoin:{1}"
+            });
+
+            // bitcoin address (heuristical)
+            regex = new Regex(
+                start_delimiter + @"(" + bitcoin_address_query + @")" + end_delimiter,
+                RegexOptions.IgnoreCase | RegexOptions.Compiled
+            );
+            BuiltinPatterns.Add(new MessagePatternModel(regex) {
+                LinkFormat = "bitcoin:{1}"
+            });
+
+            // bitcoin tx hash
+            var bitcoin_tx_hash = @"[a-fA-F0-9]{64}";
+            regex = new Regex(
+                start_delimiter + @"(" + bitcoin_tx_hash + @")" + end_delimiter,
+                RegexOptions.IgnoreCase | RegexOptions.Compiled
+            );
+            BuiltinPatterns.Add(new MessagePatternModel(regex) {
+                LinkFormat = "https://blockchain.info/tx/{1}"
+            });
+
             // addresses without protocol (heuristical)
             // include well known TLDs to prevent autogen.sh, configure.ac or
             // Gst.Buffer.Unref() from matching
             string heuristic_domain = @"(?:(?:" + subdomain + ")+(?:" + common_tld + ")|localhost)";
-            string heuristic_address = heuristic_domain + "(?:" + path + ")?";
+            string heuristic_address = @"(" +heuristic_domain + ")(?:" + path + ")?" + end_delimiter;
             regex = new Regex(
                 heuristic_address,
                 RegexOptions.IgnoreCase | RegexOptions.Compiled
             );
             BuiltinPatterns.Add(new MessagePatternModel(regex) {
-                LinkFormat = "http://{0}"
+                LinkFormat = "http://{1}"
             });
 
             // Smuxi bugtracker
@@ -360,7 +427,6 @@ namespace Smuxi.Engine
             HighlightWords = new List<string>(
                 (string[]) userConfig["Interface/Chat/HighlightWords"]
             );
-            Emojis = (bool) userConfig["Interface/Chat/Emojis"];
 
             var patternController = new MessagePatternListController(userConfig);
             var userPatterns = patternController.GetList();
@@ -373,16 +439,12 @@ namespace Smuxi.Engine
             // of MessageBuilderSettings is created via the static initializer.
             patterns.AddRange(builtinPatterns);
             patterns.AddRange(userPatterns);
-            if (Emojis) {
-                // Emoji
-                var regex = new Regex(@":(\w+):", RegexOptions.Compiled);
-                patterns.Add(new MessagePatternModel(regex) {
-                    MessagePartType = typeof(ImageMessagePartModel),
-                    LinkFormat = "smuxi-emoji://{1}",
-                });
-            }
             Patterns = patterns;
             UserPatterns = userPatterns;
+
+            // The Patterns property has to be initialized before we set the
+            // Emojis property as it will modify the existing Patterns collection
+            Emojis = (bool) userConfig["Interface/Chat/Emojis"];
         }
     }
 }

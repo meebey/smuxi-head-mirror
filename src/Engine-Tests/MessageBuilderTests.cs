@@ -1,6 +1,6 @@
 // Smuxi - Smart MUltipleXed Irc
 //
-// Copyright (c) 2013-2015 Mirco Bauer <meebey@meebey.net>
+// Copyright (c) 2013-2017 Mirco Bauer <meebey@meebey.net>
 //
 // Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
 // 
@@ -19,6 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 using System;
 using NUnit.Framework;
+using Smuxi.Common;
 
 namespace Smuxi.Engine
 {
@@ -310,18 +311,34 @@ namespace Smuxi.Engine
             builder.AppendFormat("{{{{virtual {0}}}}}", "hugs");
         }
 
-        void TestMessage(string message, MessageModel expectedMsg)
+        void TestMessage(string message, MessageModel expectedMsg,
+                         MessageBuilderSettings settings = null,
+                         string assertFailMessage = null)
         {
             var builder = new MessageBuilder();
+            if (settings != null) {
+                builder.Settings = settings;
+            }
             builder.TimeStamp = DateTime.MinValue;
             builder.AppendMessage(message);
             var actualMsg = builder.ToMessage();
-            Assert.AreEqual(expectedMsg.GetType(), actualMsg.GetType(), "The message type does not match");
-            Assert.AreEqual(expectedMsg.MessageParts.Count, actualMsg.MessageParts.Count, "The number of message parts do not match");
-            for (int i = 0; i < expectedMsg.MessageParts.Count; i++) {
-                Assert.AreEqual(expectedMsg.MessageParts[i].GetType(), actualMsg.MessageParts[i].GetType(), "The type of the message part does not match");
+
+            string assertFailMessagePrefix = String.Empty;
+            if (assertFailMessage != null) {
+                assertFailMessagePrefix = assertFailMessage + ": ";
             }
-            Assert.AreEqual(expectedMsg, actualMsg);
+
+            Assert.AreEqual(expectedMsg.GetType(), actualMsg.GetType(),
+                            assertFailMessagePrefix + "The message type does not match");
+            Assert.AreEqual(expectedMsg.MessageParts.Count, actualMsg.MessageParts.Count,
+                            assertFailMessagePrefix + "The number of message parts do not match");
+            for (int i = 0; i < expectedMsg.MessageParts.Count; i++) {
+                Assert.AreEqual(expectedMsg.MessageParts[i].GetType(),
+                                actualMsg.MessageParts[i].GetType(),
+                                assertFailMessagePrefix + "The type of the message part does not match");
+            }
+            Assert.AreEqual(expectedMsg, actualMsg,
+                            assertFailMessagePrefix + "The message objects are not equal");
         }
 
         [Test]
@@ -612,12 +629,6 @@ namespace Smuxi.Engine
         [Test]
         public void AppendMessageWithNonUrls()
         {
-        }
-
-        [Test]
-        [Ignore]
-        public void BrokenAppendMessageWithNonUrls()
-        {
             var msg = "org.gnome.Foo.desktop";
             var builder = new MessageBuilder();
             builder.TimeStamp = DateTime.MinValue;
@@ -632,12 +643,53 @@ namespace Smuxi.Engine
         }
 
         [Test]
+        public void AppendMessageWithHeuristicDomainAndLeadingAndTrailingParanthesis()
+        {
+            var msg = "leading text (example.com) trailing text";
+            var builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("leading text ("));
+            builder.Append(
+                new UrlMessagePartModel(
+                    "http://example.com",
+                    "example.com"
+                )
+            );
+            builder.Append(new TextMessagePartModel(") trailing text"));
+            TestMessage(msg, builder.ToMessage());
+        }
+
+        [Test]
+        public void AppendMessageWithIdnLink()
+        {
+            var msg = "http://www.brasileirão.com";
+            var builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new UrlMessagePartModel(msg));
+            TestMessage(msg, builder.ToMessage());
+
+            msg = "http://مثال.ايران/";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new UrlMessagePartModel(msg));
+            TestMessage(msg, builder.ToMessage());
+        }
+
+        [Test]
         public void AppendMessageWithSmartLinks()
         {
             var msg = "RFC2812";
             var builder = new MessageBuilder();
             builder.TimeStamp = DateTime.MinValue;
             builder.Append(new UrlMessagePartModel("http://www.ietf.org/rfc/rfc2812.txt", "RFC2812"));
+            TestMessage(msg, builder.ToMessage());
+
+            msg = "(CVE-2017-0144)";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("("));
+            builder.Append(new UrlMessagePartModel("http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-0144", "CVE-2017-0144"));
+            builder.Append(new TextMessagePartModel(")"));
             TestMessage(msg, builder.ToMessage());
         }
 
@@ -683,6 +735,105 @@ namespace Smuxi.Engine
             builder.TimeStamp = DateTime.MinValue;
             builder.Append(new UrlMessagePartModel("http://[2a01:4f8:a0:7041::2]/"));
             TestMessage("http://[2a01:4f8:a0:7041::2]/", builder.ToMessage());
+        }
+
+        [Test]
+        public void AppendMessageWithBitcoinTxHash()
+        {
+            var msg = "foo bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8 bar";
+            var builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("foo "));
+            builder.Append(
+                new UrlMessagePartModel(
+                    "https://blockchain.info/tx/bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8",
+                    "bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8"
+                )
+            );
+            builder.Append(new TextMessagePartModel(" bar"));
+            TestMessage(msg, builder.ToMessage());
+
+            msg = "foo (bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8) bar";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("foo ("));
+            builder.Append(
+                new UrlMessagePartModel(
+                    "https://blockchain.info/tx/bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8",
+                    "bc4c50f4bcacf990804e2dbc0049ff04eb1500acd535a20f8adf24212f333ed8"
+                )
+            );
+            builder.Append(new TextMessagePartModel(") bar"));
+            TestMessage(msg, builder.ToMessage());
+        }
+
+        [Test]
+        public void AppendMessageWithNonBitcoinTxHash()
+        {
+            var msg = "11:45:54 <matt> I so I send to 0x2880502fc7373e73cc19f3e8dd1cd71ca75ad826, correct?";
+            var builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel(msg));
+            TestMessage(msg, builder.ToMessage());
+
+            msg = "19:15:50 <meebey> b7ae3f09f4f1ef58a6bc479541523a7428ab5d30  ../../lib/emoji.json";
+            builder = new MessageBuilder();
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel(msg));
+            TestMessage(msg, builder.ToMessage());
+        }
+
+        [Test]
+        public void AppendMessageWithEmojis()
+        {
+            // simple emoji
+            var msg = "foo :smiley: bar";
+            var builder = new MessageBuilder();
+            builder.Settings.Emojis = true;
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(new TextMessagePartModel("foo "));
+            builder.Append(
+                new ImageMessagePartModel("smuxi-emoji://smiley", ":smiley:")
+            );
+            builder.Append(new TextMessagePartModel(" bar"));
+            TestMessage(msg, builder.ToMessage(), builder.Settings);
+
+            // emoji with underscore
+            msg = ":slightly_smiling_face:";
+            builder = new MessageBuilder();
+            builder.Settings.Emojis = true;
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(
+                new ImageMessagePartModel("smuxi-emoji://slightly_smiling_face", ":slightly_smiling_face:")
+            );
+            TestMessage(msg, builder.ToMessage(), builder.Settings);
+
+            // emoji with plus
+            msg = ":+1:";
+            builder = new MessageBuilder();
+            builder.Settings.Emojis = true;
+            builder.TimeStamp = DateTime.MinValue;
+            builder.Append(
+                new ImageMessagePartModel("smuxi-emoji://+1", ":+1:")
+            );
+            TestMessage(msg, builder.ToMessage(), builder.Settings);
+
+            // test all supported emojis of the Emojione provider
+            foreach (var emojiShortname in Emojione.ShortnameToUnicodeMap.Keys) {
+                var msgWithEmoji = ":" + emojiShortname + ":";
+                builder = new MessageBuilder();
+                builder.Settings.Emojis = true;
+                builder.TimeStamp = DateTime.MinValue;
+                builder.Append(
+                    new ImageMessagePartModel(
+                        String.Format("smuxi-emoji://{0}", emojiShortname),
+                        msgWithEmoji
+                    )
+                );
+                TestMessage(msgWithEmoji, builder.ToMessage(), builder.Settings,
+                            String.Format("failed testing emoji '{0}'",
+                                          emojiShortname));
+            }
         }
     }
 }

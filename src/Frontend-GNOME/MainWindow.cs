@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2014 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2016 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -225,10 +225,10 @@ namespace Smuxi.Frontend.Gnome
             entryScrolledWindow.ShadowType = Gtk.ShadowType.EtchedIn;
             entryScrolledWindow.HscrollbarPolicy = Gtk.PolicyType.Never;
             entryScrolledWindow.SizeRequested += delegate(object o, Gtk.SizeRequestedArgs args) {
-                // predict and set useful heigth
-                int lineWidth, lineHeigth;
+                // predict and set useful height
+                int lineWidth, lineHeight;
                 using (var layout = Entry.CreatePangoLayout("Qp")) {
-                    layout.GetPixelSize(out lineWidth, out lineHeigth);
+                    layout.GetPixelSize(out lineWidth, out lineHeight);
                 }
                 var it = Entry.Buffer.StartIter;
                 int newLines = 1;
@@ -242,7 +242,7 @@ namespace Smuxi.Frontend.Gnome
                 newLines = Math.Min(newLines, 3);
                 // use text heigth + a bit extra
                 var bestSize = new Gtk.Requisition() {
-                    Height = (lineHeigth * newLines) + 5
+                    Height = (lineHeight * newLines) + 5
                 };
                 args.Requisition = bestSize;
             };
@@ -645,15 +645,10 @@ namespace Smuxi.Frontend.Gnome
 
         public void UpdateProgressBar()
         {
-            var totalChatCount = ChatViewManager.Chats.Count;
-            var syncedChatCount =  ChatViewManager.SyncedChats.Count;
+            var chats = ChatViewManager.Chats;
+            var totalChatCount = chats.Count;
+            var syncedChatCount = chats.Count(x => x.IsSynced);
             var fraction = (double) syncedChatCount / totalChatCount;
-            // clamp value to avoid Gtk-CRITICAL assert failed messages
-            if (fraction < 0) {
-                fraction = 0;
-            } else if (fraction > 1) {
-                fraction = 1;
-            }
             if (totalChatCount == 0) {
                 // x / 0d -> Infinity
                 fraction = 0;

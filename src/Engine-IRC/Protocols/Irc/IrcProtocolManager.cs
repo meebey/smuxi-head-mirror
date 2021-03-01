@@ -327,9 +327,6 @@ namespace Smuxi.Engine
         {
             Trace.Call(fm, server);
 
-            if (fm == null) {
-                throw new ArgumentNullException("fm");
-            }
             if (server == null) {
                 throw new ArgumentNullException("server");
             }
@@ -837,6 +834,10 @@ namespace Smuxi.Engine
                             CommandCtcp(command);
                             handled = true;
                             break;
+                        case "oper":
+                            CommandOper(command);
+                            handled = true;
+                            break;
                         // commands which only work on channels or queries
                         case "me":
                             CommandMe(command);
@@ -1068,6 +1069,7 @@ namespace Smuxi.Engine
             "finger nick",
             "mode [target] [new-mode]",
             "away [away-message]",
+            "oper username password",
             "kick nick(s) [reason]",
             "kickban/kb nick(s) [reason]",
             "ban [mask]",
@@ -1672,6 +1674,15 @@ namespace Smuxi.Engine
             } else {
                 SetPresenceStatus(PresenceStatus.Online, null);
             }
+        }
+
+        public void CommandOper(CommandModel cd)
+        {
+            if (cd.DataArray.Length < 3) {
+                _NotEnoughParameters(cd);
+                return;
+            }
+            _IrcClient.RfcOper(cd.DataArray[1], cd.DataArray[2]);
         }
         
         public void CommandCtcp(CommandModel cd)
@@ -2595,6 +2606,41 @@ namespace Smuxi.Engine
             if (server != null) {
                 _IrcClient.UseSsl = server.UseEncryption;
                 _IrcClient.ValidateServerCertificate = server.ValidateServerCertificate;
+                if (String.IsNullOrEmpty(server.ClientCertificateFilename)) {
+                    _IrcClient.SslClientCertificate = null;
+                } else {
+                    var certFile = server.ClientCertificateFilename;
+                    if (!Path.IsPathRooted(certFile)) {
+                        var configPath = Environment.GetFolderPath(
+                            Environment.SpecialFolder.ApplicationData
+                        );
+                        configPath = Path.Combine(configPath, "smuxi");
+                        var certPath = Path.Combine(configPath, "certs");
+                        certFile = Path.Combine(certPath, certFile);
+                    }
+                    var certType = X509Certificate2.GetCertContentType(certFile);
+                    if (certType != X509ContentType.Unknown) {
+                        var cert = new X509Certificate2();
+                        cert.Import(certFile, "", X509KeyStorageFlags.PersistKeySet);
+                        if (cert.PublicKey == null) {
+#if LOG4NET
+                            _Logger.ErrorFormat(
+                                "ApplyConfig(): client certificate {0} does " +
+                                "not contain a public key!", certFile
+                            );
+#endif
+                        }
+                        if (cert.PrivateKey == null) {
+#if LOG4NET
+                            _Logger.ErrorFormat(
+                                "ApplyConfig(): client certificate {0} does " +
+                                "not contain a private key!", certFile
+                            );
+#endif
+                        }
+                        _IrcClient.SslClientCertificate = cert;
+                    }
+                }
             }
         }
 
@@ -2980,9 +3026,9 @@ namespace Smuxi.Engine
             UpdateGroupPerson(chat, e.Data);
 
             var builder = CreateMessageBuilder();
-            builder.AppendMessage(GetPerson(chat, e.Data.Nick ?? e.Data.From),
-                                  e.Data.Message);
-            builder.MarkHighlights();
+            PersonModel senderPerson = GetPerson(chat, e.Data.Nick ?? e.Data.From);
+            builder.AppendMessage(senderPerson, e.Data.Message);
+            builder.MarkHighlights(senderPerson);
 
             var msg = builder.ToMessage();
             Session.AddMessageToChat(chat, msg);
@@ -2992,7 +3038,7 @@ namespace Smuxi.Engine
                                      e.Data.Channel)
             );
         }
-        
+
         private void _OnChannelAction(object sender, ActionEventArgs e)
         {
             var chat = GetChat(e.Data.Channel, ChatType.Group) ?? Chat;
@@ -3000,10 +3046,11 @@ namespace Smuxi.Engine
 
             var builder = CreateMessageBuilder();
             builder.AppendActionPrefix();
-            builder.AppendIdendityName(GetPerson(chat, e.Data.Nick ?? e.Data.From));
+            PersonModel senderPerson = GetPerson(chat, e.Data.Nick ?? e.Data.From);
+            builder.AppendIdendityName(senderPerson);
             builder.AppendText(" ");
             builder.AppendMessage(e.ActionMessage);
-            builder.MarkHighlights();
+            builder.MarkHighlights(senderPerson);
 
             var msg = builder.ToMessage();
             Session.AddMessageToChat(chat, msg);

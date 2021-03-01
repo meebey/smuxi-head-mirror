@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2015 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2015, 2017 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -51,6 +51,8 @@ namespace Smuxi.Engine
 #endif
         protected bool          m_IsCleanConfig;
         protected Hashtable     m_Preferences = Hashtable.Synchronized(new Hashtable());
+        public Version PreviousVersion { get; private set; }
+        public Version CurrentVersion { get; private set; }
         public event EventHandler<ConfigChangedEventArgs> Changed;
         
         public object this[string key] {
@@ -244,10 +246,15 @@ namespace Smuxi.Engine
 
             prefix = "Engine/";
             var oldConfigVersion = Get<string>(prefix+"ConfigVersion", null);
-            Get(prefix+"ConfigVersion", Engine.AssemblyVersion.ToString());
+            if (!String.IsNullOrEmpty(oldConfigVersion)) {
+                PreviousVersion = new Version(oldConfigVersion);
+            }
+            CurrentVersion = Engine.AssemblyVersion;
+            Get(prefix+"ConfigVersion", CurrentVersion.ToString());
 
             prefix = "Engine/Users/DEFAULT/Interface/";
             Get(prefix+"ShowAdvancedSettings", false);
+            Get(prefix+"ShowActivityCounter", true);
 
             prefix = "Engine/Users/DEFAULT/Interface/Notebook/";
             Get(prefix+"TimestampFormat", "HH:mm");
@@ -508,6 +515,7 @@ namespace Smuxi.Engine
                 }
 
                 LoadUserEntry(user, "Interface/ShowAdvancedSettings", null);
+                LoadUserEntry(user, "Interface/ShowActivityCounter", null);
                 LoadUserEntry(user, "Interface/Notebook/TimestampFormat", null);
                 LoadUserEntry(user, "Interface/Notebook/TabPosition", null);
                 LoadUserEntry(user, "Interface/Notebook/BufferLines", null);
@@ -615,6 +623,7 @@ namespace Smuxi.Engine
                     LoadEntry(sprefix+"Password", String.Empty);
                     LoadEntry(sprefix+"UseEncryption", false);
                     LoadEntry(sprefix+"ValidateServerCertificate", false);
+                    LoadEntry(sprefix+"ClientCertificateFilename", String.Empty);
                     LoadEntry(sprefix+"OnStartupConnect", false);
                     string[] commands = GetList(sprefix + "OnConnectCommands");
                     if (commands == null) {
@@ -641,6 +650,7 @@ namespace Smuxi.Engine
                 foreach (string filter in filters) {
                     cprefix = "Filters/" + filter + "/";
                     LoadUserEntry(user, cprefix + "Protocol", null);
+                    LoadUserEntry(user, cprefix + "NetworkID", null);
                     LoadUserEntry(user, cprefix + "ChatType", null);
                     LoadUserEntry(user, cprefix + "ChatID", null);
                     LoadUserEntry(user, cprefix + "MessageType", null);
@@ -673,6 +683,19 @@ namespace Smuxi.Engine
                     dict.Add((string) entry.Key, entry.Value);
                 }
                 return dict;
+            }
+        }
+
+        public void SetAll(IEnumerable<KeyValuePair<string, object>> settings)
+        {
+            if (settings == null) {
+                throw new ArgumentNullException("settings");
+            }
+
+            lock (m_Preferences) {
+                foreach (var setting in settings) {
+                    this[setting.Key] = setting.Value;
+                }
             }
         }
 

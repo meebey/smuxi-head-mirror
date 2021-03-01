@@ -2,9 +2,12 @@ TARGET_DIR = $(top_builddir)/bin/$(PROFILE)
 EXTRA_DIST = $(WIN_ICON) $(DESKTOP_FILE).in $(man_MANS) $(appdata_in_files)
 man_MANS = smuxi-frontend-gnome.1
 
+mkdir_p = $(install_sh) -d
+
 ICON_NAME = smuxi-frontend-gnome
 ICON_NAME_PNG = $(ICON_NAME).png
 ICON_SVG = $(ICON_NAME).svg
+ICON_XPM = $(ICON_NAME).xpm
 GROUP_CHAT_ICON_NAME = smuxi-group-chat
 PERSON_CHAT_ICON_NAME = smuxi-person-chat
 ICON_16 = $(top_builddir)/images/16/$(ICON_NAME_PNG)
@@ -67,6 +70,13 @@ PROJECT_REFERENCES =  \
 BUILD_DIR = ../../bin/debug
 
 LOG4NET_DLL_SOURCE=../../lib/log4net.dll
+
+if BUNDLE_LOG4NET
+LOG4NET_REF_LIBS=-r:$(LOG4NET_DLL_SOURCE)
+else
+LOG4NET_REF_LIBS=$(LOG4NET_LIBS)
+endif
+
 SMUXI_ENGINE_DLL_MDB_SOURCE=../../bin/debug/smuxi-engine.dll.mdb
 SMUXI_ENGINE_DLL_MDB=$(BUILD_DIR)/smuxi-engine.dll.mdb
 NINI_DLL_SOURCE=../../lib/Nini.dll
@@ -96,25 +106,38 @@ BINARIES = \
 all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_DESKTOPAPPLICATIONS) $(BINARIES)
 
 $(ICON_SVG):
+	$(mkdir_p) $(dir $@)
 	$(INSTALL) -m644 $(top_srcdir)/images/icon.svg $@
+$(ICON_XPM):
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon.xpm $@
 $(ICON_16):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_16x16.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_16x16.png $@
 $(ICON_22):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_22x22.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_22x22.png $@
 $(ICON_24):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_24x24.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_24x24.png $@
 $(ICON_32):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_32x32.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_32x32.png $@
 $(ICON_48):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_48x48.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_48x48.png $@
 $(ICON_128):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_128x128.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_128x128.png $@
 $(ICON_256):
-	$(INSTALL) -D -m644 $(top_srcdir)/images/icon_256x256.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/icon_256x256.png $@
 $(top_builddir)/images/256/$(GROUP_CHAT_ICON_NAME).png:
-	$(INSTALL) -D -m644 $(top_srcdir)/images/group-chat_256x256.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/group-chat_256x256.png $@
 $(top_builddir)/images/256/$(PERSON_CHAT_ICON_NAME).png:
-	$(INSTALL) -D -m644 $(top_srcdir)/images/person-chat_256x256.png $@
+	$(mkdir_p) $(dir $@)
+	$(INSTALL) -m644 $(top_srcdir)/images/person-chat_256x256.png $@
 
 FILES = \
 	../AssemblyVersion.cs \
@@ -139,11 +162,11 @@ FILES = \
 	NotifyManager.cs \
 	PangoTools.cs \
 	Preferences/ServerListView.cs \
-	Preferences/PreferencesDialog.cs \
 	Views/ChatTreeView.cs \
 	Views/JoinWidget.cs \
 	Views/MenuWidget.cs \
 	Views/MessageTextView.cs \
+	Views/PreferencesDialog.cs \
 	Views/ServerWidget.cs \
 	Views/ServerDialog.cs \
 	Views/FilterListWidget.cs \
@@ -192,6 +215,7 @@ FILES = \
 DATA_FILES = \
 	$(DESKTOP_FILE) \
 	$(ICON_SVG) \
+	$(ICON_XPM) \
 	$(ICON_16) \
 	$(ICON_22) \
 	$(ICON_24) \
@@ -207,7 +231,9 @@ RESOURCES = \
 	$(top_builddir)/images/group-chat_256x256.png \
 	$(top_builddir)/images/person-chat_256x256.png \
 	$(top_builddir)/images/protocol-chat_256x256.png \
-	$(top_builddir)/images/session-chat_256x256.png
+	$(top_builddir)/images/session-chat_256x256.png \
+	Interfaces/PreferencesDialog2.ui \
+	Interfaces/ServerListWidget.ui
 
 EXTRAS = \
 	smuxi-frontend-gnome.in \
@@ -223,7 +249,7 @@ REFERENCES =  \
 	$(GLADE_SHARP_20_LIBS) \
 	$(GTK_SHARP_20_LIBS) \
 	$(GIO_SHARP_LIBS) \
-	$(LOG4NET_LIBS) \
+	$(LOG4NET_REF_LIBS) \
 	$(INDICATE_SHARP_LIBS) \
 	$(MESSAGINGMENU_SHARP_LIBS) \
 	$(MESSAGINGMENU_SHARP_INCLUDED_LIBS) \

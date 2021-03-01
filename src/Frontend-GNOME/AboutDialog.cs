@@ -43,7 +43,10 @@ namespace Smuxi.Frontend.Gnome
             }
             Version += "\n Frontend: " + Frontend.UIName + " " + version  +
                        "\n Engine: " + Frontend.EngineAssemblyVersion;
-            Copyright = "Copyright © 2005-2015 Mirco Bauer <meebey@meebey.net> and other contributors";
+            if (!Frontend.IsLocalEngine) {
+                Version += "\n Protocol: " + Frontend.EngineProtocolVersion;
+            }
+            Copyright = "Copyright © 2005-2021 Mirco Bauer <meebey@meebey.net> and other contributors";
             Authors = new string[] {
                 "Mirco Bauer <meebey@meebey.net>",
                 "David Paleino <dapal@debian.org>",
@@ -52,7 +55,9 @@ namespace Smuxi.Frontend.Gnome
                 "Tuukka Hastrup <Tuukka.Hastrup@iki.fi>",
                 "Bianca Mix <heavydemon@freenet.de>",
                 "Oliver Schneider <mail@oli-obk.de>",
-                "Carlos Martín Nieto <cmn@dwim.me>"
+                "Carlos Martín Nieto <cmn@dwim.me>",
+                "Andres G. Aragoneses <knocte@gmail.com>",
+                "Ondřej Hošek <ondra.hosek@gmail.com>"
             };
             Artists = new string[] {
                 "Jakub Steiner <jimmac@ximian.com>",

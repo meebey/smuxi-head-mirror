@@ -1,7 +1,18 @@
-language: c
+language: csharp
+dist: xenial
 
 before_install:
   - git submodule update --init --recursive
+
+mono:
+    - latest
+    - 6.8.0   # Ubuntu 20.04 LTS (focal)  / Debian bullseye
+    - 4.6.2   # Ubuntu 18.04 LTS (bionic) / Debian 9 (strech)
+
+addons:
+    apt:
+        sources:
+        - sourceline: 'ppa:meebey/smuxi-daily'
 
 install:
     - sudo apt-get update > /dev/null
@@ -9,14 +20,12 @@ install:
     - sudo apt-get install devscripts equivs > /dev/null
     - sudo mk-build-deps --install debian/control > /dev/null
     - sudo apt-get install mono-devel nunit-console moreutils gtk-sharp2-gapi libgtkspell-dev > /dev/null
+    - sudo apt-get install libnunit-cil-dev > /dev/null
 
 script:
-    - ./autogen.sh MCS=/usr/bin/dmcs
+    - set -e
+    - ./autogen.sh
     - find lib/ -name "*.csproj" -exec sed 's!<WarningLevel>[0-9]</WarningLevel>!<WarningLevel>0</WarningLevel>!' -i {} \;
-    - sed 's!<Package>dbus-sharp-2.0</Package>!<Package>dbus-sharp-1.0</Package>!' -i src/Frontend-GNOME/Frontend-GNOME.csproj
-    - sed 's!<Package>dbus-sharp-glib-2.0</Package>!<Package>dbus-sharp-glib-1.0</Package>!' -i src/Frontend-GNOME/Frontend-GNOME.csproj
-    - sed 's!dbus-sharp, Version=2.0.0.0,!dbus-sharp, Version=1.0.0.0,!' -i src/Frontend-GNOME/Frontend-GNOME.csproj
-    - sed 's!dbus-sharp-glib, Version=2.0.0.0,!dbus-sharp-glib, Version=1.0.0.0,!' -i src/Frontend-GNOME/Frontend-GNOME.csproj
     - |
       if test -e /usr/lib/mono/4.5/mscorlib.dll; then
         xbuild /p:Warn=0 src/smuxi.sln
@@ -28,7 +37,7 @@ script:
     - nunit-console bin/release/smuxi-frontend-tests.dll
     - nunit-console bin/release/smuxi-frontend-gnome-tests.dll
     - nunit-console bin/release/smuxi-frontend-stfl-tests.dll
-    - chronic make clean && chronic make distcheck MCS=/usr/bin/dmcs
+    - chronic make clean && chronic make distcheck
     - export DEB_UPSTREAM_VERSION=$(dpkg-parsechangelog -ldebian/changelog | grep ^Vers | cut -d\  -f2 | cut -d':' -f2 | sed 's,-.*,,' | sed 's,+dfsg.*,,')
     - mv smuxi-*.tar.gz ../smuxi_${DEB_UPSTREAM_VERSION}.orig.tar.gz
     - cd .. && tar -xzf smuxi_${DEB_UPSTREAM_VERSION}.orig.tar.gz
@@ -38,6 +47,7 @@ script:
 notifications:
     irc:
         channels: "chat.freenode.net#smuxi-devel"
+        use_notice: true
         skip_join: true
         template:
             - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"

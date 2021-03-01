@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2007, 2014-2015 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2007, 2014-2016 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -77,7 +77,10 @@ namespace Smuxi.Engine
 #if LOG4NET
                 _Logger.Debug("Creating Session for User "+user);
 #endif
-                _Sessions.Add(user, new Session(_Config, _ProtocolManagerFactory, user));
+                var session = new Session(_Config, _ProtocolManagerFactory, user);
+                session.ExecuteOnStartupCommands();
+                session.ProcessAutoConnect();
+                _Sessions.Add(user, session);
             }
         }
         

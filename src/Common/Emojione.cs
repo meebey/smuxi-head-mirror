@@ -1,6 +1,7 @@
 ﻿// This file is part of Smuxi and is licensed under the terms of MIT/X11
 //
 // Copyright (c) 2015 Carlos Martín Nieto
+// Copyright (c) 2017 Mirco Bauer <meebey@meebey.net>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +27,13 @@ namespace Smuxi.Common
 {
     public partial class Emojione
     {
-        readonly static string BaseUri = "http://cdn.jsdelivr.net/emojione/assets/png/";
+        readonly static string BaseUri = "http://cdnjs.cloudflare.com/ajax/libs/emojione/2.2.7/assets/png/";
+
+        public static Dictionary<string, string> ShortnameToUnicodeMap {
+            get {
+                return map;
+            }
+        }
 
         public static string ShortnameToUnicode(string shortName)
         {
@@ -40,6 +47,8 @@ namespace Smuxi.Common
 
         public static string  UnicodeToUrl(string unicode)
         {
+            // the filename has to be lower case, otherwise it will HTTP 404
+            unicode = unicode.ToLowerInvariant();
             return String.Format("{0}{1}.png", BaseUri, unicode);
         }
 

@@ -3,15 +3,16 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Alan Mortensen <alanmortensen.am@gmail.com>, 2018
 # Joe Hansen <joedalton2@yahoo.dk>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: Smuxi - IRC client\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-03 12:31+0200\n"
-"PO-Revision-Date: 2015-05-03 19:34+0000\n"
+"POT-Creation-Date: 2015-07-14 19:38+0200\n"
+"PO-Revision-Date: 2017-09-20 01:00+0000\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
-"Language-Team: Danish (http://www.transifex.com/projects/p/smuxi/language/da/)\n"
+"Language-Team: Danish (http://www.transifex.com/meebey/smuxi/language/da/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"

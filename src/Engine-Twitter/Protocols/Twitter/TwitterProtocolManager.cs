@@ -62,7 +62,6 @@ namespace Smuxi.Engine
         Thread                  f_UpdateFriendsTimelineThread;
         int                     f_UpdateFriendsTimelineInterval = 120;
         decimal                 f_LastFriendsTimelineStatusID;
-        DateTime                f_LastFriendsUpdate;
 
         GroupChatModel          f_RepliesChat;
         Thread                  f_UpdateRepliesThread;
@@ -1898,6 +1897,22 @@ namespace Smuxi.Engine
                     f_Logger.Warn("CheckWebException(): ignored exception", exception);
 #endif
                     return;
+            }
+
+            if (exception.InnerException != null) {
+                if (exception.InnerException is System.IO.IOException) {
+                    // sometimes data can't be read from the transport connection, e.g.:
+                    // System.Net.WebException: Unable to read data from the transport connection: Connection reset by peer
+#if LOG4NET
+                    f_Logger.Warn("CheckWebException(): ignored inner-exception", exception.InnerException);
+#endif
+                    return;
+                } else {
+#if LOG4NET
+                    f_Logger.Error("CheckWebException(): inner-exception", exception.InnerException);
+#endif
+
+                }
             }
 
             /*
