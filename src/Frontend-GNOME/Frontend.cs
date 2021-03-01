@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2015 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2015, 2021 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -64,9 +64,11 @@ namespace Smuxi.Frontend.Gnome
         public static bool IsDisconnecting { get; private set; }
         public static bool IsGtkInitialized { get; private set; }
         public static bool InGtkApplicationRun { get; private set; }
-        public static bool IsWindows { get; private set; }
+        public static bool IsWindows => Platform.IsWindows;
         public static bool IsUnity { get; private set; }
-        public static bool IsMacOSX { get; private set; }
+        public static bool IsMacOSX => Platform.IsMacOSX;
+        public static bool IsLinux => Platform.IsLinux;
+        public static bool IsMono => Platform.IsMono;
         public static Version EngineAssemblyVersion { get; set; }
         public static Version EngineProtocolVersion { get; set; }
 
@@ -172,8 +174,6 @@ namespace Smuxi.Frontend.Gnome
 
         static Frontend()
         {
-            IsWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-            IsMacOSX = Platform.OperatingSystem == "Darwin";
             var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP");
             if (!String.IsNullOrEmpty(desktop) && desktop.ToLower().Contains("unity")) {
 #if LOG4NET
@@ -299,7 +299,7 @@ namespace Smuxi.Frontend.Gnome
             _FrontendManager.Sync();
 
             // MS .NET doesn't like this with Remoting?
-            if (Type.GetType("Mono.Runtime") != null) {
+            if (Frontend.IsMono) {
                 // when are running on Mono, all should be good
                 if (_UserConfig.IsCaching) {
                     // when our UserConfig is cached, we need to invalidate the cache
@@ -630,8 +630,7 @@ namespace Smuxi.Frontend.Gnome
 
             // we are using a remote engine, we are not running on Mono and an
             // IConvertible issue happened
-            if (!Frontend.IsLocalEngine &&
-                Type.GetType("Mono.Runtime") == null &&
+            if (!Frontend.IsLocalEngine && !IsMono &&
                 ex is InvalidCastException &&
                 ex.Message.Contains("IConvertible")) {
                 var msg = _(
@@ -939,16 +938,32 @@ namespace Smuxi.Frontend.Gnome
             if (TryOpenChatLink(link)) {
                 return;
             }
-
+            var escapedUrl = Uri.EscapeUriString(link.ToString());
             // hopefully MS .NET / Mono finds some way to handle the URL
             ThreadPool.QueueUserWorkItem(delegate {
                 try {
-                    var url = link.ToString();
-                    using (var process = SysDiag.Process.Start(url)) {
+                    using (var process = SysDiag.Process.Start(escapedUrl)) {
                         // Start() might return null in case it re-used a
                         // process instead of starting one
                         if (process != null) {
                             process.WaitForExit();
+                        }
+                    }
+                } catch (System.ComponentModel.Win32Exception ex) when (IsMono && IsLinux) {
+                    // HACK: Mono >= 6.6 has a regression where Process.Start() can
+                    // no longer open URLs on Linux and just throws a Win32Exception.
+                    // To workaround this issue we call xdg-open directly :(
+                    // For the bug in Mono see:
+                    // https://github.com/mono/mono/commit/5d088cf0de7f3e50e3547dba361af4401e938dd4#diff-c1ecca7d198c8f4922767c6c350edb3d1f7bbd59524f36f73d34f973d2f42a2eR2069
+#if LOG4NET
+                    _Logger.Warn("OpenLink(): buggy Mono version detected, failing back to xdg-open. Exception:", ex);
+#endif
+                    var info = new SysDiag.ProcessStartInfo("xdg-open", escapedUrl) {
+                        UseShellExecute = false
+                    };
+                    using (var process = SysDiag.Process.Start(info)) {
+                        if (process != null) {
+                            process.WaitForExit ();
                         }
                     }
                 } catch (Exception ex) {
@@ -1090,7 +1105,7 @@ namespace Smuxi.Frontend.Gnome
 #else
             // with GTK# 2.8 we can do this better, see above
             // GTK# 2.7.1 for MS .NET doesn't support that though.
-            if (Type.GetType("Mono.Runtime") == null) {
+            if (!IsMono) {
                 // when we don't run on Mono, we need to initialize glib ourself
                 GLib.Thread.Init();
             }

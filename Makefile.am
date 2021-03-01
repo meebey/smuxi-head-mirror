@@ -85,8 +85,11 @@ update-pot:
 		$(MAKE) -C $$PODIR check 2>&1 | grep -v 'mismatched quotes at line' 2>&1; \
 	done
 
-update-transifex:
+pull-transifex:
 	tx pull -f -l ca,cs,da,de,en_GB,es,fa,fi,fr,hr,ko,lt,nb_NO,pl,pt_BR,ru,sk,sv,te,tr,ur,zh_CN
+
+push-transifex:
+	tx push -t --skip
 
 mail-po: update-po
 	for PODIR in $(PODIRS); do \
@@ -304,10 +307,10 @@ dist-linux-debs:
 run: run-gnome
 run-gnome: all
 	if [ "x$(shell uname)" = "xDarwin" ]; then \
-	  export DYLD_FALLBACK_LIBRARY_PATH=/Library/Frameworks/Mono.framework/Versions/Current/lib:/lib:/usr/lib; \
+		cp lib/Nini.dll bin/debug && cp lib/log4net.dll bin/debug; \
 	fi; \
 	cd $(BUILD_DIR) && \
-		mono --debug ./smuxi-frontend-gnome.exe -d
+		mono --debug ./smuxi-frontend-gnome.exe -d --new-instance
 
 run-stfl: all
 	cd $(BUILD_DIR) && \

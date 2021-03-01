@@ -1,7 +1,7 @@
 /*
  * Smuxi - Smart MUltipleXed Irc
  *
- * Copyright (c) 2005-2013 Mirco Bauer <meebey@meebey.net>
+ * Copyright (c) 2005-2015, 2017 Mirco Bauer <meebey@meebey.net>
  *
  * Full GPL License: <http://www.gnu.org/licenses/gpl.txt>
  *
@@ -46,7 +46,7 @@ namespace Smuxi.Frontend.Gnome
 
         private NickCompleter NickCompleter { get; set; }
 
-        ChatViewManager ChatViewManager;
+        ChatViewManager ChatViewManager { get; set; }
         event EventHandler<EventArgs> Activated;
 
         /*
@@ -268,7 +268,14 @@ namespace Smuxi.Frontend.Gnome
                     case Gdk.Key.x:
                     case Gdk.Key.X:
                         if (ChatViewManager.CurrentChatView is SessionChatView) {
-                            Frontend.FrontendManager.NextProtocolManager();
+                            ThreadPool.QueueUserWorkItem(delegate {
+                                try {
+                                    // REMOTING CALL
+                                    Frontend.FrontendManager.NextProtocolManager();
+                                } catch (Exception ex) {
+                                    Frontend.ShowException(ex);
+                                }
+                            });
                         } else {
                             // don't break cut
                             e.RetVal = false;
