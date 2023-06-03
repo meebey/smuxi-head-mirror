@@ -39,13 +39,16 @@ using System.Runtime.InteropServices;
 
 [assembly: CLSCompliant(true)]
 [assembly: ComVisible(false)]
+#if !SIGN && !DELAY_SIGN
+[assembly: InternalsVisibleToAttribute("Meebey.SmartIrc4net.Tests")]
+#endif
 
 [assembly: AssemblyTitle("SmartIrc4net")]
 [assembly: AssemblyDescription("IRC library for CLI")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("qNETp")]
 [assembly: AssemblyProduct("SmartIrc4net")]
-[assembly: AssemblyCopyright("2003-2015 (C) Mirco Bauer <meebey@meebey.net> and other contributors")]
+[assembly: AssemblyCopyright("2003-2016 (C) Mirco Bauer <meebey@meebey.net> and other contributors")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -57,7 +60,7 @@ using System.Runtime.InteropServices;
 // numbers with the '*' character (the default):
 
 [assembly: AssemblyVersion("0.4.5.0")]
-[assembly: AssemblyInformationalVersion("1.0")]
+[assembly: AssemblyInformationalVersion("1.1")]
 
 // The following attributes specify the key for the sign of your assembly. See the
 // .NET Framework documentation for more information about signing.

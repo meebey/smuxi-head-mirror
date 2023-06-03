@@ -1,75 +1,64 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# Basque translation for smuxi.
+# Copyright (C) 2022 smuxi's COPYRIGHT HOLDER
+# This file is distributed under the same license as the smuxi package.
+# Asier Sarasua Garmendia <asiersarasua@ni.eus>, 2022.
 #
-# Translators:
-#   <tty@live.nl>, 2012.
 msgid ""
-msgstr ""
-"Project-Id-Version: Smuxi - IRC client\n"
+msgstr "Project-Id-Version: smuxi master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/smuxi/issues\n"
-"POT-Creation-Date: 2020-09-04 11:27+0000\n"
-"PO-Revision-Date: 2021-10-01 20:33+0200\n"
-"Last-Translator: gogo <trebelnik2@gmail.com>\n"
-"Language-Team: Croatian (http://www.transifex.net/projects/p/smuxi/team/"
-"hr/)\n"
-"Language: hr\n"
+"POT-Creation-Date: 2022-03-27 12:54+0000\n"
+"PO-Revision-Date: 2022-04-04 18:08+0000\n"
+"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
+"Language-Team: Basque <librezale@librezale.eus>\n"
+"Language: eu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Poedit 2.3\n"
 
 #: ../src/Frontend/CommandManager.cs:479
 #, csharp-format
 msgid "Unknown Command: {0}"
-msgstr "Nepoznata naredba: {0}"
+msgstr "Komando ezezaguna: {0}"
 
 #: ../src/Frontend/CommandManager.cs:488
 #, csharp-format
 msgid "Not enough parameters for {0} command"
-msgstr "Nema dovoljno parametara za {0} naredbu"
+msgstr "Ez dago aski parametrorik {0} komandorako"
 
 #: ../src/Frontend/EngineManager.cs:112
 msgid "Engine must not be empty."
-msgstr "Pogon ne smije biti prazan."
+msgstr "Motorrak ezin du hutsik egon."
 
 #: ../src/Frontend/EngineManager.cs:123
 msgid "Engine does not exist."
-msgstr "Pogon ne postoji."
+msgstr "Ez dago motorrik."
 
 #: ../src/Frontend/EngineManager.cs:313
 #, csharp-format
 msgid "Unknown channel ({0}) - only the following channel types are supported:"
-msgstr "Nepoznati kanal ({0}) - samo sljedeće vrste kanala su podržani:"
+msgstr "Kanal ezezaguna ({0}) - honako kanal motak soilik onartzen dira:"
 
 #: ../src/Frontend/EngineManager.cs:322
 msgid ""
 "Registration with engine failed!  The username and/or password were wrong - "
 "please verify them."
-msgstr ""
-"Registracija s pogonom nije uspjela!  Korisničko ime i/ili lozinka su "
-"pogrešni - provjerite ih."
+msgstr "Motorrarekin erregistratzeak huts egin du! Erabiltzaile-izena eta/edo pasahitza okerrak ziren, egiaztatu zuzenak direla."
 
 #: ../src/Frontend/SshTunnelManager.cs:147
 msgid "SSH client application was not found: "
-msgstr "Aplikacija SSH klijenta nije pronađena:  "
+msgstr "SSH aplikazio bezeroa ez da aurkitu: "
 
 #: ../src/Frontend/SshTunnelManager.cs:150
 msgid ""
 "SSH client must be either OpenSSH (ssh) or Plink (plink.exe, not putty.exe)"
-msgstr ""
-"SSH klijent mora biti OpenSSH (ssh) ili Plink (plink.exe, a ne putty.exe)"
+msgstr "SSH bezeroak OpenSSH (ssh) edo Plink (plink.exe, ez putty.exe) izan behar du"
 
 #: ../src/Frontend/SshTunnelManager.cs:187
 #, csharp-format
 msgid ""
 "The local SSH forwarding port {0} is already in use. Is there an old SSH "
 "tunnel still active?"
-msgstr ""
-"Lokalni SSH ulaz preusmjeravanja {0} se već koristi. Je li još neki stari "
-"SSH tunel aktivan?"
+msgstr "SSH birbidalketetarako ataka lokala {0} dagoeneko erabiltzen ari da. SSH tunel zaharren bat oraindik aktibo al dago?"
 
 #: ../src/Frontend/SshTunnelManager.cs:211
 #, csharp-format
@@ -83,26 +72,25 @@ msgid ""
 "{3}\n"
 "Program Output:\n"
 "{4}\n"
-msgstr ""
-"Instalacija SSH tunela nije uspjela (izlazni kȏd: {0})\n"
+msgstr "SSH tunela konfiguratzeak hutz egin du (irteera-kodea: {0})\n"
 "\n"
-"SSH program: {1}\n"
-"SSH parametri: {2}\n"
+"SSH programa: {1}\n"
+"SSH parametroak: {2}\n"
 "\n"
-"Programska greška:\n"
+"Programaren errorea:\n"
 "{3}\n"
-"Programski ispis:\n"
+"Programaren irteera:\n"
 "{4}\n"
 
 #: ../src/Frontend/SshTunnelManager.cs:332
 #: ../src/Frontend/SshTunnelManager.cs:481
 msgid "SSH keyfile not found."
-msgstr "Datoteka SSH ključa nije pronađena."
+msgstr "Ez da SSH gako-fitxategia aurkitu."
 
 #: ../src/Frontend/SshTunnelManager.cs:338
 #: ../src/Frontend/SshTunnelManager.cs:487
 msgid "SSH keyfile could not be read."
-msgstr "Datoteka SSH ključa se ne može pročitati."
+msgstr "SSH gako-fitxategia ezin da irakurri."
 
 #: ../src/Frontend/SshTunnelManager.cs:429
 #, csharp-format
@@ -115,19 +103,18 @@ msgid ""
 "{2}\n"
 "Program Output:\n"
 "{3}\n"
-msgstr ""
-"Broj OpenSSH inačice nije pronađen (izlazni kȏd: {0})\n"
+msgstr "OpenSSH bertsio-zenbakia ez da aurkitu (irteera-kodea: {0})\n"
 "\n"
-"SSH program: {1}\n"
+"SSH programa: {1}\n"
 "\n"
-"Programska greška:\n"
+"Programaren errorea:\n"
 "{2}\n"
-"Programski ispis:\n"
+"Programaren irteera:\n"
 "{3}\n"
 
 #: ../src/Frontend/SshTunnelManager.cs:472
 msgid "PuTTY / Plink requires a username to be set."
-msgstr "PuTTY / Plink zahtijeva korisničko ime."
+msgstr "PuTTY / Plink aplikazioak erabiltzaile-izen bat behar du."
 
 #: ../src/Frontend/SshTunnelManager.cs:560
 #, csharp-format
@@ -140,12 +127,11 @@ msgid ""
 "{2}\n"
 "Program Output:\n"
 "{3}\n"
-msgstr ""
-"Broj Plink inačice nije pronađen (izlazni kȏd: {0})\n"
+msgstr "Plink bertsio-zenbakia ez da aurkitu (irteera-kodea: {0})\n"
 "\n"
-"SSH program: {1}\n"
+"SSH programa: {1}\n"
 "\n"
-"Programska greška:\n"
+"Programaren errorea:\n"
 "{2}\n"
-"Programski ispis:\n"
+"Programaren irteera:\n"
 "{3}\n"

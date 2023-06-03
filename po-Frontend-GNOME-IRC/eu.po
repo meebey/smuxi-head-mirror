@@ -1,66 +1,60 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# Basque translation for smuxi.
+# Copyright (C) 2022 smuxi's COPYRIGHT HOLDER
+# This file is distributed under the same license as the smuxi package.
+# Asier Sarasua Garmendia <asiersarasua@ni.eus>, 2022.
 #
-# Translators:
-#   <tty@live.nl>, 2012.
 msgid ""
-msgstr ""
-"Project-Id-Version: Smuxi - IRC client\n"
+msgstr "Project-Id-Version: smuxi master\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/smuxi/issues\n"
-"POT-Creation-Date: 2020-09-04 11:28+0000\n"
-"PO-Revision-Date: 2021-10-01 20:38+0200\n"
-"Last-Translator: gogo <trebelnik2@gmail.com>\n"
-"Language-Team: Croatian (http://www.transifex.net/projects/p/smuxi/team/"
-"hr/)\n"
-"Language: hr\n"
+"POT-Creation-Date: 2022-03-30 15:59+0000\n"
+"PO-Revision-Date: 2022-04-04 18:08+0000\n"
+"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
+"Language-Team: Basque <librezale@librezale.eus>\n"
+"Language: eu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Poedit 2.3\n"
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:390
 msgid "Query"
-msgstr "Upit"
+msgstr "Kontsulta"
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:396
 msgid "Op"
-msgstr "Dodijeli Op"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:400
 msgid "Deop"
-msgstr "Oduzmi Op"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:404
 msgid "Voice"
-msgstr "Dodijeli Voice"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:408
 msgid "Devoice"
-msgstr "Oduzmi Voice"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:412
 msgid "Kick"
-msgstr "Izbaci"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:416
 msgid "Kick + Ban"
-msgstr "Izbaci + zabrani"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:420
 msgid "Ban"
-msgstr "Zabrani"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:424
 msgid "Unban"
-msgstr "Ukloni zabranu"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:430
 #: ../src/Frontend-GNOME-IRC/IrcPersonChatView.cs:92
 msgid "Whois"
-msgstr "Whois naredba"
+msgstr "Whois"
 
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:434
 #: ../src/Frontend-GNOME-IRC/IrcPersonChatView.cs:96
@@ -70,7 +64,7 @@ msgstr "CTCP"
 #: ../src/Frontend-GNOME-IRC/IrcGroupChatView.cs:443
 #: ../src/Frontend-GNOME-IRC/IrcPersonChatView.cs:103
 msgid "Invite to"
-msgstr "Pozovi u"
+msgstr "Gonbidatu honi:"
 
 #: ../src/Frontend-GNOME-IRC/CtcpMenu.cs:73
 msgid "Ping"
@@ -78,16 +72,16 @@ msgstr "Ping"
 
 #: ../src/Frontend-GNOME-IRC/CtcpMenu.cs:78
 msgid "Version"
-msgstr "Inačica"
+msgstr "Bertsioa"
 
 #: ../src/Frontend-GNOME-IRC/CtcpMenu.cs:83
 msgid "Time"
-msgstr "Vrijeme"
+msgstr "Ordua"
 
 #: ../src/Frontend-GNOME-IRC/CtcpMenu.cs:88
 msgid "Finger"
-msgstr "Finger naredba"
+msgstr ""
 
 #: ../src/Frontend-GNOME-IRC/CtcpMenu.cs:93
 msgid "Userinfo"
-msgstr "Userinfo naredba"
+msgstr ""
